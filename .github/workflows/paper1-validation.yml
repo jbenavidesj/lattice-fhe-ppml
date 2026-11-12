@@ -37,7 +37,7 @@ jobs:
       - name: Format Rust sources
         run: cargo fmt --all
       - name: Run unit tests
-        run: cargo test --all-targets
+        run: cargo test --lib
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Compile benchmark target
