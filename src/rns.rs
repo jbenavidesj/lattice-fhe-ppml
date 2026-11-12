@@ -377,6 +377,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn auxiliary_ntt_crt_basis_covers_exact_integer_product_bound() {
+        let q = MODULI.iter().fold(BigUint::from(1u8), |p, &qi| p * BigUint::from(qi));
+        let p = aux_product();
+        // P > 2*N*(Q/2)^2, expressed without fractional arithmetic.
+        assert!((&p << 1usize) > BigUint::from(8192u64) * &q * &q);
+        for (i, (&modulus, &root)) in AUX_MODULI.iter().zip(AUX_ROOTS.iter()).enumerate() {
+            assert_eq!(pow_mod(root, 16384, modulus), 1, "auxiliary root {i}");
+            assert_eq!(pow_mod(root, 8192, modulus), modulus - 1, "auxiliary root {i}");
+        }
+    }
+
+    #[test]
     fn zeroize_overwrites_all_rns_lane_coefficients() {
         let mut p = RnsPoly::from_lanes(std::array::from_fn(|i| vec![1, 2, MODULI[i] - 1])).unwrap();
         p.zeroize();
