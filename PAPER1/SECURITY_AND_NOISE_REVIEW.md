@@ -67,13 +67,13 @@ For the current candidate, L=14, B=65536, N=8192, and the implemented eta=2 erro
 
 This proves only the key-switch contribution under the stated digit/error bounds. It does not bound the complete BFV multiplication error.
 
-## 5. Complete one-multiplication BFV correctness condition: proof obligations
+## 5. Complete one-multiplication BFV correctness result
 
 For a ciphertext with phase c_0+c_1*s = Delta*m + e (mod Q), a complete multiplication proof must fix the exact centered-lift convention and derive every term in the phase after tensor multiplication, BFV scale-and-round, and relinearization. The final condition is a strict coefficientwise decoding-margin inequality of the form
 ||E_mul + e_ks||_infinity < Q/(2t),
 with the precise rounding and message-representative convention stated alongside it.
 
-The complete E_mul must explicitly include:
+The completed derivation in `PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md` and its exact-rational CI audit account for:
 - both input ciphertext error polynomials and their multiplication by the opposite message/phase;
 - the product of the two input error polynomials;
 - centered-lift quotient/carry terms from each ciphertext component;
@@ -82,7 +82,7 @@ The complete E_mul must explicitly include:
 - any plaintext-product reduction modulo t;
 - the exact key-switch digit convention and e_ks.
 
-The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_SPEC.md is specific to N=8, q=1099511627873, t=17, its deterministic ternary distributions and its own centered-lift rules. It cannot be scaled to N=8192 by substituting larger values. The RNS public-key encryption/decryption path and multiply/relinearize API are now integrated. The one-multiplication RNS error expression has been derived under the exact centered-lift and integer-product semantics in PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md. Its exact-rational script passed CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa`; independent proof review remains pending. No arbitrary-depth theorem is claimed.
+The tiny-ring model's proof in `PAPER1/BFV_TOY_SPEC.md` remains specific to N=8, q=1099511627873, and t=17; it is not the basis of the N=8192 result. The integrated RNS proof covers one multiplication and one relinearization only. Its exact-rational audit passed CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa`; independent proof review remains pending. No arbitrary-depth theorem is claimed.
 
 ## 6. Gate checklist
 
@@ -91,7 +91,7 @@ The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_
 - [x] Explicit ternary secret and eta=2 error distributions.
 - [x] Evaluation-key phase relation tested; exhaustive coefficient test included.
 - [x] Secret buffer zeroization on wrapper drop, with direct buffer test.
-- [ ] Ring-aware security estimation and independent cryptographic review.
+- [ ] Execute the pinned unstructured-LWE diagnostic and obtain ring-aware independent cryptographic review; explicitly analyze the structured evaluation-key samples.
 - [ ] Constant-time and side-channel audit.
 - [x] Integrated RNS encryption/decryption with centered input lifts and exact integer tensor products.
 - [x] One-multiplication RNS noise derivation and exact-rational audit script added.
