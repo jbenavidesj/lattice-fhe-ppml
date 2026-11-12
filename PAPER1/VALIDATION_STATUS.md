@@ -47,3 +47,15 @@ Until those gates are passed, describe this as an arithmetic/RNS prototype plus 
 - Experimental CSPRNG-backed key generation added in `src/keygen.rs` using `getrandom 0.2.15`; includes unbiased per-lane uniform sampling, ternary secret sampling, eta=2 centered-binomial errors, and gadget evaluation-key construction.
 - Tests added for sampler output ranges/supports, signed CRT-lane encoding, and sampled phase-relation coefficients of generated evaluation keys. These tests must pass CI before being considered validated.
 - Still outstanding: exhaustive relation checks, zeroization, side-channel review, RLWE security estimation, independent cryptographic review, and the complete BFV noise/decryption proof.
+
+
+## Security, zeroization, and RNS noise proof gate
+
+See PAPER1/SECURITY_AND_NOISE_REVIEW.md for the exact candidate distributions, security-estimation protocol, zeroization scope, side-channel threat model, conditional key-switch theorem, and missing obligations for a full RNS-BFV multiplication proof.
+
+- Secret-key wrapper now overwrites the RNS coefficient buffers on drop using zeroize; the accessor is crate-private and a direct zeroization test was added.
+- The generated-key phase test reconstructs all 8192 coefficients for every gadget digit, rather than sampling six positions.
+- The implemented eta=2 error has coefficient support [-2,2], so E1 <= 2N = 16384. With L=14 and B=2^16, the conditional key-switch contribution bound is 15,032,156,160.
+- No ring-aware RLWE estimator has been run. The generic LWE estimator is not treated as a substitute for a ring-aware security estimate.
+- No constant-time or side-channel audit has been performed.
+- The full RNS BFV multiplication/decryption noise proof remains open because the RNS key generator is not yet integrated with a complete encryption/decryption pipeline and fixed lift/rounding semantics.
