@@ -123,7 +123,7 @@ mod tests {
         assert!(e.contains(&-2)); assert!(e.contains(&2));
     }
     #[test]
-    fn generated_evaluation_key_satisfies_sampled_coefficient_relations() {
+    fn generated_evaluation_key_satisfies_all_coefficient_relations() {
         let (secret, evaluation_key) = generate_relinearization_key().unwrap();
         assert_eq!(evaluation_key.gadget_base, DEFAULT_GADGET_BASE);
         assert_eq!(evaluation_key.digits.len(), RnsPoly::gadget_levels(DEFAULT_GADGET_BASE).unwrap());
