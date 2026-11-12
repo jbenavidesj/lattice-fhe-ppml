@@ -191,7 +191,7 @@ mod tests {
         let p=ToyParams{n:8,q:65539,t:17}; assert!(p.validate().is_err());
     }
     #[test] fn toy_bfv_tensor_product_matches_plaintext_product() {
-        let p=params(); let (sk,pk)=keygen(&p,0x31415926).unwrap();
+        let p=ToyParams { n: 8, q: 786433, t: 17 }; let (sk,pk)=keygen(&p,0x31415926).unwrap();
         let m1=vec![1,2,0,1,3,0,2,1];
         let m2=vec![2,1,1,0,1,2,0,3];
         let c1=encrypt(&p,&pk,&m1,0x1234).unwrap();
@@ -202,7 +202,8 @@ mod tests {
         assert_eq!(got,expected);
     }
     #[test] fn deterministic_multiseed_tensor_multiplication_sweep() {
-        let p=params();
+        // Larger q provides enough correctness margin for multiplication noise.
+        let p=ToyParams { n: 8, q: 786433, t: 17 };
         for seed in 1..=64u64 {
             let (sk,pk)=keygen(&p,seed.wrapping_mul(0x9e3779b97f4a7c15)).unwrap();
             let mut rng=DemoRng(seed.wrapping_mul(0xd6e8feb86659fd93).max(1));
