@@ -123,7 +123,7 @@ fn scale_and_round_integer(a:&[i128],p:&ToyParams)->Result<Vec<u64>,&'static str
     }).collect()
 }
 
-/// BFV tensor multiplication: form components in R_q, center their residues, then scale-and-round.
+/// BFV tensor multiplication: use centered component lifts, integer tensor products, then scale-and-round.
 pub fn multiply_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)->Result<ToyCiphertext3,&'static str> {
     p.validate()?;
     if lhs.c0.len()!=p.n || lhs.c1.len()!=p.n || rhs.c0.len()!=p.n || rhs.c1.len()!=p.n
