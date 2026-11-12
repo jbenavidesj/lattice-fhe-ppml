@@ -177,12 +177,12 @@ impl RnsPoly {
             let magnitude = if negative { (-x).to_biguint().ok_or("absolute coefficient conversion failed")? }
                             else { x.to_biguint().ok_or("coefficient conversion failed")? };
             let mut remaining = magnitude;
-            for j in 0..levels {
+            for digit_lane in digit_lanes.iter_mut() {
                 let digit = &remaining % &b;
                 remaining /= &b;
                 let digit_signed = BigInt::from_biguint(Sign::Plus, digit);
                 let digit_signed = if negative { -digit_signed } else { digit_signed };
-                for (lane, &q) in digit_lanes[j].iter_mut().zip(MODULI.iter()) {
+                for (lane, &q) in digit_lane.iter_mut().zip(MODULI.iter()) {
                     let modulus = BigInt::from(q);
                     let residue = ((&digit_signed % &modulus) + &modulus) % &modulus;
                     lane.push(low_u64(&residue.to_biguint().ok_or("negative digit residue")?));
