@@ -144,11 +144,11 @@ mod tests {
                     x if x == q0 - 2 => -2,
                     x => panic!("coefficient {index} outside eta=2 support: {x}"),
                 };
-                for lane in 1..4 {
+                for (lane, &q) in MODULI.iter().enumerate().skip(1) {
                     let expected = if value >= 0 {
                         value as u64
                     } else {
-                        MODULI[lane] - value.unsigned_abs()
+                        q - value.unsigned_abs()
                     };
                     assert_eq!(residual.lanes()[lane][index], expected,
                         "CRT lane {lane} disagrees on generated error coefficient {index}");
