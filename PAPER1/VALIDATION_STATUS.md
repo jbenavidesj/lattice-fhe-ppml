@@ -18,6 +18,7 @@
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
+- A production RNS evaluation-key generator with secure uniform sampling, a specified error distribution, and nonzero-error phase tests; see `PAPER1/RNS_KEY_SWITCH_DESIGN.md` for the required construction contract.
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
 - End-to-end RNS key-switch correctness for arbitrary evaluation keys with nonzero error and a nontrivial secret polynomial; the new phase-preservation test uses an algebraically exact synthetic evaluation key.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
