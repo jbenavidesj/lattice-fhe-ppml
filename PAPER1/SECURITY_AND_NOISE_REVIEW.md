@@ -78,7 +78,7 @@ The complete E_mul must explicitly include:
 - any plaintext-product reduction modulo t;
 - the exact key-switch digit convention and e_ks.
 
-The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_SPEC.md is specific to N=8, q=1099511627873, t=17, its deterministic ternary distributions and its own centered-lift rules. It cannot be scaled to N=8192 by substituting larger values. The RNS public-key encryption/decryption path and multiply/relinearize API are now integrated. The one-multiplication RNS error expression has been derived under the exact centered-lift and integer-product semantics in PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md. Its exact-rational script is wired into CI; a successful run on the latest branch head and independent proof review remain pending. No arbitrary-depth theorem is claimed.
+The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_SPEC.md is specific to N=8, q=1099511627873, t=17, its deterministic ternary distributions and its own centered-lift rules. It cannot be scaled to N=8192 by substituting larger values. The RNS public-key encryption/decryption path and multiply/relinearize API are now integrated. The one-multiplication RNS error expression has been derived under the exact centered-lift and integer-product semantics in PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md. Its exact-rational script passed CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa`; independent proof review remains pending. No arbitrary-depth theorem is claimed.
 
 ## 6. Gate checklist
 
