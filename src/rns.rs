@@ -91,7 +91,7 @@ impl RnsPoly {
             for (lane, &q) in lanes.iter_mut().zip(MODULI.iter()) {
                 let modulus = BigInt::from(q);
                 let residue = ((&rounded % &modulus) + &modulus) % &modulus;
-                lane.push(residue.to_u64_digits().first().copied().unwrap_or(0));
+                lane.push(residue.to_u64_digits().1.first().copied().unwrap_or(0));
             }
         }
         Ok(Self { lanes })
@@ -218,14 +218,14 @@ mod tests {
     #[test]
     fn bfv_scale_and_round_matches_exact_signed_reference() {
         let q = q_product_bigint();
-        let values = [
+        let values: [BigInt; 7] = [
             BigInt::from(0),
             BigInt::from(1),
             BigInt::from(-1),
-            &q / 4,
-            -(&q / 4),
-            (&q / 2) - 1,
-            -(&q / 2),
+            &q / BigInt::from(4u8),
+            -(&q / BigInt::from(4u8)),
+            (&q / BigInt::from(2u8)) - BigInt::from(1u8),
+            -(&q / BigInt::from(2u8)),
         ];
         for value in values {
             let input = encode_signed_constant(&value, 1);
