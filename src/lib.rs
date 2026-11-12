@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 pub mod asymred;
 pub mod bfv;
+pub mod keygen;
 pub mod ntt;
 pub mod poly;
 pub mod rns;
