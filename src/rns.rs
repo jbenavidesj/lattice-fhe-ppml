@@ -573,7 +573,7 @@ mod tests {
 
         let mut eval_key = Vec::with_capacity(levels);
         let mut errors = Vec::with_capacity(levels);
-        let mut gadget = BigInt::from(1);
+        let mut gadget_factors = [1u64; 4];
         for j in 0..levels {
             // Fixed sparse signed coefficients make this fixture reproducible.
             // They do not model the distribution of a production RLWE key.
@@ -594,7 +594,7 @@ mod tests {
             // b_j + a_j*s = B^j*s^2 + e_j.
             let target_lanes = std::array::from_fn(|i| {
                 secret_squared.lanes[i].iter()
-                    .map(|&x| crate::mul_mod(x, low_u64(&(&gadget % MODULI[i])), MODULI[i]))
+                    .map(|&x| crate::mul_mod(x, gadget_factors[i], MODULI[i]))
                     .collect()
             });
             let target = RnsPoly::from_lanes(target_lanes).unwrap();
@@ -602,7 +602,11 @@ mod tests {
             let b = target.add(&negate(&a_times_s)).unwrap().add(&e).unwrap();
             eval_key.push(RnsEvalKeyDigit { a, b });
             errors.push(e);
-            gadget *= base;
+            for i in 0..4 {
+                gadget_factors[i] = crate::mul_mod(
+                    gadget_factors[i], base % MODULI[i], MODULI[i]
+                );
+            }
         }
 
         let output = RnsPoly::bfv_relinearize(
