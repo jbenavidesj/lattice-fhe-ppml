@@ -23,6 +23,8 @@ pub struct ToyPublicKey { pub b: Vec<u64>, pub a: Vec<u64> }
 pub struct ToyCiphertext { pub c0: Vec<u64>, pub c1: Vec<u64> }
 #[derive(Clone, Debug)]
 pub struct ToyCiphertext3 { pub c0: Vec<u64>, pub c1: Vec<u64>, pub c2: Vec<u64> }
+#[derive(Clone, Debug)]
+pub struct ToyRelinKey { pub base: u64, pub b: Vec<Vec<u64>>, pub a: Vec<Vec<u64>> }
 
 /// Deterministic non-cryptographic generator, deliberately confined to this toy module.
 struct DemoRng(u64);
@@ -159,6 +161,69 @@ pub fn decrypt_three(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext3)->Result<V
     }).collect())
 }
 
+/// Generate a toy relinearization key for s^2 using a coefficient-wise gadget base.
+/// The deterministic sampler is test-only; this key is NOT cryptographically secure.
+pub fn relinearization_keygen(p:&ToyParams,sk:&ToySecretKey,seed:u64,base:u64)->Result<ToyRelinKey,&'static str> {
+    p.validate()?;
+    if sk.s.len()!=p.n || sk.s.iter().any(|&x|x>=p.q) || base<2 { return Err("invalid secret key or gadget base"); }
+    let mut levels=0usize; let mut capacity=1u128;
+    while capacity < p.q as u128 { capacity=capacity.checked_mul(base as u128).ok_or("gadget capacity overflow")?; levels+=1; }
+    let s2=mul(&sk.s,&sk.s,p.q);
+    let mut rng=DemoRng(seed.max(1));
+    let mut out_b=Vec::with_capacity(levels); let mut out_a=Vec::with_capacity(levels);
+    let mut gadget=1u64;
+    for _ in 0..levels {
+        let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n);
+        let target=scale_poly(&s2,gadget,p.q);
+        // b + a*s = gadget*s^2 + e (mod q)
+        let b=add(&sub_poly(&target,&mul(&a,&sk.s,p.q),p.q),&e,p.q);
+        out_b.push(b); out_a.push(a);
+        gadget=((gadget as u128*base as u128)%p.q as u128) as u64;
+    }
+    Ok(ToyRelinKey{base,b:out_b,a:out_a})
+}
+
+fn scale_poly(a:&[u64],k:u64,q:u64)->Vec<u64> {
+    a.iter().map(|&x|((x as u128*k as u128)%q as u128) as u64).collect()
+}
+fn sub_poly(a:&[u64],b:&[u64],q:u64)->Vec<u64> {
+    a.iter().zip(b).map(|(&x,&y)|if x>=y{x-y}else{q-(y-x)}).collect()
+}
+
+/// Decompose canonical c2 coefficients into base-B digit polynomials.
+fn gadget_digits(c2:&[u64],q:u64,base:u64,levels:usize)->Vec<Vec<u64>> {
+    let mut digits=vec![vec![0u64;c2.len()];levels];
+    for (i,&coefficient) in c2.iter().enumerate() {
+        let mut value=coefficient;
+        for digit in digits.iter_mut() {
+            digit[i]=value%base;
+            value/=base;
+        }
+    }
+    debug_assert!(c2.iter().all(|&x| {
+        let mut value=x; for _ in 0..levels { value/=base; } value==0 && x<q
+    }));
+    digits
+}
+
+/// Apply key switching to a three-component ciphertext, returning two components.
+pub fn relinearize(p:&ToyParams,ct:&ToyCiphertext3,rk:&ToyRelinKey)->Result<ToyCiphertext,&'static str> {
+    p.validate()?;
+    if rk.base<2 || rk.b.is_empty() || rk.b.len()!=rk.a.len()
+        || rk.b.iter().chain(&rk.a).any(|v|v.len()!=p.n || v.iter().any(|&x|x>=p.q))
+        || ct.c0.len()!=p.n || ct.c1.len()!=p.n || ct.c2.len()!=p.n
+        || ct.c0.iter().chain(&ct.c1).chain(&ct.c2).any(|&x|x>=p.q) {
+        return Err("invalid relinearization key or ciphertext");
+    }
+    let digits=gadget_digits(&ct.c2,p.q,rk.base,rk.b.len());
+    let mut c0=ct.c0.clone(); let mut c1=ct.c1.clone();
+    for j in 0..rk.b.len() {
+        c0=add(&c0,&mul(&digits[j],&rk.b[j],p.q),p.q);
+        c1=add(&c1,&mul(&digits[j],&rk.a[j],p.q),p.q);
+    }
+    Ok(ToyCiphertext{c0,c1})
+}
+
 /// Add ciphertexts componentwise.
 pub fn add_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)->Result<ToyCiphertext,&'static str> {
     p.validate()?;
@@ -215,6 +280,21 @@ mod tests {
             let expected=negacyclic_mul(&m1,&m2,p.t);
             assert_eq!(decrypt_three(&p,&sk,&product).unwrap(),expected,"multiplication seed {seed}");
         }
+    }
+    #[test] fn toy_bfv_relinearization_matches_three_component_decryption() {
+        let p=ToyParams { n: 8, q: 786433, t: 17 };
+        let (sk,pk)=keygen(&p,0x27182818).unwrap();
+        let rk=relinearization_keygen(&p,&sk,0xabcdef01,2).unwrap();
+        let m1=vec![1,2,0,1,3,0,2,1];
+        let m2=vec![2,1,1,0,1,2,0,3];
+        let c1=encrypt(&p,&pk,&m1,0x11112222).unwrap();
+        let c2=encrypt(&p,&pk,&m2,0x33334444).unwrap();
+        let product=multiply_ciphertexts(&p,&c1,&c2).unwrap();
+        let before=decrypt_three(&p,&sk,&product).unwrap();
+        let switched=relinearize(&p,&product,&rk).unwrap();
+        let after=decrypt(&p,&sk,&switched).unwrap();
+        assert_eq!(after,before);
+        assert_eq!(after,negacyclic_mul(&m1,&m2,p.t));
     }
     #[test] fn deterministic_multiseed_roundtrip_and_addition_sweep() {
         let p=params();
