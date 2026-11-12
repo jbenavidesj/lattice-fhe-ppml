@@ -25,6 +25,8 @@ jobs:
         run: python scripts/verify_asymred.py
       - name: Check negacyclic reference
         run: python scripts/verify_negacyclic.py
+      - name: Audit toy BFV multiplication noise bound
+        run: python scripts/audit_toy_bfv_noise.py
 
   rust:
     name: Rust tests and benchmark compilation
