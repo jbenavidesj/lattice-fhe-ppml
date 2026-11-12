@@ -126,11 +126,10 @@ rH_0+\frac{\Delta r}{Q}P_0
 +2NM_0E_1+\frac{t}{Q}NE_1^2.
 \]
 The three scale-rounding residuals contribute at most
-\[
-\tfrac12(1+\|s\|_1+\|s^2\|_1)
-\le\tfrac12(1+N+N^2)=33\,554\,? 
-\]
-The exact value of this expression is \(33\,554\,? \) as evaluated by the executable rational audit; the audit output is authoritative and is included in CI.
+\\[
+\\tfrac12(1+\\|s\\|_1+\\|s^2\\|_1)
+\\le\\tfrac12(1+N+N^2)=33\\,558\\,528.5.
+\\]
 
 ## 4. Relinearization error
 
