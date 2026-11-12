@@ -64,6 +64,39 @@ impl RnsPoly {
         }
     }
 
+    /// Exact BFV coefficientwise scale-and-round reference map.
+    ///
+    /// For each coefficient, reconstruct its centered representative x in (-Q/2,Q/2],
+    /// compute round(t*x/Q) with ties away from zero, then encode the result in every
+    /// RNS lane. This BigInt implementation is a correctness oracle, not a fast RNS
+    /// implementation and not a complete ciphertext multiplication by itself.
+    pub fn bfv_scale_and_round(&self, plaintext_modulus: u64) -> Result<Self, &'static str> {
+        if plaintext_modulus < 2 {
+            return Err("plaintext modulus must be >= 2");
+        }
+        let q_product = MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q));
+        let denominator = BigInt::from_biguint(Sign::Plus, q_product);
+        let mut lanes: [Vec<u64>; 4] = std::array::from_fn(|_| Vec::with_capacity(self.lanes[0].len()));
+        for index in 0..self.lanes[0].len() {
+            let x = self.crt_reconstruct_centered_coefficient(index)?;
+            let numerator = x * BigInt::from(plaintext_modulus);
+            let negative = numerator.sign() == Sign::Minus;
+            let magnitude = if negative { -numerator } else { numerator };
+            let mut quotient = &magnitude / &denominator;
+            let remainder = &magnitude % &denominator;
+            if (&remainder << 1usize) >= denominator {
+                quotient += 1u8;
+            }
+            let rounded = if negative { -quotient } else { quotient };
+            for (lane, &q) in lanes.iter_mut().zip(MODULI.iter()) {
+                let modulus = BigInt::from(q);
+                let residue = ((&rounded % &modulus) + &modulus) % &modulus;
+                lane.push(residue.to_u64_digits().first().copied().unwrap_or(0));
+            }
+        }
+        Ok(Self { lanes })
+    }
+
     /// Exact centered basis extension: reconstruct each coefficient as its signed
     /// representative modulo Q, then reduce that integer into every target modulus.
     /// This is exact extension, not an approximate fast base-conversion algorithm.
@@ -80,6 +113,28 @@ impl RnsPoly {
             }
         }
         Ok(output)
+    }
+
+    /// Exact-reference BFV tensor multiplication over the configured four-lane RNS basis.
+    ///
+    /// Tensor products are first formed in R_Q via lane-wise NTT multiplication. Each
+    /// tensor component is then reconstructed as a centered integer coefficient and
+    /// mapped by t/Q scale-and-round. Returns the three components before relinearization.
+    pub fn bfv_tensor_multiply(
+        c0: &Self, c1: &Self, d0: &Self, d1: &Self, plaintext_modulus: u64
+    ) -> Result<[Self; 3], &'static str> {
+        let n = c0.lanes[0].len();
+        if [c1, d0, d1].iter().any(|p| p.lanes[0].len() != n) {
+            return Err("BFV ciphertext polynomial dimensions differ");
+        }
+        let u0 = c0.negacyclic_mul(d0)?;
+        let u1 = c0.negacyclic_mul(d1)?.add(&c1.negacyclic_mul(d0)?)?;
+        let u2 = c1.negacyclic_mul(d1)?;
+        Ok([
+            u0.bfv_scale_and_round(plaintext_modulus)?,
+            u1.bfv_scale_and_round(plaintext_modulus)?,
+            u2.bfv_scale_and_round(plaintext_modulus)?,
+        ])
     }
 
     /// Negacyclic multiplication by NTT in each residue field. Candidate roots are fixed for N=8192.
@@ -141,6 +196,70 @@ mod tests {
         for (i, &q) in targets.iter().enumerate() {
             let expected = (&signed % BigInt::from(q) + BigInt::from(q)) % BigInt::from(q);
             assert_eq!(extended[i][0], low_u64(&expected.to_biguint().unwrap()));
+        }
+    }
+
+    fn encode_signed(value: &BigInt, n: usize) -> RnsPoly {
+        let lanes = std::array::from_fn(|i| {
+            let q = BigInt::from(MODULI[i]);
+            let residue = ((value % &q) + &q) % &q;
+            vec![low_u64(&residue.to_biguint().unwrap()); n]
+        });
+        RnsPoly::from_lanes(lanes).unwrap()
+    }
+
+    fn q_product_bigint() -> BigInt {
+        BigInt::from_biguint(Sign::Plus,
+            MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q)))
+    }
+
+    #[test]
+    fn bfv_scale_and_round_matches_exact_signed_reference() {
+        let q = q_product_bigint();
+        let values = [
+            BigInt::from(0),
+            BigInt::from(1),
+            BigInt::from(-1),
+            &q / 4,
+            -(&q / 4),
+            (&q / 2) - 1,
+            -(&q / 2),
+        ];
+        for value in values {
+            let input = encode_signed(&value, 1);
+            let output = input.bfv_scale_and_round(65537).unwrap();
+            let numerator = &value * 65537u64;
+            let negative = numerator.sign() == Sign::Minus;
+            let magnitude = if negative { -numerator } else { numerator };
+            let denominator = q.clone();
+            let mut expected = &magnitude / &denominator;
+            if ((&magnitude % &denominator) << 1usize) >= denominator { expected += 1u8; }
+            if negative { expected = -expected; }
+            for (i, lane) in output.lanes().iter().enumerate() {
+                let modulus = BigInt::from(MODULI[i]);
+                let residue = ((&expected % &modulus) + &modulus) % &modulus;
+                assert_eq!(lane[0], low_u64(&residue.to_biguint().unwrap()));
+            }
+        }
+    }
+
+    #[test]
+    fn bfv_tensor_multiply_scales_sparse_product() {
+        let n = 8192;
+        let quarter_q = q_product_bigint() / 4;
+        let c0 = encode_signed(&quarter_q, n);
+        let zero = encode_signed(&BigInt::from(0), n);
+        let two = encode_signed(&BigInt::from(2), n);
+        let result = RnsPoly::bfv_tensor_multiply(&c0, &zero, &two, &zero, 17).unwrap();
+        // U0[0] = 2*floor(Q/4), so round(17*U0/Q) = 9.
+        for lane in result[0].lanes() {
+            assert_eq!(lane[0], 9);
+            assert!(lane[1..].iter().all(|&x| x == 0));
+        }
+        for component in [&result[1], &result[2]] {
+            for lane in component.lanes() {
+                assert!(lane.iter().all(|&x| x == 0));
+            }
         }
     }
 
