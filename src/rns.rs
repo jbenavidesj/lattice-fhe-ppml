@@ -599,7 +599,7 @@ mod tests {
             });
             let target = RnsPoly::from_lanes(target_lanes).unwrap();
             let a_times_s = a.negacyclic_mul(&secret).unwrap();
-            let b = target.add(&negate(&a_times_s))?.add(&e)?;
+            let b = target.add(&negate(&a_times_s)).unwrap().add(&e).unwrap();
             eval_key.push(RnsEvalKeyDigit { a, b });
             errors.push(e);
             gadget *= base;
