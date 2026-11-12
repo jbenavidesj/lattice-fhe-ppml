@@ -76,4 +76,4 @@ See `PAPER1/RNS_BFV_INTEGRATION.md` for the equations, current API path, conditi
 - Public-key generation, encryption, decryption, and homomorphic addition are implemented in `src/keygen.rs`.
 - The public-key encryption phase error for the specified bounded samplers is at most 32770 in coefficient infinity norm, before decoding.
 - A multiply-plus-relinearize API is wired to the exact-CRT tensor scale-and-round reference and the existing evaluation-key key-switch implementation.
-- An independent sparse plaintext-ring product comparison has been added to the N=8192 integration test. Validation status is determined only by CI on the exact current head.
+- An independent sparse plaintext-ring product comparison has been added to the N=8192 integration test. The tensor phase and multiply/relinearize path passed Rust unit tests in CI run 266; Clippy then identified one iterator-style warning, now corrected in a later commit. The complete workflow for the latest head remains pending.
