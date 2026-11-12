@@ -2,7 +2,7 @@
 //! Arithmetic is lane-wise; exact CRT reconstruction is provided for coefficients.
 //! This is still an arithmetic layer, not a BFV ciphertext implementation.
 use num_bigint::BigUint;
-use crate::{ntt::negacyclic_ntt_mul, pow_mod, sub_mod, mul_mod, MODULI, ROOTS};
+use crate::{ntt::negacyclic_ntt_mul, pow_mod, sub_mod, MODULI, ROOTS};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RnsPoly {
