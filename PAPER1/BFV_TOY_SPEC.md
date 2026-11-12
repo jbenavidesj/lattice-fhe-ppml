@@ -43,3 +43,14 @@ This module does not implement ciphertext multiplication, BFV tensor-product sca
 5. Replace demonstration sampling with a reviewed CSPRNG and precisely specified error sampler before any security-oriented experiment.
 6. Port only after toy correctness is established, then validate against the N=8192 RNS basis with a complete parameter/security analysis.
 
+
+## Ciphertext multiplication: unrelinearized tensor result
+
+The toy module now includes a first tensor-product experiment. For input ciphertexts (c0,c1) and (d0,d1), it computes in R_q:
+- U0 = c0*d0
+- U1 = c0*d1 + c1*d0
+- U2 = c1*d1
+
+Each coefficient of each U_k is mapped to its centered representative in (-q/2,q/2], multiplied by t, divided by q, and rounded to nearest integer (ties away from zero), then reduced modulo q. The output retains all three components; no gadget decomposition or relinearization is applied. Decryption evaluates c0' + c1'*s + c2'*s^2 and then performs the ordinary BFV t/q decoding step.
+
+The test compares this unrelinearized result against direct negacyclic multiplication in the plaintext ring for one fixed toy vector. This is an initial executable check, not a proof of correctness for all messages, seeds, or parameter sets. The exact integer-lift and rounding convention is the one implemented by the code; a formal bound on accumulated noise and component-wise rounding error remains outstanding.
