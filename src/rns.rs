@@ -2,6 +2,7 @@
 //! CRT reconstruction is exact. Basis extension uses the centered CRT representative,
 //! a semantic distinction required by signed polynomial arithmetic.
 use num_bigint::{BigInt, BigUint, Sign};
+use zeroize::Zeroize;
 use crate::{ntt::negacyclic_ntt_mul, pow_mod, sub_mod, MODULI, ROOTS};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,6 +34,11 @@ impl RnsPoly {
     }
 
     pub fn lanes(&self) -> &[Vec<u64>; 4] { &self.lanes }
+
+    /// Overwrite all coefficient buffers with zeroes before releasing secret material.
+    pub(crate) fn zeroize(&mut self) {
+        for lane in &mut self.lanes { lane.zeroize(); }
+    }
 
     pub fn add(&self, rhs: &Self) -> Result<Self, &'static str> {
         if self.lanes[0].len() != rhs.lanes[0].len() {
