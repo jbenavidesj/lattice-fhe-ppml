@@ -1,40 +1,43 @@
 # Paper 1 — validation status
 
-**Status: research prototype; not submission-ready.** This ledger distinguishes checks actually executed in the repository from missing cryptographic evidence.
+**Status: research prototype; not submission-ready.** This ledger distinguishes the small-ring BFV demonstration from the N=8192 RNS arithmetic candidate and from a complete cryptographic implementation.
 
 ## Selected architecture
-- Core: leveled RNS-BFV.
+- Core target: leveled RNS-BFV.
 - Refresh/bootstrapping remains a separate experimental extension, not a required core feature.
-- Arithmetic prototype: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, and exact coefficient-wise CRT reconstruction.
-- Candidate optimizations are not, by themselves, evidence of speed or security improvements.
+- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, and centered basis extension.
+- A separate tiny-ring BFV model now exercises key generation, public-key encryption, decryption, and homomorphic addition for fixed deterministic test vectors. It is not integrated with the N=8192 RNS basis.
 
-## Reproducible checks now in the repository
-The branch includes a Rust crate and Python audit scripts. The latest GitHub Actions run should be consulted for its final state; do not infer a pass from the existence of a workflow.
-
+## Reproducible checks in the repository
 - Parameter audit: deterministic Miller–Rabin checks for the four 64-bit q candidates, q_i congruence, exact 2N root order, pairwise coprimality, Q bit length, and log2(Delta).
 - AsymRed: Python arbitrary-precision differential test and Rust tests, with the two-fold range bound checked at runtime.
 - Polynomial arithmetic: Rust schoolbook negacyclic reference tests and a deterministic Python small-ring reference test.
 - NTT: Rust round-trip tests at N=8192 for all four candidate moduli and a small-ring NTT-vs-schoolbook product test.
+- Toy BFV: unit tests for fixed-seed encrypt/decrypt and homomorphic addition at N=8, q=65537, t=17. The exact equations and limitations are in `PAPER1/BFV_TOY_SPEC.md`.
+
+Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
-- Full BFV key generation, encryption, decryption, ciphertext multiplication, scale-and-round, gadget decomposition, relinearization, modulus switching, and end-to-end correctness.
+- Full BFV implementation over the N=8192 four-lane RNS parameter candidates.
+- Ciphertext multiplication, BFV tensor-product scale-and-round, gadget decomposition, relinearization/key switching, modulus switching, or bootstrapping.
 - A complete proof of the BFV noise bound for the implemented parameter set.
 - RLWE security estimate or 128-bit security.
+- Cryptographically secure randomness or a production-grade error sampler in the toy model.
 - Constant-time behavior or side-channel resistance.
-- Validated bootstrapping/refresh.
 - Any headline performance improvement, including 34% or the earlier 4.12 ms versus 2.71 ms figures.
 
-AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise.
+AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise. The toy BFV module uses deterministic test-only sampling and must never be used to protect real data.
 
 ## Important benchmark caution
-The executable in `benches/arithmetic.rs` is an exploratory microbenchmark. A timing observed during debug test execution is not a release benchmark and must not be quoted. Run it in release mode on documented hardware, across repeated sessions, and compare distributions before making any performance statement. The CI runner is for correctness/build gates, not a headline speed claim.
+The Criterion executable is an exploratory microbenchmark. It is compiled in CI but no release benchmark campaign, raw timing dataset, confidence intervals, CPU/compiler metadata, or end-to-end BFV measurement has been published. Debug-mode timing is not publishable evidence. No speedup claim is supported.
 
 ## Remaining gates before IEEE submission
-1. Complete and test the BFV encryption/evaluation/decryption pipeline.
-2. Prove scale-and-round, key-switching/relinearization correctness, and a conservative noise bound for exact parameters.
-3. Specify secret/error distributions and samplers; run a current lattice estimator with recorded version and cost model.
-4. Benchmark release builds on documented hardware with repeated samples and raw data.
-5. Review constant-time behavior and side-channel exposure.
-6. Add independent review and a complete paper/reproducibility package.
+1. Expand toy BFV property tests and prove a conservative noise bound for its exact sampling model.
+2. Implement and test tensor-product multiplication and BFV scale-and-round using explicit centered integer lifts.
+3. Implement gadget decomposition/relinearization with key-switch error accounting.
+4. Port the verified pipeline to N=8192 RNS and test against independent references.
+5. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
+6. Benchmark release builds on documented hardware with repeated samples and raw data.
+7. Review constant-time behavior, side-channel exposure, and independent reproducibility.
 
-Until then, present this as an arithmetic prototype supporting a candidate RNS-BFV design, not as a validated new FHE scheme.
+Until those gates are passed, describe this as an arithmetic/RNS prototype plus a separate tiny-ring BFV correctness model—not as a validated new FHE scheme.
