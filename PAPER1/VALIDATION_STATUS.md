@@ -18,9 +18,9 @@
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
-- A production RNS evaluation-key generator with secure uniform sampling, a specified error distribution, and nonzero-error phase tests; see `PAPER1/RNS_KEY_SWITCH_DESIGN.md` for the required construction contract.
+- A production RNS evaluation-key generator with secure uniform sampling and a specified error distribution. A deterministic sparse test fixture now constructs nonzero-error RNS evaluation-key digits and checks the exact phase delta for a nontrivial secret; it is a correctness fixture only, not a cryptographic sampler. The new test has not yet been confirmed by a CI run.
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
-- End-to-end RNS key-switch correctness for arbitrary evaluation keys with nonzero error and a nontrivial secret polynomial; the new phase-preservation test uses an algebraically exact synthetic evaluation key.
+- Generalized end-to-end RNS key-switch correctness beyond the new deterministic sparse fixture; no production key generator or sampler exists.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
