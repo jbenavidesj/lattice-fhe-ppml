@@ -111,6 +111,25 @@ fn scalar_mul_lanes(poly: &RnsPoly, factors: [u64; 4]) -> Result<RnsPoly, KeyGen
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn rns_bfv_public_key_encrypt_decrypt_and_addition_roundtrip() {
+        let (secret, evaluation_key) = generate_relinearization_key().unwrap();
+        assert_eq!(evaluation_key.gadget_base, DEFAULT_GADGET_BASE);
+        let public_key = generate_public_key(&secret).unwrap();
+        let mut m1 = vec![0u64; RNS_DEGREE];
+        let mut m2 = vec![0u64; RNS_DEGREE];
+        m1[0] = 7; m1[1] = 11; m1[17] = 23;
+        m2[0] = 5; m2[3] = 19; m2[17] = 29;
+        let t = 65537;
+        let c1 = encrypt_rns_bfv(&m1, t, &public_key).unwrap();
+        let c2 = encrypt_rns_bfv(&m2, t, &public_key).unwrap();
+        assert_eq!(decrypt_rns_bfv(&secret, &c1, t).unwrap(), m1);
+        assert_eq!(decrypt_rns_bfv(&secret, &c2, t).unwrap(), m2);
+        let sum = add_rns_bfv(&c1, &c2).unwrap();
+        let expected: Vec<u64> = m1.iter().zip(&m2).map(|(&a,&b)| (a+b)%t).collect();
+        assert_eq!(decrypt_rns_bfv(&secret, &sum, t).unwrap(), expected);
+    }
+
     #[test] fn rejection_sampler_outputs_canonical_residues() {
         for &q in &MODULI { for _ in 0..128 { assert!(sample_uniform_mod_q(q).unwrap() < q); } }
     }
@@ -252,4 +271,26 @@ fn encode_bfv_plaintext(message: &[u64], plaintext_modulus: u64) -> Result<RnsPo
         }).collect()
     });
     Ok(RnsPoly::from_lanes(lanes)?)
+}
+
+
+/// Multiply two RNS-BFV ciphertexts, then relinearize with the supplied evaluation key.
+/// Tensor components are formed modulo Q and each coefficient is centered/reduced
+/// by the exact t/Q scale-and-round reference before key switching.
+pub fn multiply_relinearize_rns_bfv(
+    lhs: &RnsCiphertext,
+    rhs: &RnsCiphertext,
+    evaluation_key: &RnsEvaluationKey,
+    plaintext_modulus: u64,
+) -> Result<RnsCiphertext, KeyGenError> {
+    if evaluation_key.gadget_base < 2 {
+        return Err(KeyGenError::Arithmetic("invalid evaluation-key gadget base"));
+    }
+    let tensor = RnsPoly::bfv_tensor_multiply(
+        &lhs.c0, &lhs.c1, &rhs.c0, &rhs.c1, plaintext_modulus
+    )?;
+    let switched = RnsPoly::bfv_relinearize(
+        &tensor, &evaluation_key.digits, evaluation_key.gadget_base
+    )?;
+    Ok(RnsCiphertext { c0: switched[0].clone(), c1: switched[1].clone() })
 }
