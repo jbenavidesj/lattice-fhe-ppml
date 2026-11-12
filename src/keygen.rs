@@ -117,7 +117,7 @@ mod tests {
     #[test] fn ternary_and_eta2_supports_are_exact() {
         let s = sample_ternary(4096).unwrap(); assert!(s.iter().all(|x| (-1..=1).contains(x)));
         let e = sample_centered_binomial_eta2(4096).unwrap(); assert!(e.iter().all(|x| (-2..=2).contains(x)));
-        assert!(e.iter().any(|&x| x == -2)); assert!(e.iter().any(|&x| x == 2));
+        assert!(e.contains(&-2)); assert!(e.contains(&2));
     }
     #[test]
     fn generated_evaluation_key_satisfies_sampled_coefficient_relations() {
