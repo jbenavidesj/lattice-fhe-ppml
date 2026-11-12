@@ -54,14 +54,19 @@ The input centered lifts and final scale-and-round use exact BigInt CRT. Integer
 - CI must pass for the exact commit containing these tests before treating the checks as validated.
 - These finite tests do not replace a complete worst-case RNS-BFV multiplication-noise proof or independent cryptographic review.
 
+## One-multiplication noise theorem
+
+The deterministic derivation is now documented in `PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md`. Under the specified bounded samplers and evaluation-key relation, the exact-rational audit gives
+`||E_total||_infinity <= 91,700,891,552,753,113,897`,
+against a decoding margin of approximately `3.2138270414e60`. The audit script `scripts/audit_rns_bfv_noise.py` is wired into CI. Its first run on the current branch head is still pending, and the derivation should receive independent review.
+
 ## Remaining requirements
 
-1. Complete a formal RNS multiplication correctness derivation under the exact centered-input-lift, integer-product, scale-and-round, and gadget conventions implemented here.
-2. Establish a deterministic or probabilistic bound for every input-noise, product, quotient/carry, scale-rounding, and key-switch term.
-3. Validate the bound against the exact decoding margin for the chosen Q and t.
-4. Run and record a current lattice-estimator diagnostic with immutable estimator version and cost model; justify the ring-LWE heuristic and assess structural attacks.
-5. Audit secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
-6. Replace BigInt reference operations with a proven efficient RNS implementation only after differential tests against this reference.
-7. Run independent tests and release benchmarks with raw data and reproducible hardware/compiler metadata.
+1. Pass the new exact-rational noise audit in CI on the current branch head and obtain independent review of the proof.
+2. Run and record a current lattice-estimator diagnostic with immutable estimator version and cost model; justify the ring-LWE heuristic and assess structural attacks.
+3. Audit secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
+4. Replace the exact auxiliary NTT/CRT correctness reference with a proven efficient RNS implementation only after differential tests against this reference.
+5. Run independent tests and release benchmarks with raw data and reproducible hardware/compiler metadata.
+6. Extend correctness proofs to additional multiplication depth only if that becomes part of the claimed scheme.
 
 Do not claim production security, a concrete security level, arbitrary multiplicative depth, or a performance improvement from this prototype.
