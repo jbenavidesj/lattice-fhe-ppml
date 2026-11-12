@@ -14,11 +14,7 @@ pub enum KeyGenError { Entropy(getrandom::Error), Arithmetic(&'static str) }
 impl From<getrandom::Error> for KeyGenError { fn from(e: getrandom::Error) -> Self { Self::Entropy(e) } }
 impl From<&'static str> for KeyGenError { fn from(e: &'static str) -> Self { Self::Arithmetic(e) } }
 
-#[derive(Debug)]
 pub struct RnsSecretKey(RnsPoly);
-impl RnsSecretKey {
-    pub(crate) fn as_poly(&self) -> &RnsPoly { &self.0 }
-}
 
 impl Drop for RnsSecretKey {
     fn drop(&mut self) { self.0.zeroize(); }
