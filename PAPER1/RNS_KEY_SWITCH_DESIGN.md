@@ -129,3 +129,28 @@ The isolated half-plaintext-spacing threshold is `floor(Q/(2t)) =
 The ratio of that threshold to the above key-switch contribution bound is approximately `4.28e50` (about 168.2 bits).
 
 **Interpretation limit:** this comparison only shows that this hypothetical bounded key-switch error term is small relative to the isolated BFV rounding threshold. It does not establish the complete decryption condition after BFV multiplication: input noise, multiplication cross terms, scale-rounding residuals, plaintext carries/lifts, and all other error terms must be included in one rigorous bound. Nor does the coefficient-support assumption specify a sampler or establish RLWE security. The current deterministic sparse test uses a smaller fixture-specific `E_1 <= 3`; the `E_1 <= 8192` calculation is a conservative envelope for a future coefficientwise ternary error, not evidence that such an error sampler is implemented.
+
+
+## Proposed sampler contract for the next implementation milestone
+
+The following is a concrete implementation design, still **not implemented** and not yet a security parameter selection.
+
+### Uniform RNS element
+
+For each coefficient and each lane modulus \`q_i\`, draw a 64-bit word \`x\`. Compute in \`u128\`
+
+\`\`\`
+limit = floor(2^64 / q_i) * q_i.
+\`\`\`
+
+Reject \`x\` when \`x >= limit\`; otherwise return \`x mod q_i\`. This rejection sampler is unbiased. Sampling each of the four residues independently is mathematically equivalent to sampling one uniform coefficient in \`Z/QZ\`, because the Chinese remainder map
+\`Z/QZ ≅ product_i Z/q_i Z\`
+is a bijection. The four lanes are therefore CRT coordinates of one uniform ring element, not four unrelated keys. Coefficients are sampled independently to obtain uniformity in \`R_Q\`.
+
+### Secret and error candidates
+
+- Secret candidate: independently sample each signed coefficient uniformly from \`{-1,0,1}\`, then encode that same signed coefficient into all four RNS lanes.
+- Evaluation-key error candidate: centered binomial with parameter \`eta=2\`, defined exactly as the sum of two independent fair bits minus the sum of two independent fair bits. Its support is \`{-2,-1,0,1,2}\`. The same signed coefficient is encoded into all lanes.
+- Use a system CSPRNG for production calls. Deterministic seeded generators are confined to tests and must be named/documented as test-only.
+
+This choice makes the error support explicit (\`||e_j||_1 <= 2N\`) and permits a deterministic norm envelope. It is only a reproducible candidate distribution: it does not by itself establish an adequate security level. Before calling the construction secure, run and record a lattice estimator using the exact ring, secret/error distributions, modulus, and estimator cost model. The sampler API must not accept a generic RNG that can silently be a non-cryptographic generator in production; a production entry point should own/use the OS-backed CSPRNG, while deterministic injection remains private to tests.
