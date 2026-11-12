@@ -80,3 +80,17 @@ With L = ceil(log_B(q)) digit levels, the coefficient-wise triangle inequality g
 For the toy test parameters N=8 and q=786433, this conservative bound is 160 for B=2 (L=20), 240 for B=4 (L=10), and 600 for B=16 (L=5).
 
 This bounds only the added key-switch error polynomial under the exact toy sampler and unsigned digit convention. It is not the complete post-multiplication noise bound, does not account for all BFV tensor-product and rounding terms, and cannot be transferred to the N=8192 RNS candidate parameters or a Gaussian RLWE implementation.
+
+## Exact bound for rounding and relinearization perturbations
+
+Let rho_0,rho_1,rho_2 be the coefficientwise scale-and-round residual polynomials, with ||rho_k||_infinity <= 1/2. Let s be the secret polynomial and let e_ks = sum_j d_j*e_j be the key-switch error polynomial. The perturbation contributed by these two mechanisms to the unrelinearized/relinearized phase comparison is
+`E_add = rho_0 + rho_1*s + rho_2*s^2 + e_ks`.
+For negacyclic convolution, ||a*b||_infinity <= ||a||_infinity ||b||_1. Therefore
+`||E_add||_infinity <= (1/2)(1 + ||s||_1 + ||s^2||_1) + ||e_ks||_infinity`.
+For the toy ternary secret, ||s||_1 <= N and ||s^2||_1 <= ||s||_1^2 <= N^2. Combining this with the previous toy key-switch bound gives
+`||E_add||_infinity <= (1/2)(1+N+N^2) + L*N*(B-1)`.
+At N=8, q=786433, B=2, L=20, this is at most 196.5. This is a rigorous bound on the rounding-plus-key-switch contribution only, under the stated integer-lift and ternary-error conventions.
+
+For a phase of the form Delta*m_bar + E, where m_bar is the centered plaintext representative and q=t*Delta+r with 0<=r<t, nearest-integer decryption is guaranteed if
+`||E||_infinity < q/(2t) - (r/t)*||m_bar||_infinity`.
+This follows from t(Delta*m_bar+E)/q - m_bar = (tE-r*m_bar)/q. It is a decoding condition, not a claim that the entire BFV multiplication error equals E_add. The input-encryption noise, plaintext-product quotient/reduction terms, and representative-lift contributions must still be included in a complete post-multiplication E bound. That complete bound remains open and is a required validation gate.
