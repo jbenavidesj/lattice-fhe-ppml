@@ -532,6 +532,98 @@ mod tests {
         assert_eq!(got[2], encode_reference_rns(&expected2));
     }
 
+
+    // Deterministic, sparse test fixture only: this is deliberately NOT a
+    // uniform sampler and must not be used for cryptographic key generation.
+    #[test]
+    fn rns_relinearization_with_nonzero_test_errors_preserves_exact_phase_delta() {
+        let n = 8192;
+        let base = 1u64 << 16;
+        let levels = RnsPoly::gadget_levels(base).unwrap();
+
+        let mut secret_values = vec![BigInt::from(0); n];
+        secret_values[0] = BigInt::from(1);
+        secret_values[3] = BigInt::from(-1);
+        secret_values[17] = BigInt::from(1);
+        let secret = encode_signed_coefficients(&secret_values);
+        let secret_squared = secret.negacyclic_mul(&secret).unwrap();
+
+        let mut c0_values = vec![BigInt::from(0); n];
+        c0_values[0] = BigInt::from(11);
+        c0_values[4] = BigInt::from(-3);
+        let mut c1_values = vec![BigInt::from(0); n];
+        c1_values[2] = BigInt::from(-7);
+        c1_values[13] = BigInt::from(2);
+        let mut c2_values = vec![BigInt::from(0); n];
+        c2_values[0] = BigInt::from(1234567);
+        c2_values[9] = BigInt::from(-7654321);
+        c2_values[31] = BigInt::from(42);
+        let c0 = encode_signed_coefficients(&c0_values);
+        let c1 = encode_signed_coefficients(&c1_values);
+        let c2 = encode_signed_coefficients(&c2_values);
+        let digits = c2.gadget_decompose_centered(base).unwrap();
+        assert_eq!(digits.len(), levels);
+
+        let negate = |poly: &RnsPoly| {
+            let lanes = std::array::from_fn(|i| {
+                poly.lanes[i].iter().map(|&x| if x == 0 { 0 } else { MODULI[i] - x }).collect()
+            });
+            RnsPoly::from_lanes(lanes).unwrap()
+        };
+
+        let mut eval_key = Vec::with_capacity(levels);
+        let mut errors = Vec::with_capacity(levels);
+        let mut gadget = BigInt::from(1);
+        for j in 0..levels {
+            // Fixed sparse signed coefficients make this fixture reproducible.
+            // They do not model the distribution of a production RLWE key.
+            let mut a_values = vec![BigInt::from(0); n];
+            a_values[(37 * j + 1) % n] = BigInt::from((j as i64 % 5) + 1);
+            a_values[(53 * j + 7) % n] = BigInt::from(-2);
+            a_values[(71 * j + 19) % n] = BigInt::from(1);
+            let a = encode_signed_coefficients(&a_values);
+
+            let mut e_values = vec![BigInt::from(0); n];
+            e_values[(29 * j + 2) % n] = BigInt::from(1);
+            e_values[(43 * j + 5) % n] = BigInt::from(-1);
+            e_values[(61 * j + 11) % n] = BigInt::from(1);
+            let e = encode_signed_coefficients(&e_values);
+            assert!(e_values.iter().any(|x| x != &BigInt::from(0)));
+
+            // b_j = B^j*s^2 - a_j*s + e_j (mod Q), hence
+            // b_j + a_j*s = B^j*s^2 + e_j.
+            let target_lanes = std::array::from_fn(|i| {
+                secret_squared.lanes[i].iter()
+                    .map(|&x| crate::mul_mod(x, low_u64(&(&gadget % MODULI[i])), MODULI[i]))
+                    .collect()
+            });
+            let target = RnsPoly::from_lanes(target_lanes).unwrap();
+            let a_times_s = a.negacyclic_mul(&secret).unwrap();
+            let b = target.add(&negate(&a_times_s))?.add(&e)?;
+            eval_key.push(RnsEvalKeyDigit { a, b });
+            errors.push(e);
+            gadget *= base;
+        }
+
+        let output = RnsPoly::bfv_relinearize(
+            &[c0.clone(), c1.clone(), c2.clone()],
+            &eval_key,
+            base,
+        ).unwrap();
+
+        let before = c0.add(&c1.negacyclic_mul(&secret).unwrap()).unwrap()
+            .add(&c2.negacyclic_mul(&secret_squared).unwrap()).unwrap();
+        let after = output[0].add(&output[1].negacyclic_mul(&secret).unwrap()).unwrap();
+
+        // The phase delta must be exactly sum_j d_j*e_j in R_Q.
+        let mut expected_delta = encode_signed_coefficients(&vec![BigInt::from(0); n]);
+        for (digit, error) in digits.iter().zip(&errors) {
+            expected_delta = expected_delta.add(&digit.negacyclic_mul(error).unwrap()).unwrap();
+        }
+        assert_ne!(expected_delta, encode_signed_coefficients(&vec![BigInt::from(0); n]));
+        assert_eq!(after, before.add(&expected_delta).unwrap());
+    }
+
     #[test]
     fn rejects_mismatched_lanes() {
         let bad = [vec![0, 1], vec![0], vec![0, 1], vec![0, 1]];
