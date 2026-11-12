@@ -19,7 +19,7 @@ Consult the latest GitHub Actions run for its actual state; do not infer a pass 
 
 ## Not established
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates.
-- Ciphertext multiplication, BFV tensor-product scale-and-round, gadget decomposition, relinearization/key switching, modulus switching, or bootstrapping.
+- Gadget decomposition, relinearization/key switching, modulus switching, or bootstrapping.
 - A complete proof of the BFV noise bound for the implemented parameter set.
 - RLWE security estimate or 128-bit security.
 - Cryptographically secure randomness or a production-grade error sampler in the toy model.
@@ -32,12 +32,11 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 The Criterion executable is an exploratory microbenchmark. It is compiled in CI but no release benchmark campaign, raw timing dataset, confidence intervals, CPU/compiler metadata, or end-to-end BFV measurement has been published. Debug-mode timing is not publishable evidence. No speedup claim is supported.
 
 ## Remaining gates before IEEE submission
-1. Expand toy BFV property tests and prove a conservative noise bound for its exact sampling model.
-2. Implement and test tensor-product multiplication and BFV scale-and-round using explicit centered integer lifts.
-3. Implement gadget decomposition/relinearization with key-switch error accounting.
-4. Port the verified pipeline to N=8192 RNS and test against independent references.
-5. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
-6. Benchmark release builds on documented hardware with repeated samples and raw data.
-7. Review constant-time behavior, side-channel exposure, and independent reproducibility.
+1. Expand toy BFV multiplication tests across seeds and boundary plaintexts; prove a conservative noise bound for the exact sampling model.
+2. Implement gadget decomposition/relinearization with key-switch error accounting.
+3. Port the verified multiplication pipeline to N=8192 RNS and test against independent references.
+4. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
+5. Benchmark release builds on documented hardware with repeated samples and raw data.
+6. Review constant-time behavior, side-channel exposure, and independent reproducibility.
 
 Until those gates are passed, describe this as an arithmetic/RNS prototype plus a separate tiny-ring BFV correctness model—not as a validated new FHE scheme.
