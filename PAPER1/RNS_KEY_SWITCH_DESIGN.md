@@ -154,3 +154,17 @@ is a bijection. The four lanes are therefore CRT coordinates of one uniform ring
 - Use a system CSPRNG for production calls. Deterministic seeded generators are confined to tests and must be named/documented as test-only.
 
 This choice makes the error support explicit (`||e_j||_1 <= 2N`) and permits a deterministic norm envelope. For the current `N=8192`, `B=2^16`, and `L=14` candidates, this gives `||e_ks||_infinity <= 15,032,156,160`. Relative to the isolated `floor(Q/(2t))` threshold above, that contribution is smaller by a factor of approximately `2.14e50`. This is still only an isolated-term comparison, not the complete BFV multiplication/decryption proof. It is only a reproducible candidate distribution: it does not by itself establish an adequate security level. Before calling the construction secure, run and record a lattice estimator using the exact ring, secret/error distributions, modulus, and estimator cost model. The sampler API must not accept a generic RNG that can silently be a non-cryptographic generator in production; a production entry point should own/use the OS-backed CSPRNG, while deterministic injection remains private to tests.
+
+
+## Experimental CSPRNG-backed key-generation implementation
+
+The branch now contains \`src/keygen.rs\` and pins \`getrandom = 0.2.15\` as the OS-entropy interface. The public experimental entry point samples:
+
+- a coefficientwise uniform ternary secret in \`{-1,0,1}\`;
+- independent uniform RNS residues per coefficient and lane, using 64-bit rejection sampling (CRT gives a uniform element of \`R_Q\`);
+- evaluation-key error coefficients from the explicitly defined \`eta=2\` centered-binomial distribution;
+- evaluation-key digits satisfying the intended construction \`b_j = B^j s^2 - a_j s + e_j (mod Q)\`.
+
+The test module checks canonical rejection-sampler outputs, the exact supports of the secret/error samplers, signed cross-lane encoding, and sampled coefficients of generated evaluation-key phase relations. A separate deterministic sparse fixture checks the exact complete phase delta and conditional norm bound.
+
+**Limitations:** this is an experimental implementation, not a production-secure key-generation system. There is no zeroization guarantee, side-channel review, independent cryptographic audit, RLWE estimator result, or complete BFV decryption/noise proof. The generated-key relation test samples six coefficients per digit rather than exhaustively checking every coefficient. No security level or practical performance claim is made.
