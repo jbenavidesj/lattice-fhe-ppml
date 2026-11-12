@@ -201,6 +201,20 @@ mod tests {
         let expected=negacyclic_mul(&m1,&m2,p.t);
         assert_eq!(got,expected);
     }
+    #[test] fn deterministic_multiseed_tensor_multiplication_sweep() {
+        let p=params();
+        for seed in 1..=64u64 {
+            let (sk,pk)=keygen(&p,seed.wrapping_mul(0x9e3779b97f4a7c15)).unwrap();
+            let mut rng=DemoRng(seed.wrapping_mul(0xd6e8feb86659fd93).max(1));
+            let m1:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+            let m2:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+            let c1=encrypt(&p,&pk,&m1,seed.wrapping_add(0x3003)).unwrap();
+            let c2=encrypt(&p,&pk,&m2,seed.wrapping_add(0x4004)).unwrap();
+            let product=multiply_ciphertexts(&p,&c1,&c2).unwrap();
+            let expected=negacyclic_mul(&m1,&m2,p.t);
+            assert_eq!(decrypt_three(&p,&sk,&product).unwrap(),expected,"multiplication seed {seed}");
+        }
+    }
     #[test] fn deterministic_multiseed_roundtrip_and_addition_sweep() {
         let p=params();
         for seed in 1..=64u64 {
