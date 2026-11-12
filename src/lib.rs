@@ -2,6 +2,7 @@
 pub mod asymred;
 pub mod ntt;
 pub mod poly;
+pub mod rns;
 pub use asymred::{asymred, AsymRedError};
 pub const MODULI: [u64; 4] = [36028797002170369,36028796951838721,18014398508400641,18014398507892737];
 pub const ROOTS: [u64; 4] = [22505317672356688,29410112198941026,9354911369072846,12617745759101472];
