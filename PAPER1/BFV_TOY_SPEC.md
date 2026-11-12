@@ -46,14 +46,16 @@ This module does not implement ciphertext multiplication, BFV tensor-product sca
 
 ## Ciphertext multiplication: unrelinearized tensor result
 
-The toy module now includes a first tensor-product experiment. For input ciphertexts (c0,c1) and (d0,d1), it computes in R_q:
+For ciphertexts c=(c0,c1) and d=(d0,d1), the implementation first chooses the centered integer lift of every coefficient of each input component. It forms the three negacyclic tensor products over Z[X]/(X^N+1):
 - U0 = c0*d0
 - U1 = c0*d1 + c1*d0
 - U2 = c1*d1
 
-The tensor components U0, U1, U2 are first computed in R_q=(Z/qZ)[X]/(X^N+1), including reduction modulo q after each negacyclic product and after the sum defining U1. Each resulting coefficient is then represented by its centered lift in (-q/2,q/2], multiplied by t/q, rounded to nearest integer (ties away from zero), and reduced modulo q. This order—ring product and reduction first, centered lift and scale-and-round second—is the BFV multiplication map implemented here. The output retains all three components; no gadget decomposition or relinearization is applied. Decryption evaluates c0' + c1'*s + c2'*s^2 and then performs the ordinary BFV t/q decoding step.
+The integer coefficients U_k are then mapped by W_k = round(t*U_k/q), with ties away from zero, and reduced modulo q. The quotient information from the integer products is deliberately retained until after scale-and-round; reducing U_k modulo q first would implement a different operation. Intermediate arithmetic is checked i128 and fails closed on overflow.
 
-The tests compare this unrelinearized result against direct negacyclic multiplication in the plaintext ring for a fixed vector and a deterministic 64-seed sweep. The multiplication tests use N=8, q=786433, t=17 to provide a wider noise margin; the basic encryption/addition tests use N=8, q=65537, t=17. This is an initial executable check, not a proof of correctness for all messages, seeds, or parameter sets. The multiplication implementation follows the required order: compute each tensor component in R_q, then center its canonical residue for scale-and-round. A formal bound on accumulated noise and component-wise rounding error remains outstanding.
+For each coefficient, define the rounding residual rho_k = W_k - t*U_k/q. By the specified nearest-integer rule, |rho_k| <= 1/2. This is an exact local rounding statement; it is not by itself a proof that the decrypted plaintext product is correct, because the full BFV phase also contains the input encryption errors, representative-lift terms, and plaintext-modulus reduction terms.
+
+The regression suite compares the unrelinearized result with direct negacyclic plaintext multiplication for one fixed vector and a deterministic 64-seed sweep. The multiplication tests use N=8, q=786433, t=17; the basic encryption/addition tests use N=8, q=65537, t=17. These finite deterministic tests are regression evidence, not a universal correctness proof.
 
 ## Gadget relinearization (toy model)
 
