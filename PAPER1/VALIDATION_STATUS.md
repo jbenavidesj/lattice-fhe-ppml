@@ -36,7 +36,7 @@ CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa` completed s
 
 ## Not established
 
-- A concrete RLWE security estimate or 128-bit security claim.
+- A concrete RLWE security estimate or 128-bit security claim. A pinned unstructured-LWE diagnostic script and protocol are prepared in `scripts/estimate_lwe_proxy.py` and `PAPER1/SECURITY_ESTIMATION_PROTOCOL.md`, but the estimator has not been executed because this runtime has no SageMath installation; no security number is reported.
 - Independent cryptographic review or a proof against ring-structure attacks.
 - Constant-time behavior, side-channel resistance, or comprehensive memory-remanence protection.
 - Arbitrary multiplicative depth, modulus switching, or bootstrapping.
