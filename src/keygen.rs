@@ -133,10 +133,26 @@ mod tests {
             // Exhaustively reconstruct every coefficient of every generated
             // evaluation-key digit and verify the centered error support.
             for index in 0..RNS_DEGREE {
-                let value = residual.crt_reconstruct_centered_coefficient(index).unwrap();
-                assert!(value >= num_bigint::BigInt::from(-2)
-                    && value <= num_bigint::BigInt::from(2),
-                    "sampled evaluation-key error coefficient out of eta=2 support: {value}");
+                // Decode the small signed error from lane 0, then verify the
+                // identical integer is represented in every other CRT lane.
+                let q0 = MODULI[0];
+                let value = match residual.lanes()[0][index] {
+                    0 => 0i64,
+                    1 => 1,
+                    2 => 2,
+                    x if x == q0 - 1 => -1,
+                    x if x == q0 - 2 => -2,
+                    x => panic!("coefficient {index} outside eta=2 support: {x}"),
+                };
+                for lane in 1..4 {
+                    let expected = if value >= 0 {
+                        value as u64
+                    } else {
+                        MODULI[lane] - value.unsigned_abs()
+                    };
+                    assert_eq!(residual.lanes()[lane][index], expected,
+                        "CRT lane {lane} disagrees on generated error coefficient {index}");
+                }
             }
             for (i, factor) in factors.iter_mut().enumerate() {
                 *factor = mul_mod(*factor, DEFAULT_GADGET_BASE % MODULI[i], MODULI[i]);
