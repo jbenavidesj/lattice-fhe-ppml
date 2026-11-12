@@ -313,12 +313,6 @@ mod tests {
         RnsPoly::from_lanes(lanes).unwrap()
     }
 
-    fn scale_rns(poly: &RnsPoly, scalar: u64) -> RnsPoly {
-        let lanes = std::array::from_fn(|i| {
-            poly.lanes[i].iter().map(|&x| crate::mul_mod(x, scalar % MODULI[i], MODULI[i])).collect()
-        });
-        RnsPoly::from_lanes(lanes).unwrap()
-    }
 
     #[test]
     fn bfv_scale_and_round_matches_exact_signed_reference() {
@@ -448,18 +442,8 @@ mod tests {
         // Algebraic test fixture: a_j=0, e_j=0, b_j=B^j*s^2.
         // This verifies phase preservation for a nontrivial polynomial secret,
         // without pretending to implement secure evaluation-key generation.
+        // Construct B^j independently in each lane; the q_i are distinct.
         let mut eval_key = Vec::with_capacity(levels);
-        let mut factor = 1u64;
-        for _ in 0..levels {
-            eval_key.push(RnsEvalKeyDigit {
-                b: scale_rns(&secret_squared, factor),
-                a: zero.clone(),
-            });
-            factor = crate::mul_mod(factor, base % MODULI[0], MODULI[0]);
-            // The four q_i are not equal: construct each lane's B^j independently below.
-        }
-        // Rebuild factors separately per lane so gadget powers are represented modulo each q_i.
-        eval_key.clear();
         let mut factors = [1u64; 4];
         for _ in 0..levels {
             let b_lanes = std::array::from_fn(|i| {
