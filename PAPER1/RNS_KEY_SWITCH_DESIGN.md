@@ -4,7 +4,7 @@
 
 This document specifies the next cryptographic construction required to turn the existing N=8192, four-lane RNS arithmetic prototype into an experimental BFV key-switching implementation. It is a design contract, not evidence that secure evaluation-key generation has been implemented.
 
-The current `RnsEvalKeyDigit` is only a pair of RNS polynomials. The current phase-preservation test uses a synthetic error-free key and does not validate this construction.
+The current `RnsEvalKeyDigit` is only a pair of RNS polynomials; it does not generate keys. The test suite now includes a deterministic sparse fixture with nonzero errors and a nontrivial secret. This validates the algebraic phase identity for that fixture, not secure sampling or production key generation.
 
 ## Ring and basis
 
@@ -108,4 +108,4 @@ and checks, after the actual RNS relinearization routine, that the output phase 
 sum_j d_j*e_j  (mod Q).
 ```
 
-The fixture's `a_j) and `e_j) values are fixed sparse patterns, not samples from a cryptographic distribution. This test therefore checks the algebraic key-switch identity and its implementation path only. It does not establish uniformity, RLWE security, error-distribution suitability, a deterministic norm bound for arbitrary errors, or production key-generation readiness. CI status for the commit containing this test must be checked before treating the test as passing.
+The fixture's `a_j) and `e_j) values are fixed sparse patterns, not samples from a cryptographic distribution. This test therefore checks the algebraic key-switch identity and its implementation path only. It does not establish uniformity, RLWE security, error-distribution suitability, or production key-generation readiness. A companion assertion checks the observed centered coefficient infinity norm against the conditional bound `L(B-1) max_j ||e_j||_1`; the bound is valid only when the stated per-error l1 bound holds.
