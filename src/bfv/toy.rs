@@ -84,14 +84,37 @@ pub fn decrypt(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext)->Result<Vec<u64>
     }).collect())
 }
 
-/// Map a residue to the centered interval and apply BFV t/q scale-and-round.
-fn scale_and_round_poly(a:&[u64],p:&ToyParams)->Vec<u64> {
-    a.iter().map(|&x| {
-        let z=centered(x,p.q);
-        let numerator=z*p.t as i128;
-        let rounded=if numerator>=0 {(numerator+p.q as i128/2)/p.q as i128}
-                    else {-((-numerator+p.q as i128/2)/p.q as i128)};
-        rounded.rem_euclid(p.q as i128) as u64
+/// Multiply centered coefficient lifts over the integers in Z[X]/(X^N+1).
+/// No reduction modulo q is performed before BFV scale-and-round.
+fn centered_integer_mul(a:&[u64],b:&[u64],q:u64)->Result<Vec<i128>,&'static str> {
+    let n=a.len();
+    if n==0 || b.len()!=n { return Err("integer polynomial dimension mismatch"); }
+    let aa:Vec<i128>=a.iter().map(|&x|centered(x,q)).collect();
+    let bb:Vec<i128>=b.iter().map(|&x|centered(x,q)).collect();
+    let mut out=vec![0i128;n];
+    for (i,&x) in aa.iter().enumerate() {
+        for (j,&y) in bb.iter().enumerate() {
+            let product=x.checked_mul(y).ok_or("integer tensor product overflow")?;
+            let k=i+j;
+            let slot=if k<n {k} else {k-n};
+            out[slot]=if k<n {out[slot].checked_add(product)} else {out[slot].checked_sub(product)}
+                .ok_or("integer tensor accumulation overflow")?;
+        }
+    }
+    Ok(out)
+}
+
+/// Apply nearest-integer t/q scale-and-round to integer coefficients, then reduce mod q.
+fn scale_and_round_integer(a:&[i128],p:&ToyParams)->Result<Vec<u64>,&'static str> {
+    let q=p.q as i128;
+    a.iter().map(|&z| {
+        let numerator=z.checked_mul(p.t as i128).ok_or("scale-and-round numerator overflow")?;
+        let magnitude=numerator.checked_abs().ok_or("scale-and-round absolute-value overflow")?;
+        let mut quotient=magnitude/q;
+        let remainder=magnitude%q;
+        if remainder*2>=q { quotient=quotient.checked_add(1).ok_or("rounding overflow")?; }
+        let signed=if numerator<0 {-quotient} else {quotient};
+        Ok(signed.rem_euclid(q) as u64)
     }).collect()
 }
 
@@ -104,13 +127,18 @@ pub fn multiply_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)-
         || lhs.c0.iter().chain(&lhs.c1).chain(&rhs.c0).chain(&rhs.c1).any(|&x|x>=p.q) {
         return Err("ciphertext dimension or coefficient out of range");
     }
-    let u0=mul(&lhs.c0,&rhs.c0,p.q);
-    let u1=add(&mul(&lhs.c0,&rhs.c1,p.q),&mul(&lhs.c1,&rhs.c0,p.q),p.q);
-    let u2=mul(&lhs.c1,&rhs.c1,p.q);
+    // BFV multiplication requires integer lifts of each ciphertext component.
+    // Reducing U_k modulo q before scaling would discard quotient information.
+    let u0=centered_integer_mul(&lhs.c0,&rhs.c0,p.q)?;
+    let u1a=centered_integer_mul(&lhs.c0,&rhs.c1,p.q)?;
+    let u1b=centered_integer_mul(&lhs.c1,&rhs.c0,p.q)?;
+    let u1:Result<Vec<i128>,&'static str>=u1a.iter().zip(u1b).map(|(&x,y)|
+        x.checked_add(y).ok_or("middle tensor component overflow")).collect();
+    let u2=centered_integer_mul(&lhs.c1,&rhs.c1,p.q)?;
     Ok(ToyCiphertext3{
-        c0:scale_and_round_poly(&u0,p),
-        c1:scale_and_round_poly(&u1,p),
-        c2:scale_and_round_poly(&u2,p),
+        c0:scale_and_round_integer(&u0,p)?,
+        c1:scale_and_round_integer(&u1?,p)?,
+        c2:scale_and_round_integer(&u2,p)?,
     })
 }
 
