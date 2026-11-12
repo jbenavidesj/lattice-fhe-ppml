@@ -199,11 +199,13 @@ mod tests {
         }
     }
 
-    fn encode_signed(value: &BigInt, n: usize) -> RnsPoly {
+    fn encode_signed_constant(value: &BigInt, n: usize) -> RnsPoly {
         let lanes = std::array::from_fn(|i| {
             let q = BigInt::from(MODULI[i]);
             let residue = ((value % &q) + &q) % &q;
-            vec![low_u64(&residue.to_biguint().unwrap()); n]
+            let mut lane = vec![0u64; n];
+            lane[0] = low_u64(&residue.to_biguint().unwrap());
+            lane
         });
         RnsPoly::from_lanes(lanes).unwrap()
     }
@@ -226,7 +228,7 @@ mod tests {
             -(&q / 2),
         ];
         for value in values {
-            let input = encode_signed(&value, 1);
+            let input = encode_signed_constant(&value, 1);
             let output = input.bfv_scale_and_round(65537).unwrap();
             let numerator = &value * 65537u64;
             let negative = numerator.sign() == Sign::Minus;
@@ -247,9 +249,9 @@ mod tests {
     fn bfv_tensor_multiply_scales_sparse_product() {
         let n = 8192;
         let quarter_q = q_product_bigint() / 4;
-        let c0 = encode_signed(&quarter_q, n);
-        let zero = encode_signed(&BigInt::from(0), n);
-        let two = encode_signed(&BigInt::from(2), n);
+        let c0 = encode_signed_constant(&quarter_q, n);
+        let zero = encode_signed_constant(&BigInt::from(0), n);
+        let two = encode_signed_constant(&BigInt::from(2), n);
         let result = RnsPoly::bfv_tensor_multiply(&c0, &zero, &two, &zero, 17).unwrap();
         // U0[0] = 2*floor(Q/4), so round(17*U0/Q) = 8 (strictly below 8.5).
         for lane in result[0].lanes() {
