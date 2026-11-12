@@ -253,6 +253,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn zeroize_overwrites_all_rns_lane_coefficients() {
+        let mut p = RnsPoly::from_lanes(std::array::from_fn(|i| vec![1, 2, MODULI[i] - 1])).unwrap();
+        p.zeroize();
+        assert!(p.lanes().iter().all(|lane| lane.iter().all(|&x| x == 0)));
+    }
+
+    #[test]
     fn four_lane_addition_is_canonical() {
         let a = RnsPoly::from_lanes(std::array::from_fn(|i| vec![MODULI[i]-1, 1])).unwrap();
         let b = RnsPoly::from_lanes(std::array::from_fn(|i| vec![2, MODULI[i]-1])).unwrap();
