@@ -68,3 +68,13 @@ Thus the switched phase is c0' + c1'*s = c0 + c1*s + c2*s^2 + sum_j d_j*e_j (mod
 The regression test compares decryption before and after switching and compares the switched decryption to direct plaintext multiplication. This is only a selected toy test, not a proof of a general noise bound. A production implementation would need a reviewed error distribution, secure randomness, a carefully chosen gadget base and decomposition convention, and a formal bound for the resulting key-switch noise.
 
 The relinearization regression suite additionally checks bases B in {2,4,16} over 16 deterministic seeds per base. These finite tests are useful for catching implementation mistakes but do not replace a worst-case or probabilistic key-switch noise analysis.
+
+## Deterministic key-switch error bound for the toy sampler
+
+For the implemented toy sampler, each evaluation-key error coefficient satisfies |e_{j,k}| <= 1. Each unsigned gadget digit coefficient satisfies 0 <= d_{j,k} <= B-1. For a negacyclic ring of dimension N, each coefficient of d_j*e_j is a signed sum of N products, hence
+`||d_j*e_j||_infinity <= N(B-1)`.
+With L = ceil(log_B(q)) digit levels, the coefficient-wise triangle inequality gives the deterministic bound
+`||e_ks||_infinity <= L*N*(B-1)`.
+For the toy test parameters N=8 and q=786433, this conservative bound is 160 for B=2 (L=20), 240 for B=4 (L=10), and 600 for B=16 (L=5).
+
+This bounds only the added key-switch error polynomial under the exact toy sampler and unsigned digit convention. It is not the complete post-multiplication noise bound, does not account for all BFV tensor-product and rounding terms, and cannot be transferred to the N=8192 RNS candidate parameters or a Gaussian RLWE implementation.
