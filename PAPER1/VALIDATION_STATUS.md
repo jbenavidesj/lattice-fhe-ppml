@@ -5,7 +5,7 @@
 ## Selected architecture
 - Core: leveled RNS-BFV.
 - Refresh/bootstrapping remains a separate experimental extension, not a required core feature.
-- Arithmetic prototype: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, and twisted negacyclic NTT.
+- Arithmetic prototype: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, and exact coefficient-wise CRT reconstruction.
 - Candidate optimizations are not, by themselves, evidence of speed or security improvements.
 
 ## Reproducible checks now in the repository
