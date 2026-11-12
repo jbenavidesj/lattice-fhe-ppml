@@ -27,7 +27,7 @@ A publication-quality estimate must record:
 
 The Albrecht lattice-estimator project documents LWE, NTRU and SIS estimators and evolving attack coverage. Its ordinary LWE estimator is **not by itself a complete ring-LWE security proof**. An unstructured LWE run with n=8192, q=Q, ternary secret and eta=2 centered-binomial error may be retained as a diagnostic comparison only; it must not be reported as the scheme's RLWE security level. A ring-aware estimator or carefully justified reduction/model is still required. The estimator's documentation recommends recording the exact version/commit because estimates can change.
 
-No estimator has been run for this candidate, so this document deliberately reports no bit-security figure and makes no 128-bit claim.
+No estimator has been run for this candidate, so this document deliberately reports no bit-security figure and makes no 128-bit claim. The estimator's built-in Homomorphic Encryption Standard v2 reference includes an N=8192 ternary-secret candidate with q=2^214 and discrete-Gaussian error standard deviation 3.19; our current candidate has a larger Q (218 bits) but eta=2 centered-binomial error standard deviation 1. These are not directly comparable parameter sets, and the reference is not a substitute for estimating this construction; the difference is a reason to investigate the error distribution rather than assume a 128-bit level.
 
 References:
 - https://github.com/malb/lattice-estimator
