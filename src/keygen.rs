@@ -127,10 +127,10 @@ mod tests {
         let (secret, evaluation_key) = generate_relinearization_key().unwrap();
         assert_eq!(evaluation_key.gadget_base, DEFAULT_GADGET_BASE);
         assert_eq!(evaluation_key.digits.len(), RnsPoly::gadget_levels(DEFAULT_GADGET_BASE).unwrap());
-        let s2 = &secret.0.negacyclic_mul(secret.as_poly()).unwrap();
+        let s2 = secret.0.negacyclic_mul(&secret.0).unwrap();
         let mut factors = [1u64; 4];
         for digit in &evaluation_key.digits {
-            let as_product = digit.a.negacyclic_mul(secret.as_poly()).unwrap();
+            let as_product = digit.a.negacyclic_mul(&secret.0).unwrap();
             let phase = digit.b.add(&as_product).unwrap();
             let target = scalar_mul_lanes(&s2, factors).unwrap();
             let residual = phase.add(&negate(&target).unwrap()).unwrap();
