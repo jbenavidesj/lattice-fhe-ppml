@@ -11,3 +11,6 @@ path = "src/lib.rs"
 [[bench]]
 name = "arithmetic"
 harness = false
+
+[dependencies]
+num-bigint = "0.4"
