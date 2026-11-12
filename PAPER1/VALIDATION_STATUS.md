@@ -19,6 +19,7 @@ Consult the latest GitHub Actions run for its actual state; do not infer a pass 
 
 ## Not established
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
+- End-to-end RNS key-switch correctness for arbitrary evaluation keys with nonzero error and a nontrivial secret polynomial; the new phase-preservation test uses an algebraically exact synthetic evaluation key.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
