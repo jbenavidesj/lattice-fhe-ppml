@@ -1,7 +1,8 @@
 //! Residue-number-system polynomial representation over the four candidate q_i.
-//! Operations are performed independently in each lane. CRT reconstruction,
-//! basis extension, and BFV ciphertext semantics are intentionally out of scope.
-use crate::{ntt::negacyclic_ntt_mul, MODULI, ROOTS};
+//! Arithmetic is lane-wise; exact CRT reconstruction is provided for coefficients.
+//! This is still an arithmetic layer, not a BFV ciphertext implementation.
+use num_bigint::BigUint;
+use crate::{ntt::negacyclic_ntt_mul, pow_mod, sub_mod, mul_mod, MODULI, ROOTS};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RnsPoly {
@@ -31,17 +32,32 @@ impl RnsPoly {
             return Err("RNS polynomial dimensions differ");
         }
         let lanes = std::array::from_fn(|i| {
-            self.lanes[i]
-                .iter()
-                .zip(&rhs.lanes[i])
-                .map(|(&a, &b)| crate::add_mod(a, b, MODULI[i]))
-                .collect()
+            self.lanes[i].iter().zip(&rhs.lanes[i])
+                .map(|(&a, &b)| crate::add_mod(a, b, MODULI[i])).collect()
         });
         Ok(Self { lanes })
     }
 
+    /// Reconstruct one coefficient in the canonical interval [0,Q), exactly.
+    pub fn crt_reconstruct_coefficient(&self, index: usize) -> Result<BigUint, &'static str> {
+        if index >= self.lanes[0].len() {
+            return Err("coefficient index out of range");
+        }
+        let mut x = BigUint::from(0u8);
+        let mut product = BigUint::from(1u8);
+        for (i, &q) in MODULI.iter().enumerate() {
+            let x_mod = low_u64(&(&x % q));
+            let product_mod = low_u64(&(&product % q));
+            let inverse = pow_mod(product_mod, q - 2, q);
+            let correction = crate::mul_mod(sub_mod(self.lanes[i][index], x_mod, q), inverse, q);
+            x += &product * BigUint::from(correction);
+            product *= BigUint::from(q);
+        }
+        Ok(x)
+    }
+
     /// Negacyclic multiplication by NTT in each residue field.
-    /// Each lane length must be a power of two supported by its supplied root.
+    /// Candidate roots are fixed for N=8192.
     pub fn negacyclic_mul(&self, rhs: &Self) -> Result<Self, &'static str> {
         if self.lanes[0].len() != rhs.lanes[0].len() {
             return Err("RNS polynomial dimensions differ");
@@ -57,6 +73,10 @@ impl RnsPoly {
     }
 }
 
+fn low_u64(x: &BigUint) -> u64 {
+    x.to_u64_digits().first().copied().unwrap_or(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,6 +90,17 @@ mod tests {
             assert_eq!(lane, &vec![1, 0]);
             assert!(lane.iter().all(|&x| x < MODULI[i]));
         }
+    }
+
+    #[test]
+    fn crt_reconstructs_values_beyond_u128() {
+        let value = (BigUint::from(1u8) << 200usize) + BigUint::from(987654321u64);
+        let lanes = std::array::from_fn(|i| {
+            let q = MODULI[i];
+            vec![low_u64(&(&value % q))]
+        });
+        let rns = RnsPoly::from_lanes(lanes).unwrap();
+        assert_eq!(rns.crt_reconstruct_coefficient(0).unwrap(), value);
     }
 
     #[test]
