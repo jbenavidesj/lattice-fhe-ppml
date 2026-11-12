@@ -113,4 +113,19 @@ mod tests {
     #[test] fn rejects_non_ntt_compatible_modulus() {
         let p=ToyParams{n:8,q:65539,t:17}; assert!(p.validate().is_err());
     }
+    #[test] fn deterministic_multiseed_roundtrip_and_addition_sweep() {
+        let p=params();
+        for seed in 1..=64u64 {
+            let (sk,pk)=keygen(&p,seed.wrapping_mul(0x9e3779b97f4a7c15)).unwrap();
+            let mut rng=DemoRng(seed.wrapping_mul(0xd6e8feb86659fd93).max(1));
+            let m1:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+            let m2:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+            let c1=encrypt(&p,&pk,&m1,seed.wrapping_add(0x1001)).unwrap();
+            let c2=encrypt(&p,&pk,&m2,seed.wrapping_add(0x2002)).unwrap();
+            assert_eq!(decrypt(&p,&sk,&c1).unwrap(),m1,"roundtrip seed {seed}");
+            let sum=add_ciphertexts(&p,&c1,&c2).unwrap();
+            let expected:Vec<u64>=m1.iter().zip(&m2).map(|(&a,&b)|(a+b)%p.t).collect();
+            assert_eq!(decrypt(&p,&sk,&sum).unwrap(),expected,"addition seed {seed}");
+        }
+    }
 }
