@@ -29,5 +29,20 @@ def main():
  for i in range(4):
   for j in range(i):assert math.gcd(Q[i],Q[j])==1
  prod=math.prod(Q);Delta=prod//65537
+ for i,(q,p) in enumerate(zip(AUX_Q,AUX_PSI),1):
+  assert is_prime(q) and q%(2*N)==1
+  assert pow(p,2*N,q)==1 and pow(p,N,q)==q-1
+  print(f"auxiliary q{i}: prime; exact 2N root order PASS")
+ aux_product=math.prod(AUX_Q)
+ assert 2*aux_product > N*prod*prod
+ print("auxiliary CRT product exceeds 2*N*(Q/2)^2 bound: PASS")
  print("pairwise coprime: PASS");print("Q bit length:",prod.bit_length());print("log2(Delta):",format(math.log2(Delta),".12f"));print("No RLWE security claim.")
 if __name__=="__main__":main()
+
+# Auxiliary exact-integer tensor-product NTT basis (N=8192).
+AUX_Q = [4503599627124737,4503599626682369,4503599626321921,
+         4503599626141697,4503599625830401,4503599625535489,
+         4503599625404417,4503599625158657,4503599624962049]
+AUX_PSI = [2707758278772395,1841889776165649,1232568238856409,
+           3681299526190914,3801184396185815,2821339159676527,
+           2673470588363527,1562061910246617,2293421299669720]
