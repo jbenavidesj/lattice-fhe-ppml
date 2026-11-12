@@ -78,7 +78,7 @@ The complete E_mul must explicitly include:
 - any plaintext-product reduction modulo t;
 - the exact key-switch digit convention and e_ks.
 
-The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_SPEC.md is specific to N=8, q=1099511627873, t=17, its deterministic ternary distributions and its own centered-lift rules. It cannot be scaled to N=8192 by substituting larger values. The current RNS tensor-multiplication routine is an exact-CRT correctness reference, and the key generator is not integrated into a complete RNS encryption/decryption pipeline. Therefore the full RNS E_mul is not yet derivable from executable end-to-end semantics, and no full RNS BFV decryption theorem is claimed.
+The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_SPEC.md is specific to N=8, q=1099511627873, t=17, its deterministic ternary distributions and its own centered-lift rules. It cannot be scaled to N=8192 by substituting larger values. The RNS public-key encryption/decryption path and multiply/relinearize API are now integrated. The one-multiplication RNS error expression has been derived under the exact centered-lift and integer-product semantics in PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md. Its exact-rational script is wired into CI; a successful run on the latest branch head and independent proof review remain pending. No arbitrary-depth theorem is claimed.
 
 ## 6. Gate checklist
 
@@ -89,8 +89,9 @@ The tiny-ring model's exact-rational one-multiplication proof in PAPER1/BFV_TOY_
 - [x] Secret buffer zeroization on wrapper drop, with direct buffer test.
 - [ ] Ring-aware security estimation and independent cryptographic review.
 - [ ] Constant-time and side-channel audit.
-- [ ] Integrated RNS encryption/decryption and a single fixed lift/rounding convention.
-- [ ] Complete exact or rigorously conservative RNS multiplication noise proof.
-- [ ] Independent reproducibility of all security and correctness results.
+- [x] Integrated RNS encryption/decryption with centered input lifts and exact integer tensor products.
+- [x] One-multiplication RNS noise derivation and exact-rational audit script added.
+- [ ] Successful CI execution of the new RNS noise audit on the current branch head.
+- [ ] Independent cryptographic review and reproducibility of the security/correctness analysis.
 
 Until every relevant gate is passed, describe the work as an experimental RNS arithmetic/key-generation prototype, not as a secure or publication-validated FHE scheme.
