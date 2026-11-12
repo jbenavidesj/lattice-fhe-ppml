@@ -32,7 +32,7 @@ CI run 272 on code commit `47ee02f2e87a7dd7ab4fd7731ed5583e78d63ddb` completed s
 - Benchmark target compilation passed.
 - Python arithmetic audits passed, including the auxiliary NTT prime/root and CRT-range audit.
 
-After that run, the exact-rational RNS-BFV noise audit and its CI step were added. The current branch head contains those additions; a fresh CI run on that exact head is still required before claiming that the new audit passes CI.
+CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa` completed successfully with the new exact-rational RNS-BFV noise audit included. Both CI jobs passed: all 32 Rust unit tests, formatting, Clippy, benchmark-target compilation, and all Python arithmetic/noise audits.
 
 ## Not established
 
