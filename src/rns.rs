@@ -602,10 +602,8 @@ mod tests {
             let b = target.add(&negate(&a_times_s)).unwrap().add(&e).unwrap();
             eval_key.push(RnsEvalKeyDigit { a, b });
             errors.push(e);
-            for i in 0..4 {
-                gadget_factors[i] = crate::mul_mod(
-                    gadget_factors[i], base % MODULI[i], MODULI[i]
-                );
+            for (i, factor) in gadget_factors.iter_mut().enumerate() {
+                *factor = crate::mul_mod(*factor, base % MODULI[i], MODULI[i]);
             }
         }
 
