@@ -7,7 +7,7 @@ use crate::poly::negacyclic_mul;
 pub struct ToyParams { pub n: usize, pub q: u64, pub t: u64 }
 impl ToyParams {
     pub fn validate(&self) -> Result<(), &'static str> {
-        if self.n == 0 || !self.n.is_power_of_two() || self.q < 3 || self.q % 2 == 0
+        if self.n == 0 || !self.n.is_power_of_two() || self.q < 3 || self.q.is_multiple_of(2)
             || self.t < 2 || self.t >= self.q || self.q % (2 * self.n as u64) != 1 {
             return Err("invalid toy BFV parameters: require power-of-two N, odd q, 2N | (q-1), and 2 <= t < q");
         }
