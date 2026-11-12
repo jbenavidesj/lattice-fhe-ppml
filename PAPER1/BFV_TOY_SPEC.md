@@ -54,3 +54,15 @@ The toy module now includes a first tensor-product experiment. For input ciphert
 Before any reduction modulo q, every coefficient of each input ciphertext component is lifted to its centered integer representative. The three polynomial products U_k are then computed over the integers in Z[X]/(X^N+1), retaining all quotient information. Each integer coefficient is multiplied by t/q using nearest-integer rounding (ties away from zero), and only then reduced modulo q. The implementation uses checked i128 arithmetic and returns an error on overflow. The output retains all three components; no gadget decomposition or relinearization is applied. Decryption evaluates c0' + c1'*s + c2'*s^2 and then performs the ordinary BFV t/q decoding step.
 
 The tests compare this unrelinearized result against direct negacyclic multiplication in the plaintext ring for a fixed vector and a deterministic 64-seed sweep. The multiplication tests use N=8, q=786433, t=17 to provide a wider noise margin; the basic encryption/addition tests use N=8, q=65537, t=17. This is an initial executable check, not a proof of correctness for all messages, seeds, or parameter sets. Reducing U_k modulo q before scale-and-round is incorrect because it discards quotient information; the implementation deliberately preserves centered integer lifts through the tensor products. A formal bound on accumulated noise and component-wise rounding error remains outstanding.
+
+## Gadget relinearization (toy model)
+
+The module now contains a coefficient-wise base-B relinearization experiment. For L = ceil(log_B(q)) digit levels, it generates evaluation-key pairs (b_j,a_j) satisfying:
+`b_j + a_j*s = B^j*s^2 + e_j (mod q)`.
+For each coefficient of c2, canonical base-B digits d_j are computed so that c2 = sum_j d_j B^j exactly as an integer in [0,q). The digit polynomials are then used to form:
+- c0' = c0 + sum_j d_j*b_j
+- c1' = c1 + sum_j d_j*a_j
+
+Thus the switched phase is c0' + c1'*s = c0 + c1*s + c2*s^2 + sum_j d_j*e_j (mod q). The added key-switch error is the negacyclic polynomial sum of digit polynomials times the evaluation-key errors. The implementation is deterministic and uses tiny toy errors; it is not a secure evaluation key.
+
+The regression test compares decryption before and after switching and compares the switched decryption to direct plaintext multiplication. This is only a selected toy test, not a proof of a general noise bound. A production implementation would need a reviewed error distribution, secure randomness, a carefully chosen gadget base and decomposition convention, and a formal bound for the resulting key-switch noise.
