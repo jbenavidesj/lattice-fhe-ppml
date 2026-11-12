@@ -301,6 +301,24 @@ mod tests {
         BigInt::from_biguint(Sign::Plus,
             MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q)))
     }
+    
+    fn encode_signed_coefficients(values: &[BigInt]) -> RnsPoly {
+        let lanes = std::array::from_fn(|i| {
+            let q = BigInt::from(MODULI[i]);
+            values.iter().map(|value| {
+                let residue = ((value % &q) + &q) % &q;
+                low_u64(&residue.to_biguint().unwrap())
+            }).collect()
+        });
+        RnsPoly::from_lanes(lanes).unwrap()
+    }
+
+    fn scale_rns(poly: &RnsPoly, scalar: u64) -> RnsPoly {
+        let lanes = std::array::from_fn(|i| {
+            poly.lanes[i].iter().map(|&x| crate::mul_mod(x, scalar % MODULI[i], MODULI[i])).collect()
+        });
+        RnsPoly::from_lanes(lanes).unwrap()
+    }
 
     #[test]
     fn bfv_scale_and_round_matches_exact_signed_reference() {
@@ -399,6 +417,63 @@ mod tests {
         let expected = c1.add(&c2).unwrap();
         assert_eq!(output[0], c0);
         assert_eq!(output[1], expected);
+    }
+
+    #[test]
+    fn rns_relinearization_preserves_phase_for_nontrivial_secret_polynomial() {
+        let n = 8192;
+        let base = 1u64 << 16;
+        let levels = RnsPoly::gadget_levels(base).unwrap();
+        let zero = encode_signed_coefficients(&vec![BigInt::from(0); n]);
+        let secret_values: Vec<BigInt> = (0..n).map(|i| match i {
+            0 | 3 | 17 => BigInt::from(1),
+            5 => BigInt::from(-1),
+            _ => BigInt::from(0),
+        }).collect();
+        let secret = encode_signed_coefficients(&secret_values);
+        let secret_squared = secret.negacyclic_mul(&secret).unwrap();
+        let c0_values: Vec<BigInt> = (0..n).map(|i| if i==0 {BigInt::from(11)} else {BigInt::from(0)}).collect();
+        let c1_values: Vec<BigInt> = (0..n).map(|i| if i==2 {BigInt::from(-7)} else {BigInt::from(0)}).collect();
+        let c2_values: Vec<BigInt> = (0..n).map(|i| match i {
+            0 => BigInt::from(1234567),
+            9 => BigInt::from(-7654321),
+            31 => BigInt::from(42),
+            _ => BigInt::from(0),
+        }).collect();
+        let c0 = encode_signed_coefficients(&c0_values);
+        let c1 = encode_signed_coefficients(&c1_values);
+        let c2 = encode_signed_coefficients(&c2_values);
+        let digits = c2.gadget_decompose_centered(base).unwrap();
+
+        // Algebraic test fixture: a_j=0, e_j=0, b_j=B^j*s^2.
+        // This verifies phase preservation for a nontrivial polynomial secret,
+        // without pretending to implement secure evaluation-key generation.
+        let mut eval_key = Vec::with_capacity(levels);
+        let mut factor = 1u64;
+        for _ in 0..levels {
+            eval_key.push(RnsEvalKeyDigit {
+                b: scale_rns(&secret_squared, factor),
+                a: zero.clone(),
+            });
+            factor = crate::mul_mod(factor, base % MODULI[0], MODULI[0]);
+            // The four q_i are not equal: construct each lane's B^j independently below.
+        }
+        // Rebuild factors separately per lane so gadget powers are represented modulo each q_i.
+        eval_key.clear();
+        let mut factors = [1u64; 4];
+        for _ in 0..levels {
+            let b_lanes = std::array::from_fn(|i| {
+                secret_squared.lanes[i].iter().map(|&x| crate::mul_mod(x, factors[i], MODULI[i])).collect()
+            });
+            eval_key.push(RnsEvalKeyDigit { b: RnsPoly::from_lanes(b_lanes).unwrap(), a: zero.clone() });
+            for i in 0..4 { factors[i] = crate::mul_mod(factors[i], base % MODULI[i], MODULI[i]); }
+        }
+        let output = RnsPoly::bfv_relinearize(&[c0.clone(), c1.clone(), c2.clone()], &eval_key, base).unwrap();
+        let before = c0.add(&c1.negacyclic_mul(&secret).unwrap()).unwrap()
+            .add(&c2.negacyclic_mul(&secret_squared).unwrap()).unwrap();
+        let after = output[0].add(&output[1].negacyclic_mul(&secret).unwrap()).unwrap();
+        assert_eq!(after, before);
+        assert_eq!(digits.len(), levels);
     }
 
     #[test]
