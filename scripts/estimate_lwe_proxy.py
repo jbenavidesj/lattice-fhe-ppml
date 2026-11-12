@@ -30,6 +30,7 @@ from sage.all import log, oo
 from sage.env import SAGE_VERSION
 import estimator
 from estimator import LWE, ND
+from estimator.conf import red_cost_model, red_shape_model
 
 ESTIMATOR_COMMIT = "7d59f866655362ea8eab803dbc833710c2bc362a"
 N = 8192
@@ -55,6 +56,8 @@ def verify_estimator_checkout():
         )
     print(f"lattice-estimator commit: {actual}")
     print(f"SageMath version: {SAGE_VERSION}")
+    print(f"reduction cost model: {red_cost_model}")
+    print(f"reduction shape model: {red_shape_model}")
 
 
 def estimate_case(label, q, error_distribution, sample_count):
