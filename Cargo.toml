@@ -1,0 +1,13 @@
+[package]
+name = "paper1-rns-bfv"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Auditable arithmetic prototype for the Paper 1 RNS-BFV research"
+
+[lib]
+path = "src/lib.rs"
+
+[[bench]]
+name = "arithmetic"
+harness = false
