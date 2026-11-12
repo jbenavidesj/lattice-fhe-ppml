@@ -5,6 +5,7 @@
 use crate::rns::{RnsEvalKeyDigit, RnsPoly};
 use crate::{mul_mod, MODULI};
 use getrandom::getrandom;
+use num_bigint::{BigInt, BigUint, Sign};
 
 pub const RNS_DEGREE: usize = 8192;
 pub const DEFAULT_GADGET_BASE: u64 = 1 << 16;
@@ -163,4 +164,92 @@ mod tests {
         let p = encode_signed(&[-2,-1,0,1,2]).unwrap();
         for i in 0..5 { assert_eq!(p.crt_reconstruct_centered_coefficient(i).unwrap(), num_bigint::BigInt::from(i as i64 - 2)); }
     }
+}
+
+/// Public-key encryption material for the experimental N=8192 RNS-BFV path.
+#[derive(Clone, Debug)]
+pub struct RnsPublicKey { pub b: RnsPoly, pub a: RnsPoly }
+
+/// Two-component RNS-BFV ciphertext. This is an experimental API, not a
+/// production cryptographic interface.
+#[derive(Clone, Debug)]
+pub struct RnsCiphertext { pub c0: RnsPoly, pub c1: RnsPoly }
+
+/// Generate a public key from the same ternary secret wrapper used by decryption.
+/// b = -a*s + e (mod Q), with independent uniform a in R_Q and eta=2 error.
+pub fn generate_public_key(secret: &RnsSecretKey) -> Result<RnsPublicKey, KeyGenError> {
+    let a = sample_uniform_rq(RNS_DEGREE)?;
+    let error = encode_signed(&sample_centered_binomial_eta2(RNS_DEGREE)?)?;
+    let a_times_s = a.negacyclic_mul(&secret.0)?;
+    let b = negate(&a_times_s)?.add(&error)?;
+    Ok(RnsPublicKey { a, b })
+}
+
+/// Encrypt a coefficient-encoded plaintext using the public key.
+/// Delta=floor(Q/t); all sampling is OS-backed but the construction remains experimental.
+pub fn encrypt_rns_bfv(
+    plaintext: &[u64],
+    plaintext_modulus: u64,
+    public_key: &RnsPublicKey,
+) -> Result<RnsCiphertext, KeyGenError> {
+    if plaintext.len() != RNS_DEGREE || plaintext_modulus < 2
+        || plaintext.iter().any(|&m| m >= plaintext_modulus)
+        || public_key.a.lanes()[0].len() != RNS_DEGREE
+        || public_key.b.lanes()[0].len() != RNS_DEGREE {
+        return Err(KeyGenError::Arithmetic("invalid plaintext, modulus, or public-key dimensions"));
+    }
+    let u = encode_signed(&sample_ternary(RNS_DEGREE)?)?;
+    let e1 = encode_signed(&sample_centered_binomial_eta2(RNS_DEGREE)?)?;
+    let e2 = encode_signed(&sample_centered_binomial_eta2(RNS_DEGREE)?)?;
+    let encoded = encode_bfv_plaintext(plaintext, plaintext_modulus)?;
+    let c0 = public_key.b.negacyclic_mul(&u)?.add(&e1)?.add(&encoded)?;
+    let c1 = public_key.a.negacyclic_mul(&u)?.add(&e2)?;
+    Ok(RnsCiphertext { c0, c1 })
+}
+
+/// Decrypt and decode a two-component RNS-BFV ciphertext using exact CRT scale-and-round.
+pub fn decrypt_rns_bfv(
+    secret: &RnsSecretKey,
+    ciphertext: &RnsCiphertext,
+    plaintext_modulus: u64,
+) -> Result<Vec<u64>, KeyGenError> {
+    if plaintext_modulus < 2
+        || ciphertext.c0.lanes()[0].len() != RNS_DEGREE
+        || ciphertext.c1.lanes()[0].len() != RNS_DEGREE {
+        return Err(KeyGenError::Arithmetic("invalid ciphertext dimensions or plaintext modulus"));
+    }
+    let phase = ciphertext.c0.add(&ciphertext.c1.negacyclic_mul(&secret.0)?)?;
+    let rounded = phase.bfv_scale_and_round(plaintext_modulus)?;
+    let mut message = Vec::with_capacity(RNS_DEGREE);
+    for i in 0..RNS_DEGREE {
+        let centered = rounded.crt_reconstruct_centered_coefficient(i)?;
+        let residue = ((centered % BigInt::from(plaintext_modulus))
+            + BigInt::from(plaintext_modulus)) % BigInt::from(plaintext_modulus);
+        message.push(residue.to_u64_digits().1.first().copied().unwrap_or(0));
+    }
+    Ok(message)
+}
+
+/// Homomorphic addition in R_Q.
+pub fn add_rns_bfv(
+    lhs: &RnsCiphertext,
+    rhs: &RnsCiphertext,
+) -> Result<RnsCiphertext, KeyGenError> {
+    Ok(RnsCiphertext { c0: lhs.c0.add(&rhs.c0)?, c1: lhs.c1.add(&rhs.c1)? })
+}
+
+fn encode_bfv_plaintext(message: &[u64], plaintext_modulus: u64) -> Result<RnsPoly, KeyGenError> {
+    let q = MODULI.iter().fold(BigUint::from(1u8), |acc, &qi| acc * BigUint::from(qi));
+    let delta = &q / BigUint::from(plaintext_modulus);
+    let values: Vec<BigInt> = message.iter().map(|&m| {
+        BigInt::from_biguint(Sign::Plus, &delta * BigUint::from(m))
+    }).collect();
+    let lanes = std::array::from_fn(|i| {
+        let modulus = BigInt::from(MODULI[i]);
+        values.iter().map(|x| {
+            let residue = ((x % &modulus) + &modulus) % &modulus;
+            residue.to_u64_digits().1.first().copied().unwrap_or(0)
+        }).collect()
+    });
+    Ok(RnsPoly::from_lanes(lanes)?)
 }
