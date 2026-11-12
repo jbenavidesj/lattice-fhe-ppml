@@ -41,7 +41,7 @@ CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa` completed s
 - Constant-time behavior, side-channel resistance, or comprehensive memory-remanence protection.
 - Arbitrary multiplicative depth, modulus switching, or bootstrapping.
 - A production-optimized RNS tensor multiplication and scale-and-round implementation; the current exact auxiliary NTT/CRT and BigInt path is a correctness reference.
-- Release benchmark measurements, raw timing datasets, confidence intervals, documented hardware/compiler metadata, or any speedup claim.
+- Release benchmark measurements, raw timing datasets, confidence intervals, documented hardware/compiler metadata, or any speedup claim. Criterion targets now include four-lane N=8192 RNS NTT multiplication and exact-reference BFV tensor multiplication; see `PAPER1/BENCHMARK_PROTOCOL.md`.
 - IEEE submission readiness.
 
 AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise. The tiny-ring BFV module uses deterministic test-only sampling and must never protect real data.
