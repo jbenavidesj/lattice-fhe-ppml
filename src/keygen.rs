@@ -128,6 +128,22 @@ mod tests {
         let sum = add_rns_bfv(&c1, &c2).unwrap();
         let expected: Vec<u64> = m1.iter().zip(&m2).map(|(&a,&b)| (a+b)%t).collect();
         assert_eq!(decrypt_rns_bfv(&secret, &sum, t).unwrap(), expected);
+
+        let product = multiply_relinearize_rns_bfv(&c1, &c2, &evaluation_key, t).unwrap();
+        let mut expected_integer = vec![0i128; RNS_DEGREE];
+        for (i, &a) in m1.iter().enumerate() {
+            if a == 0 { continue; }
+            for (j, &b) in m2.iter().enumerate() {
+                if b == 0 { continue; }
+                let k = i + j;
+                let term = i128::from(a) * i128::from(b);
+                if k < RNS_DEGREE { expected_integer[k] += term; }
+                else { expected_integer[k - RNS_DEGREE] -= term; }
+            }
+        }
+        let expected_product: Vec<u64> = expected_integer.iter()
+            .map(|&x| x.rem_euclid(i128::from(t)) as u64).collect();
+        assert_eq!(decrypt_rns_bfv(&secret, &product, t).unwrap(), expected_product);
     }
 
     #[test] fn rejection_sampler_outputs_canonical_residues() {
