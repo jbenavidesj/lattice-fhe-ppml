@@ -15,6 +15,7 @@ harness = true
 [dependencies]
 num-bigint = "=0.4.8"
 getrandom = "=0.2.15"
+zeroize = "=1.8.1"
 
 [dev-dependencies]
 criterion = "=0.5.1"
