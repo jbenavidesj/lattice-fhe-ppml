@@ -18,13 +18,13 @@
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
-- A production RNS evaluation-key generator with secure uniform sampling and a specified error distribution. A deterministic sparse test fixture constructs nonzero-error RNS evaluation-key digits and checks the exact phase delta for a nontrivial secret. It also checks the observed centered coefficient infinity norm against the conditional bound L(B-1) max_j ||e_j||_1. This is a correctness fixture only, not a cryptographic sampler. CI run 178 for code commit b2a7e58 reports Python audits, Rust formatting, unit tests, and Clippy successful; benchmark-target compilation is still in progress.
+- Production-secure RNS evaluation-key generation with a validated security level. An experimental OS-CSPRNG-backed sampler now constructs keys with an explicit ternary secret and eta=2 centered-binomial errors; exhaustive coefficientwise phase checks are in the current test suite. The implementation is not security-reviewed and no RLWE estimate is available.
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
-- Generalized end-to-end RNS key-switch correctness beyond the deterministic sparse fixture; the fixture now checks the observed centered coefficient infinity norm against the conditional bound L(B-1) max_j ||e_j||_1, but no production key generator or sampler exists.
+- Complete end-to-end RNS BFV key-switch correctness with an integrated encryption/decryption pipeline and full multiplication noise proof; the isolated key-switch algebra and conditional error bound are tested, but full BFV integration is absent.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
-- Cryptographically secure randomness or a production-grade error sampler in the toy model.
+- Cryptographically secure randomness or a production-grade error sampler in the toy model. The experimental RNS key generator uses OS entropy but is not a production-security claim.
 - Constant-time behavior or side-channel resistance.
 - Any headline performance improvement, including 34% or the earlier 4.12 ms versus 2.71 ms figures.
 
