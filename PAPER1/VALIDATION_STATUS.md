@@ -1,79 +1,58 @@
 # Paper 1 — validation status
 
-**Status: research prototype; not submission-ready.** This ledger distinguishes the small-ring BFV demonstration from the N=8192 RNS arithmetic candidate and from a complete cryptographic implementation.
+**Status: experimental RNS-BFV research prototype; not submission-ready.**
 
-## Selected architecture
-- Core target: leveled RNS-BFV.
-- Refresh/bootstrapping remains a separate experimental extension, not a required core feature.
-- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, centered basis extension, exact BigInt BFV t/Q scale-and-round, and an unrelinearized three-component RNS tensor-multiplication reference. Experimental RNS public-key generation, encryption, decryption, homomorphic addition, and a multiply-then-relinearize API have now been added; the end-to-end integration test is being validated by CI.
-- A separate tiny-ring BFV model now exercises key generation, public-key encryption, decryption, homomorphic addition, unrelinearized tensor multiplication over centered integer lifts, with scale-and-round residual bounded coefficientwise by 1/2, and toy gadget relinearization. It is not integrated with the N=8192 RNS basis.
+The selected architecture remains leveled RNS-BFV as the core, with refresh/bootstrapping kept as a separate future extension.
 
-## Reproducible checks in the repository
-- Parameter audit: deterministic Miller–Rabin checks for the four 64-bit q candidates, q_i congruence, exact 2N root order, pairwise coprimality, Q bit length, and log2(Delta).
-- AsymRed: Python arbitrary-precision differential test and Rust tests, with the two-fold range bound checked at runtime.
-- Polynomial arithmetic: Rust schoolbook negacyclic reference tests and a deterministic Python small-ring reference test.
-- NTT: Rust round-trip tests at N=8192 for all four candidate moduli and a small-ring NTT-vs-schoolbook product test.
-- Toy BFV: fixed-vector and deterministic multi-seed tests for encrypt/decrypt and addition at N=8, q=65537, t=17; tensor multiplication and relinearization tests at N=8, q=1099511627873, t=17, using centered ciphertext-component lifts and integer tensor products before scale-and-round. An exact-rational worst-case bound for one multiplication plus relinearization, including input noise and lift/quotient terms, is checked by `scripts/audit_toy_bfv_noise.py`. Relinearization is tested with gadget bases 2, 4, and 16. A conservative toy-only key-switch error bound is documented in `PAPER1/BFV_TOY_SPEC.md`.
+## Implemented
 
-Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
+- Four-lane RNS arithmetic for N=8192, candidate NTT primes and roots, exact CRT reconstruction, centered basis extension, and AsymRed modular reduction.
+- Exact integer-lift BFV tensor multiplication: ciphertext components are lifted to centered integers, integer negacyclic products are computed with a nine-prime auxiliary NTT/CRT basis, and only then is coefficientwise t/Q scale-and-round applied. This preserves the integer product quotient required by the BFV multiplication convention.
+- Experimental OS-CSPRNG-backed ternary secret and eta=2 centered-binomial error samplers; unbiased per-lane uniform R_Q sampling.
+- RNS public-key generation, encryption, decryption, and homomorphic addition.
+- Evaluation-key generation, exhaustive coefficientwise phase-relation tests, gadget decomposition, and relinearization.
+- Multiply-then-relinearize RNS-BFV API and an N=8192 integration test comparing the decrypted result with an independent sparse negacyclic plaintext-ring product.
+- Secret-key wrapper zeroization on drop. This does not erase all possible temporary copies and is not a side-channel audit.
+
+## Mathematical validation
+
+- The public-key encryption phase error has deterministic coefficient bound E0 = 4N+2 = 32770 for the specified bounded samplers.
+- The conditional key-switch contribution bound is 15,032,156,160 for eta=2, N=8192, B=2^16, and L=14.
+- A deterministic one-multiplication-plus-relinearization noise derivation is documented in `PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md`.
+- The exact-rational audit script `scripts/audit_rns_bfv_noise.py` computes a total error upper bound of 91,700,891,552,753,113,897 and compares it with a decoding margin of approximately 3.2138270414e60.
+- The nine-prime auxiliary NTT/CRT product is 468 bits and is checked to exceed twice the worst-case integer tensor coefficient bound (N(Q/2)^2).
+- The proof covers one multiplication and one relinearization only. It does not establish arbitrary multiplicative depth.
+
+## Reproducible validation
+
+CI run 272 on code commit `47ee02f2e87a7dd7ab4fd7731ed5583e78d63ddb` completed successfully:
+- 32 Rust unit tests passed, including encryption/decryption, addition, tensor-phase decryption, and multiply/relinearize comparison against the sparse plaintext oracle.
+- Rust formatting passed.
+- Clippy passed with warnings denied.
+- Benchmark target compilation passed.
+- Python arithmetic audits passed, including the auxiliary NTT prime/root and CRT-range audit.
+
+After that run, the exact-rational RNS-BFV noise audit and its CI step were added. The current branch head contains those additions; a fresh CI run on that exact head is still required before claiming that the new audit passes CI.
 
 ## Not established
-- Production-secure RNS evaluation-key generation with a validated security level. An experimental OS-CSPRNG-backed sampler now constructs keys with an explicit ternary secret and eta=2 centered-binomial errors; exhaustive coefficientwise phase checks are in the current test suite. The implementation is not security-reviewed and no RLWE estimate is available.
-- A fully validated RNS-BFV implementation over the N=8192 four-lane candidates. Public-key encryption/decryption and addition are now wired through the experimental RNS key-generation module; multiply/relinearize is wired as an API but still needs an end-to-end plaintext-product test, full noise proof, and independent review.
-- Complete end-to-end RNS BFV key-switch correctness with an integrated encryption/decryption pipeline and full multiplication noise proof; the isolated key-switch algebra and conditional error bound are tested, but full BFV integration is absent.
-- Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
-- A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
-- RLWE security estimate or 128-bit security.
-- Cryptographically secure randomness or a production-grade error sampler in the toy model. The experimental RNS key generator uses OS entropy but is not a production-security claim.
-- Constant-time behavior or side-channel resistance.
-- Any headline performance improvement, including 34% or the earlier 4.12 ms versus 2.71 ms figures.
 
-AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise. The toy BFV module uses deterministic test-only sampling and must never be used to protect real data.
+- A concrete RLWE security estimate or 128-bit security claim.
+- Independent cryptographic review or a proof against ring-structure attacks.
+- Constant-time behavior, side-channel resistance, or comprehensive memory-remanence protection.
+- Arbitrary multiplicative depth, modulus switching, or bootstrapping.
+- A production-optimized RNS tensor multiplication and scale-and-round implementation; the current exact auxiliary NTT/CRT and BigInt path is a correctness reference.
+- Release benchmark measurements, raw timing datasets, confidence intervals, documented hardware/compiler metadata, or any speedup claim.
+- IEEE submission readiness.
 
-## Important benchmark caution
-The Criterion executable is an exploratory microbenchmark. It is compiled in CI but no release benchmark campaign, raw timing dataset, confidence intervals, CPU/compiler metadata, or end-to-end BFV measurement has been published. Debug-mode timing is not publishable evidence. No speedup claim is supported.
+AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise. The tiny-ring BFV module uses deterministic test-only sampling and must never protect real data.
 
-## Remaining gates before IEEE submission
-1. Expand toy BFV multiplication and relinearization tests to exhaustive/boundary plaintexts and independent implementations; preserve the exact one-multiplication proof assumptions.
-2. Replace the toy gadget/key-switch construction with a production-oriented design and formally bound its key-switch error.
-3. Replace the current exact-CRT scale-and-round reference with a fast, proven RNS scale-and-round algorithm; add independent end-to-end RNS BFV multiplication vectors and a complete RNS noise proof.
-4. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
-5. Benchmark release builds on documented hardware with repeated samples and raw data.
-6. Review constant-time behavior, side-channel exposure, and independent reproducibility.
+## Remaining gates
 
-Until those gates are passed, describe this as an arithmetic/RNS prototype plus a separate tiny-ring BFV correctness model—not as a validated new FHE scheme.
+1. Pass the newly added exact-rational RNS noise audit in CI on the current branch head.
+2. Obtain an independent review of the one-multiplication derivation, especially centered-lift quotient handling and the decoding-margin argument.
+3. Run and record a current lattice-estimator diagnostic with immutable estimator version, attack model, and cost assumptions; assess the ring-LWE heuristic and structural attacks.
+4. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
+5. Run release benchmarks with repeated samples and complete hardware/compiler metadata.
+6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
 
-
-- Experimental CSPRNG-backed key generation added in `src/keygen.rs` using `getrandom 0.2.15`; includes unbiased per-lane uniform sampling, ternary secret sampling, eta=2 centered-binomial errors, and gadget evaluation-key construction.
-- Tests added for sampler output ranges/supports, signed CRT-lane encoding, and sampled phase-relation coefficients of generated evaluation keys. These tests must pass CI before being considered validated.
-- Still outstanding: exhaustive relation checks, zeroization, side-channel review, RLWE security estimation, independent cryptographic review, and the complete BFV noise/decryption proof.
-
-
-## Security, zeroization, and RNS noise proof gate
-
-See PAPER1/SECURITY_AND_NOISE_REVIEW.md for the exact candidate distributions, security-estimation protocol, zeroization scope, side-channel threat model, conditional key-switch theorem, and missing obligations for a full RNS-BFV multiplication proof.
-
-- Secret-key wrapper now overwrites the RNS coefficient buffers on drop using zeroize; the accessor is crate-private and a direct zeroization test was added.
-- The generated-key phase test reconstructs all 8192 coefficients for every gadget digit, rather than sampling six positions.
-- The implemented eta=2 error has coefficient support [-2,2], so E1 <= 2N = 16384. With L=14 and B=2^16, the conditional key-switch contribution bound is 15,032,156,160.
-- No ring-aware RLWE estimator has been run. The generic LWE estimator is not treated as a substitute for a ring-aware security estimate.
-- No constant-time or side-channel audit has been performed.
-- The full RNS BFV multiplication/decryption noise proof remains open because the RNS key generator is not yet integrated with a complete encryption/decryption pipeline and fixed lift/rounding semantics.
-
-
-## RNS-BFV integration work (experimental; CI validation pending)
-- Added public-key generation from the OS-CSPRNG-backed ternary secret: b = -a*s + e (mod Q), with eta=2 centered-binomial error.
-- Added coefficient-encoded plaintext embedding using Delta=floor(Q/t), RNS public-key encryption, exact-CRT decryption/decoding, and homomorphic addition.
-- Added a multiply-then-relinearize API using the existing modular RNS tensor product, exact centered t/Q scale-and-round reference, and evaluation-key digits.
-- Added an N=8192 integration test for encryption/decryption of sparse plaintexts and homomorphic addition. The test is not counted as passed until the CI run for the exact head commit completes successfully.
-- Not yet validated: RNS multiplication followed by decryption/relinearization against an independent plaintext-ring oracle; complete RNS multiplication noise theorem; security estimate and side-channel audit.
-
-
-## Integrated RNS-BFV path
-
-See `PAPER1/RNS_BFV_INTEGRATION.md` for the equations, current API path, conditional encryption-error bound, multiply/relinearize sequence, and remaining proof/security gates.
-
-- Public-key generation, encryption, decryption, and homomorphic addition are implemented in `src/keygen.rs`.
-- The public-key encryption phase error for the specified bounded samplers is at most 32770 in coefficient infinity norm, before decoding.
-- A multiply-plus-relinearize API is wired to the exact-CRT tensor scale-and-round reference and the existing evaluation-key key-switch implementation.
-- An independent sparse plaintext-ring product comparison has been added to the N=8192 integration test. The tensor phase and multiply/relinearize path passed all 32 Rust unit tests in CI run 272; Clippy and Python arithmetic audits also passed for that run. Benchmark-target compilation is still in progress; do not call the complete workflow green until its final conclusion is success.
+Until these gates are passed, describe the work as an experimental RNS-BFV prototype with a one-multiplication correctness argument—not as a production-secure or fully validated new FHE scheme.
