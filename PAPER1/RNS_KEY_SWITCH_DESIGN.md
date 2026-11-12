@@ -109,3 +109,23 @@ sum_j d_j*e_j  (mod Q).
 ```
 
 The fixture's `a_j) and `e_j) values are fixed sparse patterns, not samples from a cryptographic distribution. This test therefore checks the algebraic key-switch identity and its implementation path only. It does not establish uniformity, RLWE security, error-distribution suitability, or production key-generation readiness. A companion assertion checks the observed centered coefficient infinity norm against the conditional bound `L(B-1) max_j ||e_j||_1`; the bound is valid only when the stated per-error l1 bound holds.
+
+
+## Illustrative deterministic envelope for the current RNS candidates
+
+This is a parameterized *error-contribution calculation*, not a choice of a production error distribution.
+
+For the four candidate moduli, the aggregate modulus is exactly
+`Q = 421249165630599354127590185589164472945208468246547404789529362433`
+with 218 bits. With `t=65537`, `B=2^16`, and `L=14) (the smallest integer for which `B^L >= Q`), suppose only for the purpose of a deterministic envelope that every coefficient of every evaluation-key error satisfies `|e_{j,k}| <= 1`. Then `||e_j||_1 <= N = 8192), and
+
+```
+||e_ks||_infinity <= L * (B - 1) * N
+                    = 7,516,078,080.
+```
+
+The isolated half-plaintext-spacing threshold is `floor(Q/(2t)) =
+3213827041446811374701238884822043066856954607676178378545931`.
+The ratio of that threshold to the above key-switch contribution bound is approximately `4.28e50` (about 168.2 bits).
+
+**Interpretation limit:** this comparison only shows that this hypothetical bounded key-switch error term is small relative to the isolated BFV rounding threshold. It does not establish the complete decryption condition after BFV multiplication: input noise, multiplication cross terms, scale-rounding residuals, plaintext carries/lifts, and all other error terms must be included in one rigorous bound. Nor does the coefficient-support assumption specify a sampler or establish RLWE security. The current deterministic sparse test uses a smaller fixture-specific `E_1 <= 3); the `E_1 <= 8192` calculation is a conservative envelope for a future coefficientwise ternary error, not evidence that such an error sampler is implemented.
