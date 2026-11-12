@@ -67,3 +67,13 @@ See PAPER1/SECURITY_AND_NOISE_REVIEW.md for the exact candidate distributions, s
 - Added a multiply-then-relinearize API using the existing modular RNS tensor product, exact centered t/Q scale-and-round reference, and evaluation-key digits.
 - Added an N=8192 integration test for encryption/decryption of sparse plaintexts and homomorphic addition. The test is not counted as passed until the CI run for the exact head commit completes successfully.
 - Not yet validated: RNS multiplication followed by decryption/relinearization against an independent plaintext-ring oracle; complete RNS multiplication noise theorem; security estimate and side-channel audit.
+
+
+## Integrated RNS-BFV path
+
+See `PAPER1/RNS_BFV_INTEGRATION.md` for the equations, current API path, conditional encryption-error bound, multiply/relinearize sequence, and remaining proof/security gates.
+
+- Public-key generation, encryption, decryption, and homomorphic addition are implemented in `src/keygen.rs`.
+- The public-key encryption phase error for the specified bounded samplers is at most 32770 in coefficient infinity norm, before decoding.
+- A multiply-plus-relinearize API is wired to the exact-CRT tensor scale-and-round reference and the existing evaluation-key key-switch implementation.
+- An independent sparse plaintext-ring product comparison has been added to the N=8192 integration test. Validation status is determined only by CI on the exact current head.
