@@ -10,7 +10,7 @@ The toy ring is R_q = (Z/qZ)[X]/(X^N+1), with power-of-two N, odd q, q congruent
 
 ## Secret and public key
 
-The demonstration secret s has coefficients represented by 0, 1, and q-1 (the signed values 0, 1, and -1). A is sampled uniformly by a deterministic demonstration generator. The error e is sampled from the same tiny ternary support; this is not a discrete Gaussian sampler.
+The demonstration secret s, ephemeral u, and error terms use coefficients represented by 0, 1, and q-1 (the signed values 0, 1, and -1). A is sampled uniformly by a deterministic demonstration generator. The error distribution is this tiny ternary law, not a discrete Gaussian sampler.
 
 The public key is (b,a), where b = -(a*s + e) in R_q. Consequently b+a*s = -e (mod q).
 
@@ -66,3 +66,5 @@ For each coefficient of c2, canonical base-B digits d_j are computed so that c2 
 Thus the switched phase is c0' + c1'*s = c0 + c1*s + c2*s^2 + sum_j d_j*e_j (mod q). The added key-switch error is the negacyclic polynomial sum of digit polynomials times the evaluation-key errors. The implementation is deterministic and uses tiny toy errors; it is not a secure evaluation key.
 
 The regression test compares decryption before and after switching and compares the switched decryption to direct plaintext multiplication. This is only a selected toy test, not a proof of a general noise bound. A production implementation would need a reviewed error distribution, secure randomness, a carefully chosen gadget base and decomposition convention, and a formal bound for the resulting key-switch noise.
+
+The relinearization regression suite additionally checks bases B in {2,4,16} over 16 deterministic seeds per base. These finite tests are useful for catching implementation mistakes but do not replace a worst-case or probabilistic key-switch noise analysis.
