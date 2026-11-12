@@ -5,7 +5,7 @@
 ## Selected architecture
 - Core target: leveled RNS-BFV.
 - Refresh/bootstrapping remains a separate experimental extension, not a required core feature.
-- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, centered basis extension, exact BigInt BFV t/Q scale-and-round, and an unrelinearized three-component RNS tensor-multiplication reference.
+- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, centered basis extension, exact BigInt BFV t/Q scale-and-round, and an unrelinearized three-component RNS tensor-multiplication reference. Experimental RNS public-key generation, encryption, decryption, homomorphic addition, and a multiply-then-relinearize API have now been added; the end-to-end integration test is being validated by CI.
 - A separate tiny-ring BFV model now exercises key generation, public-key encryption, decryption, homomorphic addition, unrelinearized tensor multiplication over centered integer lifts, with scale-and-round residual bounded coefficientwise by 1/2, and toy gadget relinearization. It is not integrated with the N=8192 RNS basis.
 
 ## Reproducible checks in the repository
@@ -19,7 +19,7 @@ Consult the latest GitHub Actions run for its actual state; do not infer a pass 
 
 ## Not established
 - Production-secure RNS evaluation-key generation with a validated security level. An experimental OS-CSPRNG-backed sampler now constructs keys with an explicit ternary secret and eta=2 centered-binomial errors; exhaustive coefficientwise phase checks are in the current test suite. The implementation is not security-reviewed and no RLWE estimate is available.
-- Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
+- A fully validated RNS-BFV implementation over the N=8192 four-lane candidates. Public-key encryption/decryption and addition are now wired through the experimental RNS key-generation module; multiply/relinearize is wired as an API but still needs an end-to-end plaintext-product test, full noise proof, and independent review.
 - Complete end-to-end RNS BFV key-switch correctness with an integrated encryption/decryption pipeline and full multiplication noise proof; the isolated key-switch algebra and conditional error bound are tested, but full BFV integration is absent.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
@@ -59,3 +59,11 @@ See PAPER1/SECURITY_AND_NOISE_REVIEW.md for the exact candidate distributions, s
 - No ring-aware RLWE estimator has been run. The generic LWE estimator is not treated as a substitute for a ring-aware security estimate.
 - No constant-time or side-channel audit has been performed.
 - The full RNS BFV multiplication/decryption noise proof remains open because the RNS key generator is not yet integrated with a complete encryption/decryption pipeline and fixed lift/rounding semantics.
+
+
+## RNS-BFV integration work (experimental; CI validation pending)
+- Added public-key generation from the OS-CSPRNG-backed ternary secret: b = -a*s + e (mod Q), with eta=2 centered-binomial error.
+- Added coefficient-encoded plaintext embedding using Delta=floor(Q/t), RNS public-key encryption, exact-CRT decryption/decoding, and homomorphic addition.
+- Added a multiply-then-relinearize API using the existing modular RNS tensor product, exact centered t/Q scale-and-round reference, and evaluation-key digits.
+- Added an N=8192 integration test for encryption/decryption of sparse plaintexts and homomorphic addition. The test is not counted as passed until the CI run for the exact head commit completes successfully.
+- Not yet validated: RNS multiplication followed by decryption/relinearization against an independent plaintext-ring oracle; complete RNS multiplication noise theorem; security estimate and side-channel audit.
