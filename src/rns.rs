@@ -132,9 +132,11 @@ impl RnsPoly {
 
     /// Exact-reference BFV tensor multiplication over the configured four-lane RNS basis.
     ///
-    /// Tensor products are first formed in R_Q via lane-wise NTT multiplication. Each
-    /// tensor component is then reconstructed as a centered integer coefficient and
+    /// Each input component is first lifted coefficientwise to its centered integer
+    /// representative. Exact integer negacyclic products are computed with an auxiliary
+    /// NTT/CRT basis large enough to retain the product quotient, then each component is
     /// mapped by t/Q scale-and-round. Returns the three components before relinearization.
+    /// This is an exact reference implementation, not an optimized production BFV kernel.
     pub fn bfv_tensor_multiply(
         c0: &Self, c1: &Self, d0: &Self, d1: &Self, plaintext_modulus: u64
     ) -> Result<[Self; 3], &'static str> {
@@ -620,9 +622,7 @@ mod tests {
             }
         }
         accum.into_iter().map(|value| {
-            let residue = ((&value % q) + q) % q;
-            let centered = if (&residue << 1usize) > *q { residue - q } else { residue };
-            let numerator = centered * t;
+            let numerator = value * t;
             let negative = numerator.sign() == Sign::Minus;
             let magnitude = if negative { -numerator } else { numerator };
             let mut rounded = &magnitude / q;
