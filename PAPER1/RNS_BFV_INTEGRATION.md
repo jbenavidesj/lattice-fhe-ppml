@@ -29,7 +29,7 @@ The decryption phase is:
 
 Since ||e||_infinity <= 2, ||u||_1 <= N, ||e2||_infinity <= 2, ||s||_1 <= N, and ||e1||_infinity <= 2, the encryption phase error has the deterministic bound
 `||e*u + e1 + e2*s||_infinity <= 4N + 2 = 32770`.
-This is a bound on the pre-decoding phase error for the specified bounded samplers, not a security estimate. Decryption uses the centered CRT representative and exact coefficientwise round(t*x/Q), then reduces modulo t.
+For t=65537, the exact Q/(2t) decoding half-margin is approximately 3.21e60, so this isolated encryption-error bound is comfortably inside the one-encryption decoding margin. This is a bound for the specified bounded samplers, not a security estimate and not a multiplication-noise theorem. Decryption uses the centered CRT representative and exact coefficientwise round(t*x/Q), then reduces modulo t.
 
 Homomorphic addition is componentwise modulo Q.
 
@@ -39,8 +39,8 @@ The implemented multiply/relinearize API performs:
 1. Lift every input ciphertext component to its centered integer coefficient representative.
 2. Form the three integer negacyclic tensor products over Z[X]/(X^N+1), retaining all quotient information.
 3. Recover each exact integer product coefficient with a nine-prime auxiliary NTT/CRT basis, then apply coefficientwise round(t*U/Q) and encode the result in the four RNS lanes.
-3. Centered gadget decomposition of the scaled quadratic component.
-4. Key switching using evaluation-key digits satisfying
+4. Centered gadget decomposition of the scaled quadratic component.
+5. Key switching using evaluation-key digits satisfying
    `b_j + a_j*s = B^j*s^2 + e_j (mod Q)`.
 
 The key-switch phase contribution is `sum_j d_j*e_j`. Its current deterministic conditional infinity-norm bound is documented in `PAPER1/SECURITY_AND_NOISE_REVIEW.md`.
@@ -56,7 +56,7 @@ The input centered lifts and final scale-and-round use exact BigInt CRT. Integer
 
 ## Remaining requirements
 
-1. Complete a formal RNS multiplication correctness derivation under the exact modular-product, centered-lift, scale-and-round, and gadget conventions implemented here.
+1. Complete a formal RNS multiplication correctness derivation under the exact centered-input-lift, integer-product, scale-and-round, and gadget conventions implemented here.
 2. Establish a deterministic or probabilistic bound for every input-noise, product, quotient/carry, scale-rounding, and key-switch term.
 3. Validate the bound against the exact decoding margin for the chosen Q and t.
 4. Run and record a current lattice-estimator diagnostic with immutable estimator version and cost model; justify the ring-LWE heuristic and assess structural attacks.
