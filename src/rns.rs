@@ -9,6 +9,15 @@ pub struct RnsPoly {
     lanes: [Vec<u64>; 4],
 }
 
+/// One gadget evaluation-key pair for relinearizing the quadratic ciphertext component.
+/// Required relation: b_j + a_j*s = B^j*s^2 + e_j (mod Q).
+/// This stores a pair; secure key generation is deliberately separate.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RnsEvalKeyDigit {
+    pub b: RnsPoly,
+    pub a: RnsPoly,
+}
+
 impl RnsPoly {
     pub fn from_lanes(lanes: [Vec<u64>; 4]) -> Result<Self, &'static str> {
         let n = lanes[0].len();
@@ -137,6 +146,84 @@ impl RnsPoly {
         ])
     }
 
+    /// Number of unsigned gadget digits needed to represent every centered
+    /// coefficient modulo Q. The returned L satisfies B^L >= Q.
+    pub fn gadget_levels(base: u64) -> Result<usize, &'static str> {
+        if base < 2 { return Err("gadget base must be >= 2"); }
+        let q = MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q));
+        let b = BigUint::from(base);
+        let mut capacity = BigUint::from(1u8);
+        let mut levels = 0usize;
+        while capacity < q {
+            capacity *= &b;
+            levels += 1;
+        }
+        Ok(levels)
+    }
+
+    /// Decompose centered coefficients into signed, unsigned-magnitude base-B digits.
+    /// For each coefficient x, this returns d_j in {-(B-1),...,B-1} with
+    /// x = sum_j d_j B^j exactly over the integers. The result is encoded in RNS.
+    pub fn gadget_decompose_centered(&self, base: u64) -> Result<Vec<Self>, &'static str> {
+        if base < 2 { return Err("gadget base must be >= 2"); }
+        let levels = Self::gadget_levels(base)?;
+        let b = BigUint::from(base);
+        let mut digit_lanes: Vec<[Vec<u64>; 4]> = (0..levels).map(|_| {
+            std::array::from_fn(|_| Vec::with_capacity(self.lanes[0].len()))
+        }).collect();
+        for index in 0..self.lanes[0].len() {
+            let x = self.crt_reconstruct_centered_coefficient(index)?;
+            let negative = x.sign() == Sign::Minus;
+            let magnitude = if negative { (-x).to_biguint().ok_or("absolute coefficient conversion failed")? }
+                            else { x.to_biguint().ok_or("coefficient conversion failed")? };
+            let mut remaining = magnitude;
+            for j in 0..levels {
+                let digit = &remaining % &b;
+                remaining /= &b;
+                let digit_signed = BigInt::from_biguint(Sign::Plus, digit);
+                let digit_signed = if negative { -digit_signed } else { digit_signed };
+                for (lane, &q) in digit_lanes[j].iter_mut().zip(MODULI.iter()) {
+                    let modulus = BigInt::from(q);
+                    let residue = ((&digit_signed % &modulus) + &modulus) % &modulus;
+                    lane.push(low_u64(&residue.to_biguint().ok_or("negative digit residue")?));
+                }
+            }
+            if remaining != BigUint::from(0u8) {
+                return Err("gadget digit capacity insufficient");
+            }
+        }
+        digit_lanes.into_iter().map(Self::from_lanes).collect()
+    }
+
+    /// Apply exact-reference RNS gadget key switching to a three-component BFV
+    /// ciphertext. eval_key[j] must satisfy b_j + a_j*s = B^j*s^2 + e_j (mod Q).
+    /// Returns two components. This does not generate keys or claim constant-time behavior.
+    pub fn bfv_relinearize(
+        components: &[Self; 3],
+        eval_key: &[RnsEvalKeyDigit],
+        base: u64,
+    ) -> Result<[Self; 2], &'static str> {
+        let n = components[0].lanes[0].len();
+        if components.iter().any(|p| p.lanes[0].len() != n) {
+            return Err("ciphertext component dimensions differ");
+        }
+        let levels = Self::gadget_levels(base)?;
+        if eval_key.len() != levels {
+            return Err("evaluation key length does not match gadget decomposition");
+        }
+        if eval_key.iter().any(|k| k.a.lanes[0].len() != n || k.b.lanes[0].len() != n) {
+            return Err("evaluation key polynomial dimensions differ");
+        }
+        let digits = components[2].gadget_decompose_centered(base)?;
+        let mut out0 = components[0].clone();
+        let mut out1 = components[1].clone();
+        for (digit, key) in digits.iter().zip(eval_key) {
+            out0 = out0.add(&digit.negacyclic_mul(&key.b)?)?;
+            out1 = out1.add(&digit.negacyclic_mul(&key.a)?)?;
+        }
+        Ok([out0, out1])
+    }
+
     /// Negacyclic multiplication by NTT in each residue field. Candidate roots are fixed for N=8192.
     pub fn negacyclic_mul(&self, rhs: &Self) -> Result<Self, &'static str> {
         if self.lanes[0].len() != rhs.lanes[0].len() {
@@ -263,6 +350,55 @@ mod tests {
                 assert!(lane.iter().all(|&x| x == 0));
             }
         }
+    }
+
+    #[test]
+    fn gadget_decomposition_reconstructs_signed_coefficients() {
+        let q = q_product_bigint();
+        let values: [BigInt; 5] = [
+            BigInt::from(0),
+            BigInt::from(123456789i64),
+            BigInt::from(-987654321i64),
+            &q / BigInt::from(3u8),
+            -(&q / BigInt::from(3u8)),
+        ];
+        for value in values {
+            let input = encode_signed_constant(&value, 1);
+            let digits = input.gadget_decompose_centered(1u64 << 16).unwrap();
+            let mut reconstructed = BigInt::from(0);
+            let mut factor = BigInt::from(1);
+            for digit in digits {
+                reconstructed += digit.crt_reconstruct_centered_coefficient(0).unwrap() * &factor;
+                factor *= 1u64 << 16;
+            }
+            assert_eq!(reconstructed, value);
+        }
+    }
+
+    #[test]
+    fn rns_relinearization_applies_gadget_key_relation() {
+        let n = 8192;
+        let base = 1u64 << 16;
+        let levels = RnsPoly::gadget_levels(base).unwrap();
+        let q = q_product_bigint();
+        let c0 = encode_signed_constant(&BigInt::from(5), n);
+        let c1 = encode_signed_constant(&BigInt::from(7), n);
+        let c2 = encode_signed_constant(&(&q / BigInt::from(5u8)), n);
+        let zero = encode_signed_constant(&BigInt::from(0), n);
+        // Test secret s=1 and error-free evaluation keys: b_j=0, a_j=B^j.
+        let mut eval_key = Vec::with_capacity(levels);
+        let mut factor = BigInt::from(1);
+        for _ in 0..levels {
+            eval_key.push(RnsEvalKeyDigit {
+                b: zero.clone(),
+                a: encode_signed_constant(&factor, n),
+            });
+            factor *= base;
+        }
+        let output = RnsPoly::bfv_relinearize(&[c0.clone(), c1.clone(), c2.clone()], &eval_key, base).unwrap();
+        let expected = c1.add(&c2).unwrap();
+        assert_eq!(output[0], c0);
+        assert_eq!(output[1], expected);
     }
 
     #[test]
