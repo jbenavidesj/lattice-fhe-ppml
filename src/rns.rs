@@ -1,7 +1,7 @@
 //! Residue-number-system polynomial representation over the four candidate q_i.
-//! Arithmetic is lane-wise; exact CRT reconstruction is provided for coefficients.
-//! This is still an arithmetic layer, not a BFV ciphertext implementation.
-use num_bigint::BigUint;
+//! CRT reconstruction is exact. Basis extension uses the centered CRT representative,
+//! a semantic distinction required by signed polynomial arithmetic.
+use num_bigint::{BigInt, BigUint, Sign};
 use crate::{ntt::negacyclic_ntt_mul, pow_mod, sub_mod, MODULI, ROOTS};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,9 +23,7 @@ impl RnsPoly {
         Ok(Self { lanes })
     }
 
-    pub fn lanes(&self) -> &[Vec<u64>; 4] {
-        &self.lanes
-    }
+    pub fn lanes(&self) -> &[Vec<u64>; 4] { &self.lanes }
 
     pub fn add(&self, rhs: &Self) -> Result<Self, &'static str> {
         if self.lanes[0].len() != rhs.lanes[0].len() {
@@ -39,10 +37,9 @@ impl RnsPoly {
     }
 
     /// Reconstruct one coefficient in the canonical interval [0,Q), exactly.
+    /// Assumes the configured q_i are pairwise coprime primes.
     pub fn crt_reconstruct_coefficient(&self, index: usize) -> Result<BigUint, &'static str> {
-        if index >= self.lanes[0].len() {
-            return Err("coefficient index out of range");
-        }
+        if index >= self.lanes[0].len() { return Err("coefficient index out of range"); }
         let mut x = BigUint::from(0u8);
         let mut product = BigUint::from(1u8);
         for (i, &q) in MODULI.iter().enumerate() {
@@ -56,8 +53,36 @@ impl RnsPoly {
         Ok(x)
     }
 
-    /// Negacyclic multiplication by NTT in each residue field.
-    /// Candidate roots are fixed for N=8192.
+    /// Return the signed centered representative in (-Q/2,Q/2].
+    pub fn crt_reconstruct_centered_coefficient(&self, index: usize) -> Result<BigInt, &'static str> {
+        let x = self.crt_reconstruct_coefficient(index)?;
+        let q_product = MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q));
+        if (&x << 1usize) > q_product {
+            Ok(BigInt::from_biguint(Sign::Plus, x) - BigInt::from_biguint(Sign::Plus, q_product))
+        } else {
+            Ok(BigInt::from_biguint(Sign::Plus, x))
+        }
+    }
+
+    /// Exact centered basis extension: reconstruct each coefficient as its signed
+    /// representative modulo Q, then reduce that integer into every target modulus.
+    /// This is exact extension, not an approximate fast base-conversion algorithm.
+    pub fn basis_extend_centered(&self, target_moduli: &[u64]) -> Result<Vec<Vec<u64>>, &'static str> {
+        if target_moduli.is_empty() || target_moduli.iter().any(|&q| q < 2) {
+            return Err("target basis must contain moduli >= 2");
+        }
+        let mut output = vec![Vec::with_capacity(self.lanes[0].len()); target_moduli.len()];
+        for index in 0..self.lanes[0].len() {
+            let signed = self.crt_reconstruct_centered_coefficient(index)?;
+            for (lane, &q) in output.iter_mut().zip(target_moduli) {
+                let residue = (&signed % BigInt::from(q) + BigInt::from(q)) % BigInt::from(q);
+                lane.push(low_u64(&residue.to_biguint().ok_or("negative residue after normalization")?));
+            }
+        }
+        Ok(output)
+    }
+
+    /// Negacyclic multiplication by NTT in each residue field. Candidate roots are fixed for N=8192.
     pub fn negacyclic_mul(&self, rhs: &Self) -> Result<Self, &'static str> {
         if self.lanes[0].len() != rhs.lanes[0].len() {
             return Err("RNS polynomial dimensions differ");
@@ -73,9 +98,7 @@ impl RnsPoly {
     }
 }
 
-fn low_u64(x: &BigUint) -> u64 {
-    x.to_u64_digits().first().copied().unwrap_or(0)
-}
+fn low_u64(x: &BigUint) -> u64 { x.to_u64_digits().first().copied().unwrap_or(0) }
 
 #[cfg(test)]
 mod tests {
@@ -101,6 +124,24 @@ mod tests {
         });
         let rns = RnsPoly::from_lanes(lanes).unwrap();
         assert_eq!(rns.crt_reconstruct_coefficient(0).unwrap(), value);
+    }
+
+    #[test]
+    fn centered_crt_and_basis_extension_preserve_signed_value() {
+        let signed = BigInt::from(-1234567890123456789i128);
+        let lanes = std::array::from_fn(|i| {
+            let q = MODULI[i];
+            let r = (&signed % BigInt::from(q) + BigInt::from(q)) % BigInt::from(q);
+            vec![low_u64(&r.to_biguint().unwrap())]
+        });
+        let rns = RnsPoly::from_lanes(lanes).unwrap();
+        assert_eq!(rns.crt_reconstruct_centered_coefficient(0).unwrap(), signed);
+        let targets = [65537u64, 1000000007u64];
+        let extended = rns.basis_extend_centered(&targets).unwrap();
+        for (i, &q) in targets.iter().enumerate() {
+            let expected = (&signed % BigInt::from(q) + BigInt::from(q)) % BigInt::from(q);
+            assert_eq!(extended[i][0], low_u64(&expected.to_biguint().unwrap()));
+        }
     }
 
     #[test]
