@@ -13,14 +13,14 @@
 - AsymRed: Python arbitrary-precision differential test and Rust tests, with the two-fold range bound checked at runtime.
 - Polynomial arithmetic: Rust schoolbook negacyclic reference tests and a deterministic Python small-ring reference test.
 - NTT: Rust round-trip tests at N=8192 for all four candidate moduli and a small-ring NTT-vs-schoolbook product test.
-- Toy BFV: fixed-vector and deterministic multi-seed tests for encrypt/decrypt and addition at N=8, q=65537, t=17; tensor multiplication and relinearization tests at N=8, q=786433, t=17, using centered integer lifts before scale-and-round. A rigorous bound for rounding plus toy key-switch perturbations is documented; the complete BFV multiplication noise bound remains open. Relinearization is tested with gadget bases 2, 4, and 16. A conservative toy-only key-switch error bound is documented in `PAPER1/BFV_TOY_SPEC.md`.
+- Toy BFV: fixed-vector and deterministic multi-seed tests for encrypt/decrypt and addition at N=8, q=65537, t=17; tensor multiplication and relinearization tests at N=8, q=1099511627873, t=17, using centered ciphertext-component lifts and integer tensor products before scale-and-round. An exact-rational worst-case bound for one multiplication plus relinearization, including input noise and lift/quotient terms, is checked by `scripts/audit_toy_bfv_noise.py`. Relinearization is tested with gadget bases 2, 4, and 16. A conservative toy-only key-switch error bound is documented in `PAPER1/BFV_TOY_SPEC.md`.
 
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
-- A complete proof of the BFV noise bound for the implemented parameter set.
+- A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
 - Cryptographically secure randomness or a production-grade error sampler in the toy model.
 - Constant-time behavior or side-channel resistance.
@@ -32,7 +32,7 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 The Criterion executable is an exploratory microbenchmark. It is compiled in CI but no release benchmark campaign, raw timing dataset, confidence intervals, CPU/compiler metadata, or end-to-end BFV measurement has been published. Debug-mode timing is not publishable evidence. No speedup claim is supported.
 
 ## Remaining gates before IEEE submission
-1. Expand toy BFV multiplication and relinearization tests across more seeds and boundary plaintexts; derive a complete conservative post-multiplication and decoding noise bound, including input encryption noise and all representative-lift/plaintext quotient terms.
+1. Expand toy BFV multiplication and relinearization tests to exhaustive/boundary plaintexts and independent implementations; preserve the exact one-multiplication proof assumptions.
 2. Replace the toy gadget/key-switch construction with a production-oriented design and formally bound its key-switch error.
 3. Port the verified multiplication/relinearization pipeline to N=8192 RNS and test against independent references.
 4. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
