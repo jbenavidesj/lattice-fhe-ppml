@@ -460,6 +460,75 @@ mod tests {
         assert_eq!(digits.len(), levels);
     }
 
+
+    // Independent sparse BigInt oracle for RNS tensor multiplication. It computes
+    // negacyclic products over Z, reduces each coefficient to its centered R_Q
+    // representative, then applies exact t/Q nearest-integer scaling.
+    fn reference_tensor_component(
+        terms: &[(&[(usize, i64)], &[(usize, i64)])],
+        n: usize,
+        q: &BigInt,
+        t: u64,
+    ) -> Vec<BigInt> {
+        let mut accum = vec![BigInt::from(0); n];
+        for (lhs, rhs) in terms {
+            for &(i, a) in *lhs {
+                for &(j, b) in *rhs {
+                    let product = BigInt::from(a) * BigInt::from(b);
+                    let k = i + j;
+                    if k < n { accum[k] += product; }
+                    else { accum[k - n] -= product; }
+                }
+            }
+        }
+        accum.into_iter().map(|value| {
+            let residue = ((&value % q) + q) % q;
+            let centered = if (&residue << 1usize) > *q { residue - q } else { residue };
+            let numerator = centered * t;
+            let negative = numerator.sign() == Sign::Minus;
+            let magnitude = if negative { -numerator } else { numerator };
+            let mut rounded = &magnitude / q;
+            if ((&magnitude % q) << 1usize) >= *q { rounded += 1u8; }
+            if negative { -rounded } else { rounded }
+        }).collect()
+    }
+
+    fn encode_reference_rns(values: &[BigInt]) -> RnsPoly {
+        encode_signed_coefficients(values)
+    }
+
+    #[test]
+    fn bfv_rns_tensor_multiplication_matches_independent_bigint_oracle() {
+        let n = 8192;
+        let q = q_product_bigint();
+        let t = 65537u64;
+        let c0_sparse = [(0usize, 3i64), (7, -2), (8190, 1)];
+        let c1_sparse = [(2usize, -1i64), (19, 4)];
+        let d0_sparse = [(1usize, 2i64), (8, 3), (8191, -2)];
+        let d1_sparse = [(0usize, -3i64), (11, 1), (20, 2)];
+
+        let expand = |sparse: &[(usize, i64)]| {
+            let mut values = vec![BigInt::from(0); n];
+            for &(i, value) in sparse { values[i] = BigInt::from(value); }
+            encode_reference_rns(&values)
+        };
+        let c0 = expand(&c0_sparse);
+        let c1 = expand(&c1_sparse);
+        let d0 = expand(&d0_sparse);
+        let d1 = expand(&d1_sparse);
+
+        let got = RnsPoly::bfv_tensor_multiply(&c0, &c1, &d0, &d1, t).unwrap();
+        let expected0 = reference_tensor_component(&[(&c0_sparse, &d0_sparse)], n, &q, t);
+        let expected1 = reference_tensor_component(
+            &[(&c0_sparse, &d1_sparse), (&c1_sparse, &d0_sparse)], n, &q, t
+        );
+        let expected2 = reference_tensor_component(&[(&c1_sparse, &d1_sparse)], n, &q, t);
+
+        assert_eq!(got[0], encode_reference_rns(&expected0));
+        assert_eq!(got[1], encode_reference_rns(&expected1));
+        assert_eq!(got[2], encode_reference_rns(&expected2));
+    }
+
     #[test]
     fn rejects_mismatched_lanes() {
         let bad = [vec![0, 1], vec![0], vec![0, 1], vec![0, 1]];
