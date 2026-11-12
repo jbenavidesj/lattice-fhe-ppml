@@ -590,7 +590,7 @@ mod tests {
             e_values[(61 * j + 11) % n] = BigInt::from(1);
             let error_l1: u64 = e_values.iter().map(|x| {
                 let magnitude = if x.sign() == Sign::Minus { -x } else { x.clone() };
-                magnitude.to_u64_digits().first().copied().unwrap_or(0)
+                magnitude.to_u64_digits().1.first().copied().unwrap_or(0)
             }).sum();
             max_error_l1 = max_error_l1.max(error_l1);
             let e = encode_signed_coefficients(&e_values);
