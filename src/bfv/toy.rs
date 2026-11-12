@@ -53,7 +53,7 @@ fn centered(x:u64,q:u64)->i128 { if x>q/2{x as i128-q as i128}else{x as i128} }
 pub fn keygen(p:&ToyParams,seed:u64)->Result<(ToySecretKey,ToyPublicKey),&'static str> {
     p.validate()?;
     let mut rng=DemoRng(seed.max(1));
-    let s=rng.ternary(p.n,p.q); let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n);
+    let s=rng.ternary(p.n,p.q); let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n,p.q);
     let b=neg(&add(&mul(&a,&s,p.q),&e,p.q),p.q);
     Ok((ToySecretKey{s},ToyPublicKey{b,a}))
 }
@@ -64,7 +64,7 @@ pub fn encrypt(p:&ToyParams,pk:&ToyPublicKey,message:&[u64],seed:u64)->Result<To
     if message.len()!=p.n || message.iter().any(|&x|x>=p.t) || pk.a.len()!=p.n || pk.b.len()!=p.n
         || pk.a.iter().chain(&pk.b).any(|&x|x>=p.q) { return Err("dimension or coefficient out of range"); }
     let mut rng=DemoRng(seed.max(1));
-    let u=rng.ternary(p.n); let e1=rng.ternary(p.n); let e2=rng.ternary(p.n);
+    let u=rng.ternary(p.n,p.q); let e1=rng.ternary(p.n,p.q); let e2=rng.ternary(p.n,p.q);
     let c0=add(&add(&mul(&pk.b,&u,p.q),&e1,p.q),&lift_message(message,p),p.q);
     let c1=add(&mul(&pk.a,&u,p.q),&e2,p.q);
     Ok(ToyCiphertext{c0,c1})
@@ -173,7 +173,7 @@ pub fn relinearization_keygen(p:&ToyParams,sk:&ToySecretKey,seed:u64,base:u64)->
     let mut out_b=Vec::with_capacity(levels); let mut out_a=Vec::with_capacity(levels);
     let mut gadget=1u64;
     for _ in 0..levels {
-        let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n);
+        let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n,p.q);
         let target=scale_poly(&s2,gadget,p.q);
         // b + a*s = gadget*s^2 + e (mod q)
         let b=add(&sub_poly(&target,&mul(&a,&sk.s,p.q),p.q),&e,p.q);
