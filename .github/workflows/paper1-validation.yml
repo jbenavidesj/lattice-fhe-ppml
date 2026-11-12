@@ -11,31 +11,34 @@ permissions:
   contents: read
 
 jobs:
-  documentation:
-    name: Documentation and repository sanity
+  python-audit:
+    name: Python arithmetic audits
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Confirm validation documents exist
-        run: |
-          test -s PAPER1/VALIDATION_STATUS.md
-          test -s PAPER1/PARAMETER_CANDIDATES.md
-          test -s PAPER1/BENCHMARK_PROTOCOL.md
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit candidate parameters
+        run: python scripts/audit_parameters.py
+      - name: Differential-test AsymRed
+        run: python scripts/verify_asymred.py
+      - name: Check negacyclic reference
+        run: python scripts/verify_negacyclic.py
 
   rust:
-    name: Rust checks (when crate is added)
+    name: Rust tests and benchmark compilation
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('Cargo.toml') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Run tests
+      - name: Format Rust sources
+        run: cargo fmt --all
+      - name: Run unit tests
         run: cargo test --all-targets
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: Compile benchmarks
+      - name: Compile benchmark target
         run: cargo bench --no-run
