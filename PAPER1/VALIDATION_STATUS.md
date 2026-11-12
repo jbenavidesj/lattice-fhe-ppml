@@ -42,3 +42,8 @@ The Criterion executable is an exploratory microbenchmark. It is compiled in CI 
 6. Review constant-time behavior, side-channel exposure, and independent reproducibility.
 
 Until those gates are passed, describe this as an arithmetic/RNS prototype plus a separate tiny-ring BFV correctness model—not as a validated new FHE scheme.
+
+
+- Experimental CSPRNG-backed key generation added in `src/keygen.rs` using `getrandom 0.2.15`; includes unbiased per-lane uniform sampling, ternary secret sampling, eta=2 centered-binomial errors, and gadget evaluation-key construction.
+- Tests added for sampler output ranges/supports, signed CRT-lane encoding, and sampled phase-relation coefficients of generated evaluation keys. These tests must pass CI before being considered validated.
+- Still outstanding: exhaustive relation checks, zeroization, side-channel review, RLWE security estimation, independent cryptographic review, and the complete BFV noise/decryption proof.
