@@ -117,7 +117,7 @@ This is a parameterized *error-contribution calculation*, not a choice of a prod
 
 For the four candidate moduli, the aggregate modulus is exactly
 `Q = 421249165630599354127590185589164472945208468246547404789529362433`
-with 218 bits. With `t=65537`, `B=2^16`, and `L=14` (the smallest integer for which `B^L >= Q`), suppose only for the purpose of a deterministic envelope that every coefficient of every evaluation-key error satisfies `|e_{j,k}| <= 1`. Then `||e_j||_1 <= N = 8192), and
+with 218 bits. With `t=65537`, `B=2^16`, and `L=14` (the smallest integer for which `B^L >= Q`), suppose only for the purpose of a deterministic envelope that every coefficient of every evaluation-key error satisfies `|e_{j,k}| <= 1`. Then `||e_j||_1 <= N = 8192`, and
 
 ```
 ||e_ks||_infinity <= L * (B - 1) * N
