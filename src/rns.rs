@@ -573,6 +573,7 @@ mod tests {
 
         let mut eval_key = Vec::with_capacity(levels);
         let mut errors = Vec::with_capacity(levels);
+        let mut max_error_l1 = 0u64;
         let mut gadget_factors = [1u64; 4];
         for j in 0..levels {
             // Fixed sparse signed coefficients make this fixture reproducible.
@@ -587,7 +588,13 @@ mod tests {
             e_values[(29 * j + 2) % n] = BigInt::from(1);
             e_values[(43 * j + 5) % n] = BigInt::from(-1);
             e_values[(61 * j + 11) % n] = BigInt::from(1);
+            let error_l1: u64 = e_values.iter().map(|x| {
+                let magnitude = if x.sign() == Sign::Minus { -x } else { x.clone() };
+                magnitude.to_u64_digits().first().copied().unwrap_or(0)
+            }).sum();
+            max_error_l1 = max_error_l1.max(error_l1);
             let e = encode_signed_coefficients(&e_values);
+            assert!(error_l1 <= 3);
             assert!(e_values.iter().any(|x| x != &BigInt::from(0)));
 
             // b_j = B^j*s^2 - a_j*s + e_j (mod Q), hence
@@ -624,6 +631,20 @@ mod tests {
         }
         assert_ne!(expected_delta, encode_signed_coefficients(&vec![BigInt::from(0); n]));
         assert_eq!(after, before.add(&expected_delta).unwrap());
+
+        // Deterministic coefficient bound:
+        // ||sum_j d_j*e_j||_inf <= L*(B-1)*max_j ||e_j||_1.
+        // The fixture uses sparse errors with ||e_j||_1 <= 3.
+        assert!(max_error_l1 <= 3);
+        let observed_inf = (0..n).map(|i| {
+            let x = expected_delta.crt_reconstruct_centered_coefficient(i).unwrap();
+            if x.sign() == Sign::Minus { -x } else { x }
+        }).max().unwrap();
+        let deterministic_bound = BigInt::from(levels)
+            * BigInt::from(base - 1)
+            * BigInt::from(max_error_l1);
+        assert!(observed_inf <= deterministic_bound,
+            "observed key-switch error {observed_inf} exceeds bound {deterministic_bound}");
     }
 
     #[test]
