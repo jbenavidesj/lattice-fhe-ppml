@@ -1,7 +1,7 @@
 # Paper 1 implementation scope and evidence ledger
 
 ## Added in this branch
-- Rust arithmetic crate: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted iterative negacyclic NTT, four-lane RNS polynomial storage/addition/NTT multiplication, exact CRT reconstruction, centered CRT reconstruction, and exact centered basis extension into a supplied target basis.
+- Rust arithmetic crate: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted iterative negacyclic NTT, four-lane RNS polynomial storage/addition/NTT multiplication, exact CRT reconstruction, centered CRT reconstruction, exact centered basis extension, BFV t/Q scale-and-round, three-component tensor multiplication, signed gadget decomposition, and exact-reference gadget relinearization.
 - A separately namespaced tiny-ring BFV model with deterministic demonstration key generation, public-key encryption, decryption, homomorphic addition, centered-lift integer tensor multiplication, and gadget relinearization tests.
 - An exact-rational worst-case correctness audit for one multiplication plus relinearization, including input-noise, lift-quotient, scale-bias, cross-term, rounding, and key-switch contributions.
 - Python parameter audit with deterministic Miller-Rabin for unsigned 64-bit candidates.
@@ -15,7 +15,7 @@ The module `src/bfv/toy.rs` is a tiny-ring correctness model, not a complete or 
 The toy gadget relinearization and one-multiplication correctness proof are deterministic correctness experiments only; the latter is audited by `scripts/audit_toy_bfv_noise.py` using exact rational arithmetic. Production-grade key switching, modulus switching, arbitrary-depth noise management, and bootstrapping are absent. The toy proof has not been established for the N=8192 RNS basis. No security, production-readiness, or performance claim is made.
 
 ## Arithmetic-layer caveats
-The RNS basis-extension routine is a correctness-oriented BigInt reference: it reconstructs the signed representative in (-Q/2,Q/2] and reduces it into the target moduli. It is not an approximate fast base-conversion algorithm, nor does it implement BFV modulus switching or a complete RNS modulus chain.
+The RNS BFV relinearization accepts caller-supplied evaluation-key digit pairs satisfying b_j+a_j*s=B^j*s^2+e_j (mod Q). Its gadget decomposition and key-switch accumulation are correctness-oriented references; evaluation-key generation, secure randomness, and a full BFV-RNS noise proof are not implemented. The RNS basis-extension and scale-and-round routines are correctness-oriented BigInt references: it reconstructs the signed representative in (-Q/2,Q/2] and reduces it into the target moduli. It is not an approximate fast base-conversion algorithm, nor does it implement BFV modulus switching or a complete RNS modulus chain.
 
 ## Correctness and benchmark caveats
 AsymRed checks 0 <= z < q^2, checks intermediate arithmetic, and rejects any case where the two-fold result is not below 2q. This fails closed if the range lemma does not hold. Tests must pass before relying on the lemma in the paper.
