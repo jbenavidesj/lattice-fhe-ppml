@@ -36,16 +36,16 @@ Homomorphic addition is componentwise modulo Q.
 ## Multiplication and relinearization
 
 The implemented multiply/relinearize API performs:
-1. Tensor multiplication in R_Q:
-   `U0=c0*d0`, `U1=c0*d1+c1*d0`, `U2=c1*d1`.
-2. Exact-reference BFV coefficientwise scale-and-round of each component using centered CRT representatives and round(t*x/Q).
+1. Lift every input ciphertext component to its centered integer coefficient representative.
+2. Form the three integer negacyclic tensor products over Z[X]/(X^N+1), retaining all quotient information.
+3. Recover each exact integer product coefficient with a nine-prime auxiliary NTT/CRT basis, then apply coefficientwise round(t*U/Q) and encode the result in the four RNS lanes.
 3. Centered gadget decomposition of the scaled quadratic component.
 4. Key switching using evaluation-key digits satisfying
    `b_j + a_j*s = B^j*s^2 + e_j (mod Q)`.
 
 The key-switch phase contribution is `sum_j d_j*e_j`. Its current deterministic conditional infinity-norm bound is documented in `PAPER1/SECURITY_AND_NOISE_REVIEW.md`.
 
-The scale-and-round implementation uses BigInt CRT reconstruction. It is a correctness reference, not a fast RNS base-conversion/rounding algorithm.
+The input centered lifts and final scale-and-round use exact BigInt CRT. Integer negacyclic products are recovered by a nine-prime auxiliary NTT/CRT basis whose product exceeds twice the bound N*(Q/2)^2 for the current parameter set. This preserves the integer-product quotient required by BFV multiplication. It is a correctness reference, not a fast RNS base-conversion/rounding algorithm.
 
 ## Executable checks
 
