@@ -86,12 +86,27 @@ pub fn decrypt(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext)->Result<Vec<u64>
     }).collect())
 }
 
-/// Compute a polynomial product in R_q, then return centered coefficient lifts.
-fn centered_product_mod_q(a:&[u64],b:&[u64],q:u64)->Result<Vec<i128>,&'static str> {
-    if a.is_empty() || a.len()!=b.len() || a.iter().chain(b).any(|&x|x>=q) {
-        return Err("polynomial dimension or coefficient out of range");
+/// Multiply centered lifts of ciphertext components over Z[X]/(X^N+1).
+/// This is the toy BFV multiplication lift: do NOT reduce the tensor products modulo q
+/// before scale-and-round, because that discards the quotient needed to remove Delta.
+fn centered_integer_mul(a:&[u64],b:&[u64],q:u64)->Result<Vec<i128>,&'static str> {
+    let n=a.len();
+    if n==0 || b.len()!=n || a.iter().chain(b).any(|&x|x>=q) {
+        return Err("integer polynomial dimension or coefficient out of range");
     }
-    Ok(mul(a,b,q).into_iter().map(|x|centered(x,q)).collect())
+    let aa:Vec<i128>=a.iter().map(|&x|centered(x,q)).collect();
+    let bb:Vec<i128>=b.iter().map(|&x|centered(x,q)).collect();
+    let mut out=vec![0i128;n];
+    for (i,&x) in aa.iter().enumerate() {
+        for (j,&y) in bb.iter().enumerate() {
+            let product=x.checked_mul(y).ok_or("integer tensor product overflow")?;
+            let k=i+j;
+            let slot=if k<n {k} else {k-n};
+            out[slot]=if k<n {out[slot].checked_add(product)} else {out[slot].checked_sub(product)}
+                .ok_or("integer tensor accumulation overflow")?;
+        }
+    }
+    Ok(out)
 }
 
 /// Apply nearest-integer t/q scale-and-round to integer coefficients, then reduce mod q.
@@ -115,16 +130,18 @@ pub fn multiply_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)-
         || lhs.c0.iter().chain(&lhs.c1).chain(&rhs.c0).chain(&rhs.c1).any(|&x|x>=p.q) {
         return Err("ciphertext dimension or coefficient out of range");
     }
-    // BFV multiplication is performed in R_q. Each U_k is reduced modulo q
-    // before selecting its centered representative for the coefficientwise scale-and-round.
-    let u0=centered_product_mod_q(&lhs.c0,&rhs.c0,p.q)?;
-    let u1a=mul(&lhs.c0,&rhs.c1,p.q);
-    let u1b=mul(&lhs.c1,&rhs.c0,p.q);
-    let u1=add(&u1a,&u1b,p.q).into_iter().map(|x|centered(x,p.q)).collect::<Vec<_>>();
-    let u2=centered_product_mod_q(&lhs.c1,&rhs.c1,p.q)?;
+    // Lift each ciphertext component to its centered integer representative.
+    // Form the tensor products over Z[X]/(X^N+1), retaining quotient information
+    // until after multiplication by t/q and nearest-integer rounding.
+    let u0=centered_integer_mul(&lhs.c0,&rhs.c0,p.q)?;
+    let u1a=centered_integer_mul(&lhs.c0,&rhs.c1,p.q)?;
+    let u1b=centered_integer_mul(&lhs.c1,&rhs.c0,p.q)?;
+    let u1:Result<Vec<i128>,&'static str>=u1a.iter().zip(u1b).map(|(&x,y)|
+        x.checked_add(y).ok_or("middle tensor component overflow")).collect();
+    let u2=centered_integer_mul(&lhs.c1,&rhs.c1,p.q)?;
     Ok(ToyCiphertext3{
         c0:scale_and_round_integer(&u0,p)?,
-        c1:scale_and_round_integer(&u1,p)?,
+        c1:scale_and_round_integer(&u1?,p)?,
         c2:scale_and_round_integer(&u2,p)?,
     })
 }
@@ -241,7 +258,7 @@ mod tests {
         let p=ToyParams{n:8,q:65539,t:17}; assert!(p.validate().is_err());
     }
     #[test] fn toy_bfv_tensor_product_matches_plaintext_product() {
-        let p=ToyParams { n: 8, q: 786433, t: 17 }; let (sk,pk)=keygen(&p,0x31415926).unwrap();
+        let p=ToyParams { n: 8, q: 1099511627873, t: 17 }; let (sk,pk)=keygen(&p,0x31415926).unwrap();
         let m1=vec![1,2,0,1,3,0,2,1];
         let m2=vec![2,1,1,0,1,2,0,3];
         let c1=encrypt(&p,&pk,&m1,0x1234).unwrap();
@@ -253,7 +270,7 @@ mod tests {
     }
     #[test] fn deterministic_multiseed_tensor_multiplication_sweep() {
         // Larger q provides enough correctness margin for multiplication noise.
-        let p=ToyParams { n: 8, q: 786433, t: 17 };
+        let p=ToyParams { n: 8, q: 1099511627873, t: 17 };
         for seed in 1..=64u64 {
             let (sk,pk)=keygen(&p,seed.wrapping_mul(0x9e3779b97f4a7c15)).unwrap();
             let mut rng=DemoRng(seed.wrapping_mul(0xd6e8feb86659fd93).max(1));
@@ -267,7 +284,7 @@ mod tests {
         }
     }
     #[test] fn toy_bfv_relinearization_matches_three_component_decryption() {
-        let p=ToyParams { n: 8, q: 786433, t: 17 };
+        let p=ToyParams { n: 8, q: 1099511627873, t: 17 };
         let (sk,pk)=keygen(&p,0x27182818).unwrap();
         let rk=relinearization_keygen(&p,&sk,0xabcdef01,2).unwrap();
         let m1=vec![1,2,0,1,3,0,2,1];
@@ -282,7 +299,7 @@ mod tests {
         assert_eq!(after,negacyclic_mul(&m1,&m2,p.t));
     }
     #[test] fn relinearization_is_stable_across_gadget_bases_and_seeds() {
-        let p=ToyParams { n: 8, q: 786433, t: 17 };
+        let p=ToyParams { n: 8, q: 1099511627873, t: 17 };
         for base in [2u64,4,16] {
             for seed in 1..=16u64 {
                 let (sk,pk)=keygen(&p,seed.wrapping_mul(0xa0761d6478bd642f)).unwrap();
