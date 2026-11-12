@@ -119,6 +119,31 @@ mod tests {
         let e = sample_centered_binomial_eta2(4096).unwrap(); assert!(e.iter().all(|x| (-2..=2).contains(x)));
         assert!(e.iter().any(|&x| x == -2)); assert!(e.iter().any(|&x| x == 2));
     }
+    #[test]
+    fn generated_evaluation_key_satisfies_sampled_coefficient_relations() {
+        let (secret, evaluation_key) = generate_relinearization_key().unwrap();
+        assert_eq!(evaluation_key.gadget_base, DEFAULT_GADGET_BASE);
+        assert_eq!(evaluation_key.digits.len(), RnsPoly::gadget_levels(DEFAULT_GADGET_BASE).unwrap());
+        let s2 = secret.as_poly().negacyclic_mul(secret.as_poly()).unwrap();
+        let mut factors = [1u64; 4];
+        for digit in &evaluation_key.digits {
+            let as_product = digit.a.negacyclic_mul(secret.as_poly()).unwrap();
+            let phase = digit.b.add(&as_product).unwrap();
+            let target = scalar_mul_lanes(&s2, factors).unwrap();
+            let residual = phase.add(&negate(&target).unwrap()).unwrap();
+            // Check a deterministic spread of coefficients; the full polynomial
+            // identity is also covered by the separate sparse exact-phase fixture.
+            for index in [0usize, 1, 17, 257, 4095, 8191] {
+                let value = residual.crt_reconstruct_centered_coefficient(index).unwrap();
+                assert!(value >= num_bigint::BigInt::from(-2)
+                    && value <= num_bigint::BigInt::from(2),
+                    "sampled evaluation-key error coefficient out of eta=2 support: {value}");
+            }
+            for (i, factor) in factors.iter_mut().enumerate() {
+                *factor = mul_mod(*factor, DEFAULT_GADGET_BASE % MODULI[i], MODULI[i]);
+            }
+        }
+    }
     #[test] fn signed_encoding_is_consistent_across_crt_lanes() {
         let p = encode_signed(&[-2,-1,0,1,2]).unwrap();
         for i in 0..5 { assert_eq!(p.crt_reconstruct_centered_coefficient(i).unwrap(), num_bigint::BigInt::from(i as i64 - 2)); }
