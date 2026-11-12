@@ -131,9 +131,9 @@ mod tests {
             let phase = digit.b.add(&as_product).unwrap();
             let target = scalar_mul_lanes(&s2, factors).unwrap();
             let residual = phase.add(&negate(&target).unwrap()).unwrap();
-            // Check a deterministic spread of coefficients; the full polynomial
-            // identity is also covered by the separate sparse exact-phase fixture.
-            for index in [0usize, 1, 17, 257, 4095, 8191] {
+            // Exhaustively reconstruct every coefficient of every generated
+            // evaluation-key digit and verify the centered error support.
+            for index in 0..RNS_DEGREE {
                 let value = residual.crt_reconstruct_centered_coefficient(index).unwrap();
                 assert!(value >= num_bigint::BigInt::from(-2)
                     && value <= num_bigint::BigInt::from(2),
