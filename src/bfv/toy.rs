@@ -21,6 +21,8 @@ pub struct ToySecretKey { pub s: Vec<u64> }
 pub struct ToyPublicKey { pub b: Vec<u64>, pub a: Vec<u64> }
 #[derive(Clone, Debug)]
 pub struct ToyCiphertext { pub c0: Vec<u64>, pub c1: Vec<u64> }
+#[derive(Clone, Debug)]
+pub struct ToyCiphertext3 { pub c0: Vec<u64>, pub c1: Vec<u64>, pub c2: Vec<u64> }
 
 /// Deterministic non-cryptographic generator, deliberately confined to this toy module.
 struct DemoRng(u64);
@@ -82,6 +84,53 @@ pub fn decrypt(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext)->Result<Vec<u64>
     }).collect())
 }
 
+/// Map a residue to the centered interval and apply BFV t/q scale-and-round.
+fn scale_and_round_poly(a:&[u64],p:&ToyParams)->Vec<u64> {
+    a.iter().map(|&x| {
+        let z=centered(x,p.q);
+        let numerator=z*p.t as i128;
+        let rounded=if numerator>=0 {(numerator+p.q as i128/2)/p.q as i128}
+                    else {-((-numerator+p.q as i128/2)/p.q as i128)};
+        rounded.rem_euclid(p.q as i128) as u64
+    }).collect()
+}
+
+/// Multiply two toy ciphertexts, retaining the three-component tensor ciphertext.
+/// Each tensor component is multiplied in R_q, represented by centered residues,
+/// then independently scaled by t/q with nearest-integer rounding.
+pub fn multiply_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)->Result<ToyCiphertext3,&'static str> {
+    p.validate()?;
+    if lhs.c0.len()!=p.n || lhs.c1.len()!=p.n || rhs.c0.len()!=p.n || rhs.c1.len()!=p.n
+        || lhs.c0.iter().chain(&lhs.c1).chain(&rhs.c0).chain(&rhs.c1).any(|&x|x>=p.q) {
+        return Err("ciphertext dimension or coefficient out of range");
+    }
+    let u0=mul(&lhs.c0,&rhs.c0,p.q);
+    let u1=add(&mul(&lhs.c0,&rhs.c1,p.q),&mul(&lhs.c1,&rhs.c0,p.q),p.q);
+    let u2=mul(&lhs.c1,&rhs.c1,p.q);
+    Ok(ToyCiphertext3{
+        c0:scale_and_round_poly(&u0,p),
+        c1:scale_and_round_poly(&u1,p),
+        c2:scale_and_round_poly(&u2,p),
+    })
+}
+
+/// Decrypt a three-component tensor ciphertext, without relinearization.
+pub fn decrypt_three(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext3)->Result<Vec<u64>,&'static str> {
+    p.validate()?;
+    if sk.s.len()!=p.n || ct.c0.len()!=p.n || ct.c1.len()!=p.n || ct.c2.len()!=p.n
+        || sk.s.iter().chain(&ct.c0).chain(&ct.c1).chain(&ct.c2).any(|&x|x>=p.q) {
+        return Err("ciphertext/key dimension or coefficient out of range");
+    }
+    let s2=mul(&sk.s,&sk.s,p.q);
+    let phase=add(&add(&ct.c0,&mul(&ct.c1,&sk.s,p.q),p.q),&mul(&ct.c2,&s2,p.q),p.q);
+    Ok(phase.into_iter().map(|x|{
+        let numerator=centered(x,p.q)*p.t as i128;
+        let rounded=if numerator>=0 {(numerator+p.q as i128/2)/p.q as i128}
+                    else {-((-numerator+p.q as i128/2)/p.q as i128)};
+        rounded.rem_euclid(p.t as i128) as u64
+    }).collect())
+}
+
 /// Add ciphertexts componentwise.
 pub fn add_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)->Result<ToyCiphertext,&'static str> {
     p.validate()?;
@@ -112,6 +161,17 @@ mod tests {
     }
     #[test] fn rejects_non_ntt_compatible_modulus() {
         let p=ToyParams{n:8,q:65539,t:17}; assert!(p.validate().is_err());
+    }
+    #[test] fn toy_bfv_tensor_product_matches_plaintext_product() {
+        let p=params(); let (sk,pk)=keygen(&p,0x31415926).unwrap();
+        let m1=vec![1,2,0,1,3,0,2,1];
+        let m2=vec![2,1,1,0,1,2,0,3];
+        let c1=encrypt(&p,&pk,&m1,0x1234).unwrap();
+        let c2=encrypt(&p,&pk,&m2,0x5678).unwrap();
+        let product=multiply_ciphertexts(&p,&c1,&c2).unwrap();
+        let got=decrypt_three(&p,&sk,&product).unwrap();
+        let expected=negacyclic_mul(&m1,&m2,p.t);
+        assert_eq!(got,expected);
     }
     #[test] fn deterministic_multiseed_roundtrip_and_addition_sweep() {
         let p=params();
