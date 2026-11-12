@@ -296,6 +296,25 @@ mod tests {
         assert_eq!(after,before);
         assert_eq!(after,negacyclic_mul(&m1,&m2,p.t));
     }
+    #[test] fn relinearization_is_stable_across_gadget_bases_and_seeds() {
+        let p=ToyParams { n: 8, q: 786433, t: 17 };
+        for base in [2u64,4,16] {
+            for seed in 1..=16u64 {
+                let (sk,pk)=keygen(&p,seed.wrapping_mul(0xa0761d6478bd642f)).unwrap();
+                let rk=relinearization_keygen(&p,&sk,seed.wrapping_add(0x5151),base).unwrap();
+                let mut rng=DemoRng(seed.wrapping_mul(0xe7037ed1a0b428db).max(1));
+                let m1:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+                let m2:Vec<u64>=(0..p.n).map(|_|rng.next()%p.t).collect();
+                let c1=encrypt(&p,&pk,&m1,seed.wrapping_add(0x6161)).unwrap();
+                let c2=encrypt(&p,&pk,&m2,seed.wrapping_add(0x7171)).unwrap();
+                let product=multiply_ciphertexts(&p,&c1,&c2).unwrap();
+                let tensor_dec=decrypt_three(&p,&sk,&product).unwrap();
+                let switched=relinearize(&p,&product,&rk).unwrap();
+                assert_eq!(decrypt(&p,&sk,&switched).unwrap(),tensor_dec,
+                    "relinearization base {base}, seed {seed}");
+            }
+        }
+    }
     #[test] fn deterministic_multiseed_roundtrip_and_addition_sweep() {
         let p=params();
         for seed in 1..=64u64 {
