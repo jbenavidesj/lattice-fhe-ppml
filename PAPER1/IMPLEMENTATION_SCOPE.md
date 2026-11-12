@@ -5,10 +5,10 @@
 - Python parameter audit with deterministic Miller-Rabin for unsigned 64-bit candidates.
 - Python arbitrary-precision differential test for AsymRed.
 - Small-ring independent polynomial reference checks.
-- Exploratory executable benchmark comparing AsymRed and u128 remainder.
+- Criterion microbenchmark comparing AsymRed and u128 remainder; it is compiled in CI but not used to assert a speedup.
 
 ## Not implemented
-RNS lane arithmetic is implemented, but CRT reconstruction and basis extension are not. This is not a complete BFV implementation. Key generation, encryption, decryption, ciphertext multiplication, BFV scale-and-round, gadget decomposition, relinearization, modulus switching, noise tracking, and bootstrapping are not implemented. It is not production cryptography.
+RNS lane arithmetic and exact per-coefficient CRT reconstruction are implemented. RNS basis extension is not. This is not a complete BFV implementation. Key generation, encryption, decryption, ciphertext multiplication, BFV scale-and-round, gadget decomposition, relinearization, modulus switching, noise tracking, and bootstrapping are not implemented. It is not production cryptography.
 
 ## Correctness and benchmark caveats
 AsymRed checks 0 <= z < q^2, checks intermediate arithmetic, and rejects any case where the two-fold result is not below 2q. This fails closed if the range lemma does not hold. Tests must pass before relying on the lemma in the paper.
