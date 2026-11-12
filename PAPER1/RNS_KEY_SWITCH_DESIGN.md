@@ -95,3 +95,17 @@ The repository currently stores evaluation-key pairs and applies gadget accumula
 - Security separation: test RNG is explicitly named and documented as deterministic; production API must require a CSPRNG source.
 
 Passing these tests would validate the implementation contract, not prove RLWE security or constant-time behavior.
+
+
+## Implemented deterministic test fixture (not production key generation)
+
+The RNS test suite now contains a deterministic sparse fixture that builds evaluation-key digits with nonzero signed error polynomials and a nontrivial sparse secret. It constructs each digit using
+```
+b_j = B^j*s^2 - a_j*s + e_j  (mod Q)
+```
+and checks, after the actual RNS relinearization routine, that the output phase differs from the input three-component phase by exactly
+```
+sum_j d_j*e_j  (mod Q).
+```
+
+The fixture's `a_j) and `e_j) values are fixed sparse patterns, not samples from a cryptographic distribution. This test therefore checks the algebraic key-switch identity and its implementation path only. It does not establish uniformity, RLWE security, error-distribution suitability, a deterministic norm bound for arbitrary errors, or production key-generation readiness. CI status for the commit containing this test must be checked before treating the test as passing.
