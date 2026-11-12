@@ -18,7 +18,7 @@
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
-- A production RNS evaluation-key generator with secure uniform sampling and a specified error distribution. A deterministic sparse test fixture now constructs nonzero-error RNS evaluation-key digits and checks the exact phase delta for a nontrivial secret; it is a correctness fixture only, not a cryptographic sampler. The new test has not yet been confirmed by a CI run.
+- A production RNS evaluation-key generator with secure uniform sampling and a specified error distribution. A deterministic sparse test fixture constructs nonzero-error RNS evaluation-key digits and checks the exact phase delta for a nontrivial secret. It also checks the observed centered coefficient infinity norm against the conditional bound L(B-1) max_j ||e_j||_1. This is a correctness fixture only, not a cryptographic sampler. CI run 178 for code commit b2a7e58 reports Python audits, Rust formatting, unit tests, and Clippy successful; benchmark-target compilation is still in progress.
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
 - Generalized end-to-end RNS key-switch correctness beyond the deterministic sparse fixture; the fixture now checks the observed centered coefficient infinity norm against the conditional bound L(B-1) max_j ||e_j||_1, but no production key generator or sampler exists.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
