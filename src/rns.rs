@@ -330,13 +330,15 @@ fn exact_integer_negacyclic_mul(
         negacyclic_ntt_mul(&lhs_lanes[i], &rhs_lanes[i], AUX_MODULI[i], AUX_ROOTS[i])
     });
     let crt_product = aux_product();
-    let mut output = Vec::with_capacity(n);
-    let mut residues = [0u64; 9];
-    for index in 0..n {
-        for lane in 0..9 { residues[lane] = products[lane][index]; }
-        output.push(crt_aux_centered(&residues, &crt_product));
+    let mut coefficients = vec![[0u64; 9]; n];
+    for (lane, product) in products.iter().enumerate() {
+        for (index, &residue) in product.iter().enumerate() {
+            coefficients[index][lane] = residue;
+        }
     }
-    Ok(output)
+    Ok(coefficients.iter()
+        .map(|residues| crt_aux_centered(residues, &crt_product))
+        .collect())
 }
 
 fn scale_integer_coefficients(
