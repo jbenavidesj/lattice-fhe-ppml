@@ -20,7 +20,7 @@ Consult the latest GitHub Actions run for its actual state; do not infer a pass 
 ## Not established
 - A production RNS evaluation-key generator with secure uniform sampling and a specified error distribution. A deterministic sparse test fixture now constructs nonzero-error RNS evaluation-key digits and checks the exact phase delta for a nontrivial secret; it is a correctness fixture only, not a cryptographic sampler. The new test has not yet been confirmed by a CI run.
 - Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
-- Generalized end-to-end RNS key-switch correctness beyond the new deterministic sparse fixture; no production key generator or sampler exists.
+- Generalized end-to-end RNS key-switch correctness beyond the deterministic sparse fixture; the fixture now checks the observed centered coefficient infinity norm against the conditional bound L(B-1) max_j ||e_j||_1, but no production key generator or sampler exists.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
