@@ -251,9 +251,9 @@ mod tests {
         let zero = encode_signed(&BigInt::from(0), n);
         let two = encode_signed(&BigInt::from(2), n);
         let result = RnsPoly::bfv_tensor_multiply(&c0, &zero, &two, &zero, 17).unwrap();
-        // U0[0] = 2*floor(Q/4), so round(17*U0/Q) = 9.
+        // U0[0] = 2*floor(Q/4), so round(17*U0/Q) = 8 (strictly below 8.5).
         for lane in result[0].lanes() {
-            assert_eq!(lane[0], 9);
+            assert_eq!(lane[0], 8);
             assert!(lane[1..].iter().all(|&x| x == 0));
         }
         for component in [&result[1], &result[2]] {
