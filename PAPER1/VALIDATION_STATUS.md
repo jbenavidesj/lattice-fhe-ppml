@@ -5,7 +5,7 @@
 ## Selected architecture
 - Core target: leveled RNS-BFV.
 - Refresh/bootstrapping remains a separate experimental extension, not a required core feature.
-- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, and centered basis extension.
+- Arithmetic foundation: modular operations, AsymRed candidate, schoolbook negacyclic multiplication, twisted negacyclic NTT, four-lane RNS operations, exact coefficient-wise CRT reconstruction, centered basis extension, exact BigInt BFV t/Q scale-and-round, and an unrelinearized three-component RNS tensor-multiplication reference.
 - A separate tiny-ring BFV model now exercises key generation, public-key encryption, decryption, homomorphic addition, unrelinearized tensor multiplication over centered integer lifts, with scale-and-round residual bounded coefficientwise by 1/2, and toy gadget relinearization. It is not integrated with the N=8192 RNS basis.
 
 ## Reproducible checks in the repository
@@ -18,7 +18,7 @@
 Consult the latest GitHub Actions run for its actual state; do not infer a pass from the existence of a workflow.
 
 ## Not established
-- Full BFV implementation over the N=8192 four-lane RNS parameter candidates.
+- Full BFV implementation over the N=8192 four-lane RNS parameter candidates; current RNS tensor multiplication is a correctness-oriented BigInt reference map and has no integrated key switching/relinearization.
 - Production-grade gadget decomposition/relinearization and key switching, modulus switching, or bootstrapping.
 - A proof of correctness for arbitrary multiplicative depth or for the N=8192 RNS parameter candidates.
 - RLWE security estimate or 128-bit security.
@@ -34,7 +34,7 @@ The Criterion executable is an exploratory microbenchmark. It is compiled in CI 
 ## Remaining gates before IEEE submission
 1. Expand toy BFV multiplication and relinearization tests to exhaustive/boundary plaintexts and independent implementations; preserve the exact one-multiplication proof assumptions.
 2. Replace the toy gadget/key-switch construction with a production-oriented design and formally bound its key-switch error.
-3. Port the verified multiplication/relinearization pipeline to N=8192 RNS and test against independent references.
+3. Replace the current exact-CRT scale-and-round reference with a fast, proven RNS scale-and-round algorithm; add independent end-to-end RNS BFV multiplication vectors and a complete RNS noise proof.
 4. Specify secure randomness and error samplers; run a current lattice estimator with recorded version and cost model.
 5. Benchmark release builds on documented hardware with repeated samples and raw data.
 6. Review constant-time behavior, side-channel exposure, and independent reproducibility.
