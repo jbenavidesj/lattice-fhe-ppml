@@ -32,8 +32,8 @@ impl DemoRng {
     fn next(&mut self) -> u64 {
         let mut x=self.0; x^=x<<13; x^=x>>7; x^=x<<17; self.0=x; x
     }
-    fn ternary(&mut self,n:usize)->Vec<u64> {
-        (0..n).map(|_| match self.next()%3 {0=>0,1=>1,_=>2}).collect()
+    fn ternary(&mut self,n:usize,q:u64)->Vec<u64> {
+        (0..n).map(|_| match self.next()%3 {0=>0,1=>1,_=>q-1}).collect()
     }
     fn uniform(&mut self,n:usize,q:u64)->Vec<u64> {
         (0..n).map(|_|self.next()%q).collect()
@@ -53,7 +53,7 @@ fn centered(x:u64,q:u64)->i128 { if x>q/2{x as i128-q as i128}else{x as i128} }
 pub fn keygen(p:&ToyParams,seed:u64)->Result<(ToySecretKey,ToyPublicKey),&'static str> {
     p.validate()?;
     let mut rng=DemoRng(seed.max(1));
-    let s=rng.ternary(p.n); let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n);
+    let s=rng.ternary(p.n,p.q); let a=rng.uniform(p.n,p.q); let e=rng.ternary(p.n);
     let b=neg(&add(&mul(&a,&s,p.q),&e,p.q),p.q);
     Ok((ToySecretKey{s},ToyPublicKey{b,a}))
 }
