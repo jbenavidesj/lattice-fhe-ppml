@@ -129,7 +129,6 @@ mod tests {
         let expected: Vec<u64> = m1.iter().zip(&m2).map(|(&a,&b)| (a+b)%t).collect();
         assert_eq!(decrypt_rns_bfv(&secret, &sum, t).unwrap(), expected);
 
-        let product = multiply_relinearize_rns_bfv(&c1, &c2, &evaluation_key, t).unwrap();
         let mut expected_integer = vec![0i128; RNS_DEGREE];
         for (i, &a) in m1.iter().enumerate() {
             if a == 0 { continue; }
@@ -143,7 +142,24 @@ mod tests {
         }
         let expected_product: Vec<u64> = expected_integer.iter()
             .map(|&x| x.rem_euclid(i128::from(t)) as u64).collect();
-        assert_eq!(decrypt_rns_bfv(&secret, &product, t).unwrap(), expected_product);
+
+        // First validate the unrelinearized tensor phase independently.
+        let tensor = RnsPoly::bfv_tensor_multiply(&c1.c0, &c1.c1, &c2.c0, &c2.c1, t).unwrap();
+        let secret_squared = secret.0.negacyclic_mul(&secret.0).unwrap();
+        let tensor_phase = tensor[0]
+            .add(&tensor[1].negacyclic_mul(&secret.0).unwrap()).unwrap()
+            .add(&tensor[2].negacyclic_mul(&secret_squared).unwrap()).unwrap();
+        let tensor_scaled = tensor_phase.bfv_scale_and_round(t).unwrap();
+        let tensor_decoded: Vec<u64> = (0..RNS_DEGREE).map(|i| {
+            let x = tensor_scaled.crt_reconstruct_centered_coefficient(i).unwrap();
+            ((x % num_bigint::BigInt::from(t) + num_bigint::BigInt::from(t))
+                % num_bigint::BigInt::from(t)).to_u64_digits().1.first().copied().unwrap_or(0)
+        }).collect();
+        assert_eq!(tensor_decoded, expected_product, "unrelinearized tensor phase");
+
+        let product = multiply_relinearize_rns_bfv(&c1, &c2, &evaluation_key, t).unwrap();
+        assert_eq!(decrypt_rns_bfv(&secret, &product, t).unwrap(), expected_product,
+            "relinearized RNS-BFV product");
     }
 
     #[test] fn rejection_sampler_outputs_canonical_residues() {
