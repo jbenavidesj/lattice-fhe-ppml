@@ -86,24 +86,13 @@ pub fn decrypt(p:&ToyParams,sk:&ToySecretKey,ct:&ToyCiphertext)->Result<Vec<u64>
     }).collect())
 }
 
-/// Multiply centered coefficient lifts over the integers in Z[X]/(X^N+1).
-/// No reduction modulo q is performed before BFV scale-and-round.
-fn centered_integer_mul(a:&[u64],b:&[u64],q:u64)->Result<Vec<i128>,&'static str> {
-    let n=a.len();
-    if n==0 || b.len()!=n { return Err("integer polynomial dimension mismatch"); }
-    let aa:Vec<i128>=a.iter().map(|&x|centered(x,q)).collect();
-    let bb:Vec<i128>=b.iter().map(|&x|centered(x,q)).collect();
-    let mut out=vec![0i128;n];
-    for (i,&x) in aa.iter().enumerate() {
-        for (j,&y) in bb.iter().enumerate() {
-            let product=x.checked_mul(y).ok_or("integer tensor product overflow")?;
-            let k=i+j;
-            let slot=if k<n {k} else {k-n};
-            out[slot]=if k<n {out[slot].checked_add(product)} else {out[slot].checked_sub(product)}
-                .ok_or("integer tensor accumulation overflow")?;
-        }
+/// Compute a polynomial product in R_q first, then choose its centered lift.
+/// This is the BFV tensor-product representative used by scale-and-round.
+fn centered_product_mod_q(a:&[u64],b:&[u64],q:u64)->Result<Vec<i128>,&'static str> {
+    if a.is_empty() || a.len()!=b.len() || a.iter().chain(b).any(|&x|x>=q) {
+        return Err("polynomial dimension or coefficient out of range");
     }
-    Ok(out)
+    Ok(mul(a,b,q).into_iter().map(|x|centered(x,q)).collect())
 }
 
 /// Apply nearest-integer t/q scale-and-round to integer coefficients, then reduce mod q.
@@ -121,25 +110,22 @@ fn scale_and_round_integer(a:&[i128],p:&ToyParams)->Result<Vec<u64>,&'static str
 }
 
 /// Multiply two toy ciphertexts, retaining the three-component tensor ciphertext.
-/// Each tensor component is multiplied in R_q, represented by centered residues,
-/// then independently scaled by t/q with nearest-integer rounding.
 pub fn multiply_ciphertexts(p:&ToyParams,lhs:&ToyCiphertext,rhs:&ToyCiphertext)->Result<ToyCiphertext3,&'static str> {
     p.validate()?;
     if lhs.c0.len()!=p.n || lhs.c1.len()!=p.n || rhs.c0.len()!=p.n || rhs.c1.len()!=p.n
         || lhs.c0.iter().chain(&lhs.c1).chain(&rhs.c0).chain(&rhs.c1).any(|&x|x>=p.q) {
         return Err("ciphertext dimension or coefficient out of range");
     }
-    // BFV multiplication requires integer lifts of each ciphertext component.
-    // Reducing U_k modulo q before scaling would discard quotient information.
-    let u0=centered_integer_mul(&lhs.c0,&rhs.c0,p.q)?;
-    let u1a=centered_integer_mul(&lhs.c0,&rhs.c1,p.q)?;
-    let u1b=centered_integer_mul(&lhs.c1,&rhs.c0,p.q)?;
-    let u1:Result<Vec<i128>,&'static str>=u1a.iter().zip(u1b).map(|(&x,y)|
-        x.checked_add(y).ok_or("middle tensor component overflow")).collect();
-    let u2=centered_integer_mul(&lhs.c1,&rhs.c1,p.q)?;
+    // Tensor components are formed in R_q. Their centered representatives are
+    // then scaled by t/q; reducing after the scaling would be a different map.
+    let u0=centered_product_mod_q(&lhs.c0,&rhs.c0,p.q)?;
+    let u1a=mul(&lhs.c0,&rhs.c1,p.q);
+    let u1b=mul(&lhs.c1,&rhs.c0,p.q);
+    let u1=add(&u1a,&u1b,p.q).into_iter().map(|x|centered(x,p.q)).collect::<Vec<_>>();
+    let u2=centered_product_mod_q(&lhs.c1,&rhs.c1,p.q)?;
     Ok(ToyCiphertext3{
         c0:scale_and_round_integer(&u0,p)?,
-        c1:scale_and_round_integer(&u1?,p)?,
+        c1:scale_and_round_integer(&u1,p)?,
         c2:scale_and_round_integer(&u2,p)?,
     })
 }
