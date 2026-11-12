@@ -142,13 +142,20 @@ impl RnsPoly {
         if [c1, d0, d1].iter().any(|p| p.lanes[0].len() != n) {
             return Err("BFV ciphertext polynomial dimensions differ");
         }
-        let u0 = c0.negacyclic_mul(d0)?;
-        let u1 = c0.negacyclic_mul(d1)?.add(&c1.negacyclic_mul(d0)?)?;
-        let u2 = c1.negacyclic_mul(d1)?;
+        let c0_lift = centered_lifts(c0)?;
+        let c1_lift = centered_lifts(c1)?;
+        let d0_lift = centered_lifts(d0)?;
+        let d1_lift = centered_lifts(d1)?;
+        let u0 = exact_integer_negacyclic_mul(&c0_lift, &d0_lift)?;
+        let u1a = exact_integer_negacyclic_mul(&c0_lift, &d1_lift)?;
+        let u1b = exact_integer_negacyclic_mul(&c1_lift, &d0_lift)?;
+        let u1: Vec<BigInt> = u1a.iter().zip(u1b)
+            .map(|(a, b)| a + b).collect();
+        let u2 = exact_integer_negacyclic_mul(&c1_lift, &d1_lift)?;
         Ok([
-            u0.bfv_scale_and_round(plaintext_modulus)?,
-            u1.bfv_scale_and_round(plaintext_modulus)?,
-            u2.bfv_scale_and_round(plaintext_modulus)?,
+            scale_integer_coefficients(&u0, plaintext_modulus)?,
+            scale_integer_coefficients(&u1, plaintext_modulus)?,
+            scale_integer_coefficients(&u2, plaintext_modulus)?,
         ])
     }
 
@@ -244,6 +251,121 @@ impl RnsPoly {
         });
         Ok(Self { lanes })
     }
+}
+
+
+
+// Auxiliary NTT basis used to recover exact integer tensor-product coefficients.
+// Nine ~52-bit primes give a 468-bit CRT product, exceeding twice the worst-case
+// coefficient bound N*(Q/2)^2 for the current 218-bit Q and N=8192.
+const AUX_MODULI: [u64; 9] = [
+    4503599627124737, 4503599626682369, 4503599626321921,
+    4503599626141697, 4503599625830401, 4503599625535489,
+    4503599625404417, 4503599625158657, 4503599624962049,
+];
+const AUX_ROOTS: [u64; 9] = [
+    2707758278772395, 1841889776165649, 1232568238856409,
+    3681299526190914, 3801184396185815, 2821339159676527,
+    2673470588363527, 1562061910246617, 2293421299669720,
+];
+
+fn centered_lifts(poly: &RnsPoly) -> Result<Vec<BigInt>, &'static str> {
+    (0..poly.lanes[0].len())
+        .map(|i| poly.crt_reconstruct_centered_coefficient(i))
+        .collect()
+}
+
+fn aux_product() -> BigUint {
+    AUX_MODULI.iter().fold(BigUint::from(1u8), |p, &q| p * BigUint::from(q))
+}
+
+fn crt_aux_centered(residues: &[u64; 9], product: &BigUint) -> BigInt {
+    let mut x = BigUint::from(0u8);
+    let mut partial = BigUint::from(1u8);
+    for (i, &q) in AUX_MODULI.iter().enumerate() {
+        let x_mod = low_u64(&(&x % q));
+        let partial_mod = low_u64(&(&partial % q));
+        let inverse = pow_mod(partial_mod, q - 2, q);
+        let correction = crate::mul_mod(
+            sub_mod(residues[i], x_mod, q), inverse, q
+        );
+        x += &partial * BigUint::from(correction);
+        partial *= BigUint::from(q);
+    }
+    if (&x << 1usize) > *product {
+        BigInt::from_biguint(Sign::Plus, x) - BigInt::from_biguint(Sign::Plus, product.clone())
+    } else {
+        BigInt::from_biguint(Sign::Plus, x)
+    }
+}
+
+/// Exact signed negacyclic product. The auxiliary CRT modulus is larger than
+/// twice N*(Q/2)^2, so centered reconstruction recovers each integer coefficient.
+fn exact_integer_negacyclic_mul(
+    lhs: &[BigInt],
+    rhs: &[BigInt],
+) -> Result<Vec<BigInt>, &'static str> {
+    let n = lhs.len();
+    if n != 8192 || rhs.len() != n {
+        return Err("exact BFV tensor multiplication requires N=8192");
+    }
+    let mut lhs_lanes: [Vec<u64>; 9] =
+        std::array::from_fn(|_| Vec::with_capacity(n));
+    let mut rhs_lanes: [Vec<u64>; 9] =
+        std::array::from_fn(|_| Vec::with_capacity(n));
+    for (lane, &q) in AUX_MODULI.iter().enumerate() {
+        let modulus = BigInt::from(q);
+        for value in lhs {
+            let residue = ((value % &modulus) + &modulus) % &modulus;
+            lhs_lanes[lane].push(low_u64(&residue.to_biguint().ok_or("negative auxiliary residue")?));
+        }
+        for value in rhs {
+            let residue = ((value % &modulus) + &modulus) % &modulus;
+            rhs_lanes[lane].push(low_u64(&residue.to_biguint().ok_or("negative auxiliary residue")?));
+        }
+    }
+    let products: [Vec<u64>; 9] = std::array::from_fn(|i| {
+        negacyclic_ntt_mul(&lhs_lanes[i], &rhs_lanes[i], AUX_MODULI[i], AUX_ROOTS[i])
+    });
+    let crt_product = aux_product();
+    let mut output = Vec::with_capacity(n);
+    let mut residues = [0u64; 9];
+    for index in 0..n {
+        for lane in 0..9 { residues[lane] = products[lane][index]; }
+        output.push(crt_aux_centered(&residues, &crt_product));
+    }
+    Ok(output)
+}
+
+fn scale_integer_coefficients(
+    values: &[BigInt],
+    plaintext_modulus: u64,
+) -> Result<RnsPoly, &'static str> {
+    if plaintext_modulus < 2 {
+        return Err("plaintext modulus must be >= 2");
+    }
+    let q_product = MODULI.iter().fold(
+        BigUint::from(1u8), |p, &q| p * BigUint::from(q)
+    );
+    let denominator = BigInt::from_biguint(Sign::Plus, q_product);
+    let mut lanes: [Vec<u64>; 4] =
+        std::array::from_fn(|_| Vec::with_capacity(values.len()));
+    for value in values {
+        let numerator = value * BigInt::from(plaintext_modulus);
+        let negative = numerator.sign() == Sign::Minus;
+        let magnitude = if negative { -numerator } else { numerator };
+        let mut rounded = &magnitude / &denominator;
+        if ((&magnitude % &denominator) << 1usize) >= denominator {
+            rounded += 1u8;
+        }
+        let rounded = if negative { -rounded } else { rounded };
+        for (lane, &q) in lanes.iter_mut().zip(MODULI.iter()) {
+            let modulus = BigInt::from(q);
+            let residue = ((&rounded % &modulus) + &modulus) % &modulus;
+            lane.push(low_u64(&residue.to_biguint().ok_or("negative output residue")?));
+        }
+    }
+    RnsPoly::from_lanes(lanes)
 }
 
 fn low_u64(x: &BigUint) -> u64 { x.to_u64_digits().first().copied().unwrap_or(0) }
