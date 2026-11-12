@@ -464,8 +464,11 @@ mod tests {
     // Independent sparse BigInt oracle for RNS tensor multiplication. It computes
     // negacyclic products over Z, reduces each coefficient to its centered R_Q
     // representative, then applies exact t/Q nearest-integer scaling.
+    type SparsePolynomial = [(usize, i64)];
+    type SparseProductTerm<'a> = (&'a SparsePolynomial, &'a SparsePolynomial);
+
     fn reference_tensor_component(
-        terms: &[(&[(usize, i64)], &[(usize, i64)])],
+        terms: &[SparseProductTerm<'_>],
         n: usize,
         q: &BigInt,
         t: u64,
