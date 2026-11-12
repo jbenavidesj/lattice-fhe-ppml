@@ -4,13 +4,15 @@
 This audits the conservative analytical bound, not a security parameter set.
 """
 from fractions import Fraction
-from math import ceil, log
 
 
 def audit(n: int, q: int, t: int, base: int) -> dict[str, Fraction | int]:
     assert n > 0 and q > t >= 2 and q % (2 * n) == 1 and base >= 2
     delta, r = divmod(q, t)
-    levels = ceil(log(q, base))
+    levels, capacity = 0, 1
+    while capacity < q:
+        capacity *= base
+        levels += 1
     # Ternary public-key encryption: eps = e1 + e2*s - e*u.
     eps = 1 + 2 * n
     m = t - 1
