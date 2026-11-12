@@ -5,7 +5,7 @@
 use crate::rns::{RnsEvalKeyDigit, RnsPoly};
 use crate::{mul_mod, MODULI};
 use getrandom::getrandom;
-use num_bigint::{BigInt, BigUint};
+use num_bigint::{BigInt, BigUint, Sign};
 
 pub const RNS_DEGREE: usize = 8192;
 pub const DEFAULT_GADGET_BASE: u64 = 1 << 16;
