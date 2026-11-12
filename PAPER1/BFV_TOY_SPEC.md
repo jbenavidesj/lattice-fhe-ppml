@@ -1,96 +1,121 @@
-# Tiny-ring BFV model: mathematical contract and limits
+# Tiny-ring BFV model: mathematical contract and correctness proof
 
-## Purpose
+## Scope
 
-This module is a small-ring executable correctness model. It is deliberately separate from the four-lane, N=8192 RNS arithmetic candidates. It is not the Paper 1 production parameter set, does not establish security, and is not suitable for protecting data.
+This is a deterministic, tiny-ring correctness model for one leveled BFV multiplication followed by gadget relinearization. It is separate from the four-lane, N=8192 RNS arithmetic prototype. It is not production cryptography, does not establish RLWE security, and must never protect real data.
 
-## Ring and parameters
+## Parameters and rings
 
-The toy ring is R_q = (Z/qZ)[X]/(X^N+1), with power-of-two N, odd q, q congruent to 1 modulo 2N, and 2 <= t < q. The plaintext ring is R_t = (Z/tZ)[X]/(X^N+1). Let Delta = floor(q/t). Coefficients are stored as canonical residues in [0,q) or [0,t), as appropriate.
+The toy ring is
+`R_q = (Z/qZ)[X]/(X^N+1)`,
+with `N=8`, `q=1099511627873`, and plaintext modulus `t=17`. The modulus satisfies `q ≡ 1 (mod 2N)`. Set
+`Delta = floor(q/t) = 64677154580`
+and
+`r = q - t*Delta = 13`,
+so `q=t*Delta+r`.
 
-## Secret and public key
+The plaintext ring is `R_t = (Z/tZ)[X]/(X^N+1)`. Ciphertext coefficients are stored canonically modulo q; the multiplication routine chooses the centered integer representative in `(-q/2,q/2)` for each input ciphertext component before forming integer tensor products.
 
-The demonstration secret s, ephemeral u, and error terms use coefficients represented by 0, 1, and q-1 (the signed values 0, 1, and -1). A is sampled uniformly by a deterministic demonstration generator. The error distribution is this tiny ternary law, not a discrete Gaussian sampler.
+## Demonstration distributions and encryption
 
-The public key is (b,a), where b = -(a*s + e) in R_q. Consequently b+a*s = -e (mod q).
+The secret `s`, ephemeral `u`, and errors `e,e1,e2` have coefficients in `{-1,0,1}`, encoded modulo q. All sampling is deterministic and test-only.
 
-## Encryption
+The public key is `(b,a)`, with `b=-(a*s+e) mod q`. Encryption returns
+- `c0 = b*u + e1 + Delta*m (mod q)`
+- `c1 = a*u + e2 (mod q)`.
 
-For plaintext m in R_t, the implementation lifts its coefficients as Delta*m in R_q. It samples demonstration polynomials u,e1,e2 and returns:
-- c0 = b*u + e1 + Delta*m (mod q)
-- c1 = a*u + e2 (mod q)
+For the integer phase of the centered input lifts, write
+`x = c0_hat + c1_hat*s`.
+Modulo q,
+`x = Delta*m + epsilon (mod q)`, where
+`epsilon = e1 + e2*s - e*u`.
+Because the secret and all error polynomials are ternary and negacyclic convolution obeys
+`||a*b||_infinity <= ||a||_infinity ||b||_1`,
+we have
+`||epsilon||_infinity <= 1 + N + N = 17`.
 
-The decryption phase is c0+c1*s = Delta*m + e1 + e2*s - e*u (mod q). This identity is the correctness starting point; successful decoding additionally requires the centered phase error to remain within the rounding margin. The included fixed-seed tests exercise only selected toy instances.
+## Decryption
 
-## Decryption and rounding convention
+Decryption computes the centered representative of `c0+c1*s mod q`, multiplies each coefficient by `t/q`, rounds to nearest integer (ties away from zero), and reduces modulo t. This is the convention implemented by the toy module.
 
-The implementation maps each phase coefficient to its centered integer representative in (-q/2,q/2], computes nearest-integer rounding of t*z/q, with ties rounded away from zero, and reduces modulo t. This explicit convention is part of the implementation contract. It is not a substitute for a general BFV correctness/noise proof.
+## Multiplication: essential lift convention
 
-## Homomorphic addition
+For each input ciphertext component, take its centered integer coefficient lift. Form the three tensor components over the integer negacyclic ring `Z[X]/(X^N+1)`:
+- `U0 = c0_hat*d0_hat`
+- `U1 = c0_hat*d1_hat + c1_hat*d0_hat`
+- `U2 = c1_hat*d1_hat`.
 
-Ciphertexts add componentwise modulo q. The test checks that decrypting the sum agrees coefficientwise with plaintext addition modulo t for the selected toy vectors.
+Then compute `Wk = round(t*Uk/q) mod q`, coefficientwise, with ties away from zero. The quotient information in the integer tensor products MUST be retained until after scale-and-round. Reducing `Uk` modulo q before scaling is a different operation and is not the multiplication implemented here.
 
-## Explicitly not implemented
+Write each rounding residual as
+`rho_k = Wk - (t/q)*Uk`,
+so `||rho_k||_infinity <= 1/2`. The unrelinearized phase is therefore
+`W0 + W1*s + W2*s^2 = (t/q)*x1*x2 + rho0 + rho1*s + rho2*s^2`
+as an integer-lift identity, modulo the ciphertext modulus.
 
-This module does not implement ciphertext multiplication, BFV tensor-product scale-and-round, gadget decomposition, relinearization/key switching, modulus switching, noise-budget estimation, bootstrapping/refresh, secure randomness, Gaussian sampling, constant-time arithmetic, or a security estimator. It has no cryptographic security claim. Deterministic seeds and the tiny ternary generator are strictly for reproducible unit tests.
+## Full one-multiplication noise bound
 
-## Next correctness gates
+The following is a deterministic worst-case bound for the exact toy distributions and lift convention above; it is not a probabilistic estimate.
 
-1. Add independent property tests over many toy seeds and plaintexts, including boundary coefficients and failure cases.
-2. Derive and test a conservative correctness bound for the exact implemented noise distribution and ring norm.
-3. Implement multiplication only after specifying centered integer lifts and the scale-and-round rule; do not reduce tensor components modulo q before the required centered-lift calculation.
-4. Add gadget decomposition and relinearization with explicit key-switch error accounting.
-5. Replace demonstration sampling with a reviewed CSPRNG and precisely specified error sampler before any security-oriented experiment.
-6. Port only after toy correctness is established, then validate against the N=8192 RNS basis with a complete parameter/security analysis.
+For each input ciphertext, its centered components satisfy
+`||c0_hat||_infinity, ||c1_hat||_infinity <= q/2`.
+Since `||s||_1 <= N`,
+`||x||_infinity <= q(1+N)/2`.
+There is an integer polynomial k such that
+`x = Delta*m + epsilon + q*k`.
+Using `q=t*Delta+r`, rewrite this exactly as
+`x = Delta*m_tilde + epsilon_tilde`,
+where
+`m_tilde = m + t*k` and `epsilon_tilde = epsilon + r*k`.
 
+The preceding bounds imply
+`||k||_infinity <= 5`,
+`||m_tilde||_infinity <= 16 + 17*5 = 101`,
+and
+`||epsilon_tilde||_infinity <= 17 + 13*5 = 82`.
 
-## Ciphertext multiplication: unrelinearized tensor result
+Let `m12` be the centered coefficient representative of the plaintext product `m_tilde1*m_tilde2 mod t), so `||m12||_infinity <= 8`. Define the integer polynomial H by
+`m_tilde1*m_tilde2 = m12 + t*H`.
+Then
+`||m_tilde1*m_tilde2||_infinity <= N*101^2 = 81608`
+and
+`||H||_infinity <= ceil((81608+8)/17) = 4801).
 
-For ciphertexts c=(c0,c1) and d=(d0,d1), the implementation first chooses the centered integer lift of every coefficient of each input component. It forms the three negacyclic tensor products over Z[X]/(X^N+1):
-- U0 = c0*d0
-- U1 = c0*d1 + c1*d0
-- U2 = c1*d1
+Expanding the scaled product and using `t*Delta=q-r` gives
+`(t*Delta^2/q)*(m12+t*H) - Delta*m12
+ = q*H - r*H - (Delta*r/q)*(m12+t*H)`.
+The `q*H` term vanishes modulo q. The remaining deterministic multiplication-error terms are bounded by:
+- plaintext quotient term: `r*||H||_infinity <= 62413`;
+- scale bias: `(Delta*r/q)*81608`;
+- cross terms: `(2*t*Delta/q)*N*101*82`;
+- product of input errors: `(t/q)*N*82^2`.
 
-The integer coefficients U_k are then mapped by W_k = round(t*U_k/q), with ties away from zero, and reduced modulo q. The quotient information from the integer products is deliberately retained until after scale-and-round; reducing U_k modulo q first would implement a different operation. Intermediate arithmetic is checked i128 and fails closed on overflow.
+The three scale-and-round residuals contribute at most
+`(1/2)*(1+||s||_1+||s^2||_1) <= (1/2)*(1+N+N^2) = 36.5`.
 
-For each coefficient, define the rounding residual rho_k = W_k - t*U_k/q. By the specified nearest-integer rule, |rho_k| <= 1/2. This is an exact local rounding statement; it is not by itself a proof that the decrypted plaintext product is correct, because the full BFV phase also contains the input encryption errors, representative-lift terms, and plaintext-modulus reduction terms.
+## Relinearization and key-switch error
 
-The regression suite compares the unrelinearized result with direct negacyclic plaintext multiplication for one fixed vector and a deterministic 64-seed sweep. The multiplication tests use N=8, q=786433, t=17; the basic encryption/addition tests use N=8, q=65537, t=17. These finite deterministic tests are regression evidence, not a universal correctness proof.
+For base `B=2`, the gadget has `L=ceil(log_B(q))=41` levels. Each evaluation-key error coefficient has absolute value at most 1, and each unsigned digit coefficient is at most `B-1`. Thus
+`||e_ks||_infinity <= L*N*(B-1) = 328`.
 
-## Gadget relinearization (toy model)
+Adding the quotient, scale-bias, cross, product-error, rounding, and key-switch terms gives the exact-rational bound
+`||E_total||_infinity <= 257695.6176455859...`.
 
-The module now contains a coefficient-wise base-B relinearization experiment. For L = ceil(log_B(q)) digit levels, it generates evaluation-key pairs (b_j,a_j) satisfying:
-`b_j + a_j*s = B^j*s^2 + e_j (mod q)`.
-For each coefficient of c2, canonical base-B digits d_j are computed so that c2 = sum_j d_j B^j exactly as an integer in [0,q). The digit polynomials are then used to form:
-- c0' = c0 + sum_j d_j*b_j
-- c1' = c1 + sum_j d_j*a_j
+The decryption condition for phase `Delta*m12 + E_total` is
+`||E_total||_infinity < q/(2t) - (r/t)*||m12||_infinity`.
+For `||m12||_infinity <= 8`, the right-hand side is
+`32338577284.2647...`.
+Therefore the deterministic one-multiplication bound is strictly below the decoding margin for these toy parameters.
 
-Thus the switched phase is c0' + c1'*s = c0 + c1*s + c2*s^2 + sum_j d_j*e_j (mod q). The added key-switch error is the negacyclic polynomial sum of digit polynomials times the evaluation-key errors. The implementation is deterministic and uses tiny toy errors; it is not a secure evaluation key.
+This proof covers one multiplication and one relinearization only. It does not prove arbitrary multiplicative depth, security, constant-time execution, or correctness for the N=8192 RNS candidates.
 
-The regression test compares decryption before and after switching and compares the switched decryption to direct plaintext multiplication. This is only a selected toy test, not a proof of a general noise bound. A production implementation would need a reviewed error distribution, secure randomness, a carefully chosen gadget base and decomposition convention, and a formal bound for the resulting key-switch noise.
+## Executable validation
 
-The relinearization regression suite additionally checks bases B in {2,4,16} over 16 deterministic seeds per base. These finite tests are useful for catching implementation mistakes but do not replace a worst-case or probabilistic key-switch noise analysis.
+- Rust tests compare multiplication decryption with plaintext negacyclic multiplication for a fixed vector and 64 deterministic seeds.
+- Relinearization tests compare two-component and three-component decryption for gadget bases 2, 4, and 16 over 16 deterministic seeds per base.
+- `scripts/audit_toy_bfv_noise.py` recomputes the conservative bound using exact rational arithmetic and fails if it does not fit inside the decoding margin.
+- CI runs this audit alongside the existing arithmetic tests.
 
-## Deterministic key-switch error bound for the toy sampler
+## Explicit limitations
 
-For the implemented toy sampler, each evaluation-key error coefficient satisfies |e_{j,k}| <= 1. Each unsigned gadget digit coefficient satisfies 0 <= d_{j,k} <= B-1. For a negacyclic ring of dimension N, each coefficient of d_j*e_j is a signed sum of N products, hence
-`||d_j*e_j||_infinity <= N(B-1)`.
-With L = ceil(log_B(q)) digit levels, the coefficient-wise triangle inequality gives the deterministic bound
-`||e_ks||_infinity <= L*N*(B-1)`.
-For the toy test parameters N=8 and q=786433, this conservative bound is 160 for B=2 (L=20), 240 for B=4 (L=10), and 600 for B=16 (L=5).
-
-This bounds only the added key-switch error polynomial under the exact toy sampler and unsigned digit convention. It is not the complete post-multiplication noise bound, does not account for all BFV tensor-product and rounding terms, and cannot be transferred to the N=8192 RNS candidate parameters or a Gaussian RLWE implementation.
-
-## Exact bound for rounding and relinearization perturbations
-
-Let rho_0,rho_1,rho_2 be the coefficientwise scale-and-round residual polynomials, with ||rho_k||_infinity <= 1/2. Let s be the secret polynomial and let e_ks = sum_j d_j*e_j be the key-switch error polynomial. The perturbation contributed by these two mechanisms to the unrelinearized/relinearized phase comparison is
-`E_add = rho_0 + rho_1*s + rho_2*s^2 + e_ks`.
-For negacyclic convolution, ||a*b||_infinity <= ||a||_infinity ||b||_1. Therefore
-`||E_add||_infinity <= (1/2)(1 + ||s||_1 + ||s^2||_1) + ||e_ks||_infinity`.
-For the toy ternary secret, ||s||_1 <= N and ||s^2||_1 <= ||s||_1^2 <= N^2. Combining this with the previous toy key-switch bound gives
-`||E_add||_infinity <= (1/2)(1+N+N^2) + L*N*(B-1)`.
-At N=8, q=786433, B=2, L=20, this is at most 196.5. This is a rigorous bound on the rounding-plus-key-switch contribution only, under the stated integer-lift and ternary-error conventions.
-
-For a phase of the form Delta*m_bar + E, where m_bar is the centered plaintext representative and q=t*Delta+r with 0<=r<t, nearest-integer decryption is guaranteed if
-`||E||_infinity < q/(2t) - (r/t)*||m_bar||_infinity`.
-This follows from t(Delta*m_bar+E)/q - m_bar = (tE-r*m_bar)/q. It is a decoding condition, not a claim that the entire BFV multiplication error equals E_add. The input-encryption noise, plaintext-product quotient/reduction terms, and representative-lift contributions must still be included in a complete post-multiplication E bound. That complete bound remains open and is a required validation gate.
+The toy sampler is deterministic and non-cryptographic. No RLWE estimator, secure randomness, Gaussian sampler, production relinearization design, constant-time audit, or N=8192 RNS BFV integration is claimed. The bound is a correctness proof for this finite toy model, not a security argument or an IEEE-ready validation of the full scheme.
