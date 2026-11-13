@@ -82,11 +82,50 @@ def analyze(n):
     assert parity_checks == 3 ** n
 
 
+def audit_parity_only_fiber_counts():
+    """Check the exact number of ternary pairs compatible with each parity bit."""
+    from math import comb
+
+    pairs = ((a, b) for a in (-1, 0, 1) for b in (-1, 0, 1))
+    zero_parity = 0
+    one_parity = 0
+    for a, b in pairs:
+        parity = (a + b) & 1
+        if parity == 0:
+            zero_parity += 1
+        else:
+            one_parity += 1
+    assert (zero_parity, one_parity) == (5, 4)
+
+    # For m=N/2 independent coefficient pairs, h parity-one positions
+    # give exactly 5^(m-h) * 4^h compatible ternary secrets.
+    for m in range(1, 9):
+        total = sum(comb(m, h) * (5 ** (m - h)) * (4 ** h)
+                    for h in range(m + 1))
+        assert total == 9 ** m
+        # Under a uniform ternary secret, h ~ Binomial(m, 4/9).
+        probability_mass = sum(comb(m, h) * (4 ** h) * (5 ** (m - h))
+                               for h in range(m + 1)) / (9 ** m)
+        assert probability_mass == 1
+
+    m = 4096
+    typical_log2 = m * ((5 / 9) * 2.321928094887362 + (4 / 9) * 2)
+    initial_log2 = 8192 * 1.584962500721156
+    print(
+        "Parity-only information bound for N=8192: "
+        f"typical_log2_candidates={typical_log2:.3f}; "
+        f"initial_log2_secrets={initial_log2:.3f}; "
+        f"typical_log2_reduction={initial_log2 - typical_log2:.3f}; "
+        "pair_counts=(5,4); exact counting identities: PASS"
+    )
+
+
 def main():
     print(f"Ternary negacyclic-square fiber audit over Z/{Q}Z")
     print("The square map is sign-invariant; counts are exact for each toy N.")
     for n in DEGREES:
         analyze(n)
+    audit_parity_only_fiber_counts()
 
 
 if __name__ == "__main__":
