@@ -756,7 +756,7 @@ The implemented toy filters enumerate the coefficientwise ternary secret space. 
 3^{8192}\approx 10^{3,908.7}.
 \]
 
-Consequently, exhaustive enumeration is not a plausible production attack. Even if one candidate were checked in one nanosecond, enumerating the full space would take approximately 10^(3,891) seconds. This is only an illustrative lower-bound calculation for a deliberately unrealistic per-candidate cost; it is not a security estimate.
+Consequently, exhaustive enumeration is not a plausible production attack. Even if one candidate were checked in one nanosecond, enumerating the full space would take approximately 10^(3,899.7) seconds. This is only an illustrative lower-bound calculation for a deliberately unrealistic per-candidate cost; it is not a security estimate.
 
 A direct candidate check evaluates the public-key residual and the evaluation-key residuals, including negacyclic products. A straightforward implementation costs on the order of O(L N^2) ring-coefficient operations per candidate; fast polynomial multiplication can reduce the per-candidate arithmetic cost, but it does not make a search over 3^8192 candidates feasible.
 
