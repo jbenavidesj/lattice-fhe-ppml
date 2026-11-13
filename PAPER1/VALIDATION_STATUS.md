@@ -287,7 +287,7 @@ repeated-variable case. The raw-solution audit also checks integrality, all
 linear-row bounds, every auxiliary product, and direct transcript residuals
 against exact negacyclic arithmetic.
 
-Both validation workflow runs #? (43393204281 and 43393210492) completed
+Both validation workflow runs (IDs 43393204281 and 43393210492) completed
 successfully on commit
 `d2ebd22ed64afd2f367e1444cbb14d53c62c2a86`. The SageMath job passed the
 exact comparison against exhaustive enumeration for all eight unique-secret
