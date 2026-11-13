@@ -177,7 +177,7 @@ The staged-filtering Python audit completed successfully in CI run #472 on commi
 
 ## Adjacent-level linear prefilter result (2026-11-13)
 
-The new exhaustive toy audit uses (q=29), (B=3), eta=3, and (N=4,6,8), with 30 instances per degree. The transformed error support radius is 12, strictly below (q/2), so the centered-residue bound is exact. The Python audit passed in CI run #496 on the q=29 script revision.
+The new exhaustive toy audit uses (q=29), (B=3), eta=3, and (N=4,6,8), with 30 instances per degree. The transformed error support radius is 12, strictly below (q/2), so the centered-residue bound is exact. Eta=3 is intentionally a toy stress setting and differs from the implementation's eta=2 sampler; it is not a production-distribution model. The Python audit passed in CI run #496 on the q=29 script revision.
 
 The public equation already had median one candidate at every degree. The two linear cancellation filters modestly increased the number of unique-candidate instances: N=4, 23/30 to 27/30; N=6, 27/30 to 29/30; N=8 remained 30/30. Mean survivor counts fell from 1.300 to 1.100 at N=4 and from 1.267 to 1.033 at N=6. The subsequent three quadratic evaluation-key levels yielded one candidate in every tested instance. These data do not establish a practical attack or a production-scale speedup.
 
