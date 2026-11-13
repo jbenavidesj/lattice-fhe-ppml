@@ -15,15 +15,16 @@ lines = text.splitlines()
 # without delimiters (for example, s^2). Put these simple powers into inline
 # math mode before Pandoc emits LaTeX. Preserve already-delimited math.
 def normalize_plaintext_powers(line):
-    parts = re.split(r"(\\\\\\(.*?\\\\\\)|\\$.*?\\$|\\x60.*?\\x60)", line)
+    # Protect existing inline math and code spans from rewriting.
+    parts = re.split(r"(\\\(.*?\\\)|\$.*?\$|`.*?`)", line)
     for i in range(0, len(parts), 2):
         parts[i] = re.sub(
-            r"(?<![\\\\\\w])([A-Za-z][A-Za-z0-9]*)\\^([A-Za-z0-9]+)",
+            r"(?<![\w\\\\])([A-Za-z][A-Za-z0-9]*)\^([A-Za-z0-9]+)",
             lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
             parts[i],
         )
         parts[i] = re.sub(
-            r"([A-Za-z])\\^\\(([^)]+)\\)",
+            r"([A-Za-z])\^\(([^)]+)\)",
             lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
             parts[i],
         )
