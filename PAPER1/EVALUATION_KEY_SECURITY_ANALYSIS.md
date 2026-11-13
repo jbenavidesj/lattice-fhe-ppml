@@ -668,3 +668,21 @@ The marginal transformed relaxation was measurably weaker. For (q=17), 51/200 ev
 
 
 The subsequent reporting-only CI rerun #715 quantified uniqueness rather than only the mean count. The public-key equation alone left more than one candidate in 75/200 trials for (q=17) and 66/200 for (q=19). After the first evaluation-key level, the joint public-plus-evaluation filter was already unique in 187/200 and 192/200 trials, respectively; after the second level it was unique in 200/200 trials for both moduli. The evaluation-key-only filter became unique in 200/200 trials by stage 3 for (q=17) and stage 2 for (q=19). All 200 trials at each modulus retained at least one candidate at every stage, consistent with the planted secret being included. These uniqueness counts are specific to the seeded toy distributions and the nine-element search space.
+
+
+## 19. Dimension-growth toy audit: (N=3,4) (CI run #722)
+
+The successful SageMath job in CI run #722 extended the exhaustive ternary-candidate experiment from (N=2) to (N=3) and (N=4). Each new parameter pair used (q\in\{17,19\}), (B=2), six evaluation-key levels, (eta=2) centered-binomial errors, and 100 seeded transcripts. The candidate spaces therefore contained 27 and 81 secrets, respectively.
+
+| (N) | (q) | Candidate space | Mean candidates after public key | Public-key ambiguity | Joint unique after level 0 | After level 1 | After level 2 | Trials with any coarse joint extras |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 17 | 27 | 1.99 | 48/100 | 96/100 | 98/100 | 100/100 | 1/100 |
+| 3 | 19 | 27 | 1.63 | 36/100 | 94/100 | 99/100 | 100/100 | 2/100 |
+| 4 | 17 | 81 | 1.49 | 26/100 | 98/100 | 100/100 | 100/100 | 2/100 |
+| 4 | 19 | 81 | 1.48 | 16/100 | 100/100 | 100/100 | 100/100 | 0/100 |
+
+Here level 0 is the first evaluation-key equation, level 1 the second, and level 2 the third. All trials retained at least one candidate at every stage; the planted secret was explicitly asserted to survive. For all four parameter pairs, the exact anchor-plus-differences filter equaled the original-residual filter at every stage, both evaluation-only and jointly with the public-key equation.
+
+The marginal relaxation was strictly weaker in the evaluation-only experiment: it admitted extra candidates in 30/100, 16/100, 19/100, and 7/100 trials for ((N,q)=(3,17),(3,19),(4,17),(4,19)), respectively. For the joint public-plus-evaluation filter, the corresponding counts were 1/100, 2/100, 2/100, and 0/100; the maximum number of extra candidates in any joint trial was one.
+
+**Scope.** These experiments are exhaustive only over the (3^N) ternary candidates for (N\le4), use deliberately tiny moduli, and have 100 trials per setting. They show how the constraints behave in this finite toy model and verify implementation-level equivalence of the exact reparameterization. They do not provide an asymptotic algorithm, a production-parameter attack, a probability estimate for (N=8192), or a concrete security bound. The public-key-only filter is already unique in a substantial fraction of these toy trials, so joint uniqueness must not be attributed entirely to evaluation-key equations.
