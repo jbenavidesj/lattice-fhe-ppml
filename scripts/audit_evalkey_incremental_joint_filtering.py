@@ -203,6 +203,37 @@ def run_case(label, n, q, B, levels, trials):
           f"{sum(any(v > 0 for v in r[2]['joint']) for r in rows)}/{trials}")
     print(f"max_eval_only_coarse_extra={max(max(r[2]['eval']) for r in rows)}")
     print(f"max_joint_coarse_extra={max(max(r[2]['joint']) for r in rows)}")
+    print("conditional_joint_filtering_by_public_key_ambiguity")
+    for group_name, predicate in (
+        ("public_key_ambiguous", lambda count: count > 1),
+        ("public_key_unique", lambda count: count == 1),
+    ):
+        selected = [r for r in rows if predicate(r[0])]
+        group_size = len(selected)
+        print(f"  group={group_name}; trials={group_size}/{trials}")
+        if not selected:
+            continue
+        previous_counts = [r[0] for r in selected]
+        for j in range(levels):
+            current_counts = [r[1]["joint_original"][j] for r in selected]
+            unique_count = sum(v == 1 for v in current_counts)
+            nonempty_count = sum(v > 0 for v in current_counts)
+            newly_unique = sum(
+                previous > 1 and current == 1
+                for previous, current in zip(previous_counts, current_counts)
+            )
+            mean_removed = mean(
+                previous - current
+                for previous, current in zip(previous_counts, current_counts)
+            )
+            print(
+                f"    stage_{j}: mean_joint_survivors={mean(current_counts):.4f}; "
+                f"unique={unique_count}/{group_size}; "
+                f"newly_unique={newly_unique}/{group_size}; "
+                f"nonempty={nonempty_count}/{group_size}; "
+                f"mean_candidates_removed_this_stage={mean_removed:.4f}"
+            )
+            previous_counts = current_counts
 
 
 def main():
