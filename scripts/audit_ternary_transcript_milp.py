@@ -137,7 +137,13 @@ def milp_survivors(n, q, base, levels, masks, bodies, parity_constraints):
                     uj = up[j] if sj == 1 else um[j]
                     model.constraint({p: 1, ui: -1}, -np.inf, 0)
                     model.constraint({p: 1, uj: -1}, -np.inf, 0)
-                    model.constraint({p: 1, ui: -1, uj: -1}, -1, np.inf)
+                    # When i == j and si == sj, ui and uj are the
+                    # same binary variable. A dict literal would silently
+                    # overwrite one -1 coefficient; accumulate it as -2.
+                    lower_product = {p: 1}
+                    lower_product[ui] = lower_product.get(ui, 0) - 1
+                    lower_product[uj] = lower_product.get(uj, 0) - 1
+                    model.constraint(lower_product, -1, np.inf)
 
     if parity_constraints:
         for k in range(n):
