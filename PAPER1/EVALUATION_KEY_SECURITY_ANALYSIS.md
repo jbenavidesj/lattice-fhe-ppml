@@ -58,3 +58,31 @@ The reviewer must work with the exact four-prime Q, N=8192, t=65537, B=2^16, L=1
 The format exposes 14 structured, related RLWE-like samples with a common secret-dependent target s^2. The simple linear-combination identities above do not by themselves demonstrate a break, but they also prevent us from silently treating the samples as ordinary RLWE. Security remains unresolved pending a ring-aware, joint public-key/evaluation-key analysis and independent cryptographic review.
 
 Until then, describe the construction as an experimental RNS-BFV prototype, not a security-validated FHE scheme.
+
+## Joint-sample model: a more precise formulation
+
+Write the published equation as
+\(b_j=-a_js+B^js^2+e_j\pmod Q\). Equivalently, in the product ring \(R_Q^2\), it is a linear observation of the *related secret pair* \((s,s^2)\):
+\[b_j=\langle(-a_j,B^j),(s,s^2)\rangle+e_j\pmod Q.\]
+This is only an algebraic rewriting. It is **not** a standard rank-two RLWE instance: the second public coordinate is the known scalar polynomial \(B^j\), not an independently uniform ring element, and the two secret coordinates are algebraically dependent. Consequently, standard rank-two RLWE estimators or sample-count heuristics cannot be applied without a reduction or a justified distributional transformation.
+
+The conventional public-key sample has a different form, \(b_{pk}=-a_{pk}s+e_{pk}\pmod Q\), with uniform \(a_{pk}\). The joint public transcript therefore contains one ordinary-looking RLWE relation plus the 14 structured related-target equations. A security analysis must treat the entire transcript as one distribution, rather than estimating the public key and evaluation key separately and adding nominal bit-security figures.
+
+### What the current implementation establishes
+
+- The source generates each \(a_j\) independently and uniformly in \(R_Q\), and samples each coefficient of \(e_j\) from the eta=2 centered-binomial support \([-2,2]\).
+- The implementation uses \(B=2^{16}\), \(L=14\), and \(N=8192\).
+- `gadget_decompose_centered` reconstructs each coefficient's centered CRT lift as a signed magnitude and emits ordinary base-\(B\) digits with the same sign. Thus each digit coefficient has magnitude at most \(B-1\), and the integer digit identity is exact for the centered lift.
+- The relinearization phase error is \(\sum_j d_je_j\). For negacyclic convolution, \(\|d_je_j\|_\infty\le\|d_j\|_\infty\|e_j\|_1\), while the sampler support gives \(\|e_j\|_1\le2N\). Hence the deterministic bound \(L(B-1)2N=15,032,156,160\) is valid under the documented sampler and decomposition assumptions.
+
+These are implementation and correctness facts, not evidence that recovering the secret is hard. The exhaustive unit test verifies the evaluation-key phase relation and CRT consistency for generated samples; it is not a cryptanalytic test.
+
+### Concrete next cryptanalytic tasks
+
+1. Formulate the exact joint distribution of \((a_{pk},b_{pk},(a_j,b_j)_{j=0}^{L-1})\), including the secret distribution and all error distributions.
+2. Determine whether the known scalar sequence \(1,B,\ldots,B^{L-1}\) permits useful modular combinations after centered-lift analysis. Any claim of a small-error derived equation must bound the *centered representative* of every transformed error, not merely its symbolic expression.
+3. Test algebraic attacks exploiting the coefficientwise ternary constraint and the relation \(s^2=s\cdot s\) in \(R_Q\). Distinguish attacks on the integer lift from attacks modulo \(Q\).
+4. Evaluate whether repeated evaluation-key publication under the same secret changes the attack surface. The current generator produces one set of levels, but an API that republishes independent sets would create additional related samples.
+5. Obtain an independent specialist review before assigning any concrete security level.
+
+No attack or reduction is established by this note. Until the above work is completed, the security status remains unresolved.
