@@ -371,3 +371,36 @@ The rank-6 vector has lower variance and a narrower central 99% interval, but su
 This demonstrates why variance alone is inadequate for assessing a discrete error distribution. The exact PMF is a one-coefficient marginal for one fixed linear combination. It does not give a security estimate, does not model the joint distribution across all thirteen transformed equations, and does not establish that a lattice attack can exploit this vector. The cross-equation dependence inherited from the original fourteen errors must be retained in any attack analysis.
 
 The reproducible implementation is `scripts/audit_evalkey_weighted_error_distribution.py`; it is run by the SageMath workflow and its output is uploaded as `evalkey-weighted-error-distribution.txt`.
+
+
+## 7. Joint law of all thirteen adjacent-cancellation errors
+
+For one fixed polynomial coefficient position, write the fourteen independent eta=2 errors as
+\[
+e=(e_0,\ldots,e_{13})^T,\qquad z=De,
+\]
+where \(D\in\mathbb Z^{13\times14}\) has entries \(D_{j,j}=-B\) and \(D_{j,j+1}=1\). The exact covariance matrix is
+\[
+C=DD^T=
+\begin{pmatrix}
+B^2+1&-B&0&\cdots&0\\
+-B&B^2+1&-B&\ddots&\vdots\\
+0&-B&B^2+1&\ddots&0\\
+\vdots&\ddots&\ddots&\ddots&-B\\
+0&\cdots&0&-B&B^2+1
+\end{pmatrix}.
+\]
+It is strictly diagonally dominant, with margin \((B-1)^2=4,294,836,225>0\), hence positive definite. Its exact determinant, obtained by the continuant recurrence \(d_0=1\), \(d_1=B^2+1\), \(d_n=(B^2+1)d_{n-1}-B^2d_{n-2}\), is
+\[
+\det C=
+169230328049705647537258792534764699379076729544064679608111008719715824544689093686379525903645691337158953059330845948510209.
+\]
+The nonzero adjacent off-diagonal entries prove that neighboring transformed errors are statistically dependent; zero non-adjacent covariance does not imply mutual independence of all thirteen coordinates.
+
+The full one-coefficient joint characteristic function is available exactly in factorized form. Since an eta=2 variable has characteristic function \(\varphi_X(u)=\cos^4(u/2)\), for \(t\in\mathbb R^{13}\),
+\[
+\varphi_z(t)=\prod_{k=0}^{13}\cos^4\!\left(\frac{(D^Tt)_k}{2}\right),
+\]
+where \((D^Tt)_0=-Bt_0\), \((D^Tt)_k=t_{k-1}-Bt_k\) for \(1\le k\le12\), and \((D^Tt)_{13}=t_{12}\). This is the exact discrete joint law in characteristic-function form, not a Gaussian approximation. Under independent coefficient sampling, the coefficient-position vectors are independent before any ring multiplication or other polynomial transformation is applied.
+
+The reproducible audit is `scripts/audit_evalkey_joint_error_covariance.py`. It checks the exact integer covariance entries, determinant recurrence, strict diagonal-dominance margin, and prints the characteristic-function factorization. This is a distributional characterization of the derived errors; it does not by itself give an attack, distinguisher, secret-recovery method, or security estimate.
