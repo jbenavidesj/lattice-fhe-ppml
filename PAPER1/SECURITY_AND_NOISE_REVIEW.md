@@ -101,3 +101,8 @@ The tiny-ring model's proof in `PAPER1/BFV_TOY_SPEC.md` remains specific to N=8,
 - [ ] Independent cryptographic review and reproducibility of the security/correctness analysis.
 
 Until every relevant gate is passed, describe the work as an experimental RNS arithmetic/key-generation prototype, not as a secure or publication-validated FHE scheme.
+
+
+## Structured evaluation-key model
+
+See `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` for the joint related-secret formulation of the evaluation-key transcript, implementation-grounded decomposition bounds, and unresolved algebraic attack questions. The 14 equations are not ordinary independent RLWE samples; the known scalar sequence `B^j` and dependent secret pair `(s,s^2)` must be modeled jointly with the public-key sample. No concrete security estimate is established.
