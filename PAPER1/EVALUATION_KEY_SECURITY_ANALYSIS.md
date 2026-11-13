@@ -113,6 +113,19 @@ and \(\operatorname{Cov}(e'_j,e'_k)=0\) for \(|j-k|>1\). The adjacent correlatio
 
 For B=65536, the individual coefficient variance is 4,294,967,297 and the standard deviation is approximately 65,536.000008. This standard deviation is descriptive, not a replacement for the exact discrete law or a proof that a Gaussian estimator is valid. The support bound remains 131,074.
 
+For the thirteen-level transformed error vector at one fixed polynomial coefficient, the full covariance matrix is the tridiagonal matrix
+\[
+\Sigma=
+\begin{pmatrix}
+1+B^2&-B&0&\cdots&0\\
+-B&1+B^2&-B&\ddots&\vdots\\
+0&-B&1+B^2&\ddots&0\\
+\vdots&\ddots&\ddots&\ddots&-B\\
+0&\cdots&0&-B&1+B^2
+\end{pmatrix}\in\mathbb Z^{13\times13}.
+\]
+The transformed coefficient vector is independent of this error vector because all original uniform coefficients and error samples are generated independently. Across different polynomial coefficient positions, the transformed error vectors are independent under the coefficientwise sampler. This describes the exact second moments and dependence pattern; it does not replace the discrete joint probability law needed by an attack or estimator.
+
 ### Correct interpretation of the transformed samples
 
 The map from \((a_0,\ldots,a_{L-1})\) to \((a_1-Ba_0,\ldots,a_{L-1}-Ba_{L-2})\) is a surjective linear map over \(R_Q\): its matrix has a unit coefficient on each successive pivot. Therefore the transformed coefficient vector is jointly uniform. This does not make the errors independent, and the transformed transcript is a deterministic function of the original transcript. The transformation is a cryptanalytic viewpoint, not additional leakage beyond the published key.
