@@ -521,3 +521,12 @@ The present MITM implementation is useful for exact toy-instance cross-checks an
 | 8192 | 61 | 6492.0 | 6633.6 | 6510.8 |
 
 The payload column is a lower-bound accounting of the coefficient-residue payload in both tables, not a realistic RAM forecast. Actual Python hash-table and object overhead would be substantially larger.
+
+
+## 12. What does the square s^2 reveal about a ternary secret?
+
+To isolate the information content of the quadratic component, scripts/audit_ternary_square_fibers.py exhaustively enumerates all ternary secrets for N in {2,4,6,8}, maps each to its negacyclic square modulo q=65537, and measures the exact fiber sizes of this map. It also checks the coefficient-parity identity on every enumerated secret.
+
+A necessary ambiguity is immediate: s and -s have the same square. Therefore the square component alone cannot uniquely determine any nonzero secret, even if s^2 were revealed without noise. Additional collisions, if present, are measured by the fiber histogram rather than assumed away.
+
+This is an information-content diagnostic only. In the actual evaluation-key transcript, s^2 is not directly revealed: it appears mixed with secret-dependent linear terms and bounded errors. The toy fiber counts therefore do not model a complete attack, do not account for the public-key equation, and cannot be interpreted as security estimates.
