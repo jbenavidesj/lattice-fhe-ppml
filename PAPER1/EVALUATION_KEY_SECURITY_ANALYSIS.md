@@ -86,3 +86,20 @@ These are implementation and correctness facts, not evidence that recovering the
 5. Obtain an independent specialist review before assigning any concrete security level.
 
 No attack or reduction is established by this note. Until the above work is completed, the security status remains unresolved.
+## Adjacent-level cancellation: exact result
+
+Define \(y_j=b_j+a_js=B^js^2+e_j\). For each adjacent pair of levels, subtracting \(B y_j\) from \(y_{j+1}\) cancels the target exactly:
+\[
+b_{j+1}-Bb_j+(a_{j+1}-Ba_j)s=e_{j+1}-Be_j\pmod Q.
+\]
+Thus each adjacent pair yields a derived RLWE-shaped equation with a uniform-looking coefficient \(a'_j=a_{j+1}-Ba_j\) and error \(e'_j=e_{j+1}-Be_j\). Since the original \(a_j\) are independent uniform ring elements and the adjacent-difference map has full row rank (the coefficient of \(a_{j+1}\) is 1), the vector \((a'_0,\ldots,a'_{L-2})\) is jointly uniform over \(R_Q^{L-1}\).
+
+However, the errors are not independent across j: \(e'_j\) and \(e'_{j+1}\) both contain \(e_{j+1}\). Each coefficient of an individual derived error has absolute value at most \(2(1+B)=131,074\) before reduction modulo Q. Therefore this transformation exposes up to 13 correlated RLWE-shaped samples with a wider error distribution, not 13 independent standard eta=2 samples. The derived equations are deterministic functions of the original evaluation-key transcript and do not add information in an information-theoretic sense; they provide a useful alternative view for cryptanalysis.
+
+**Interpretation:** the cancellation is exact and the uniformity claim concerns the joint coefficient vector only. It does not establish a practical attack. A proper estimator would need to handle the correlated error vector and its exact distribution; feeding 13 independent samples with a Gaussian error of guessed width into a conventional estimator would be an unjustified approximation. The next review should compare attacks on the original related-target transcript with attacks on this transformed correlated-error transcript.
+
+### Coefficientwise support calculation
+
+For eta=2 centered-binomial errors, each original coefficient lies in [-2,2]. Hence
+\[|e'_{j,k}|=|e_{j+1,k}-B e_{j,k}|\le 2+2B=131,074.\]
+This is a support bound on the unreduced integer expression. The actual public equation is modulo Q; centered modular representatives may wrap, so any lattice embedding or estimator must preserve the modular distribution rather than treating this support bound as a Gaussian standard deviation.
