@@ -383,11 +383,11 @@ mod tests {
     fn is_prime_u64(n: u64) -> bool {
         if n < 2 { return false; }
         for p in [2u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] {
-            if n % p == 0 { return n == p; }
+            if n.is_multiple_of(p) { return n == p; }
         }
         let mut d = n - 1;
         let mut s = 0u32;
-        while d % 2 == 0 {
+        while d.is_multiple_of(2) {
             d /= 2;
             s += 1;
         }
