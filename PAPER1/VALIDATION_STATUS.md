@@ -72,3 +72,8 @@ The evaluation-key security note now derives the exact adjacent-level identity `
 ## Ternary-square parity audit and interpretation
 
 `scripts/verify_ternary_square_parity.py` checks the exact negacyclic-square identity modulo 2 for deterministic random ternary inputs at several even toy degrees. The CI run on commit `e5709b1123ebec73d457b2f7d5943dc9cbfcbe37` (run #339) completed successfully: both Python arithmetic audits and Rust tests/formatting/Clippy/benchmark compilation passed. The analysis note now explicitly explains why this identity is not directly observable from public residues modulo odd Q and why the unknown `a_j*s` term prevents treating it as a direct parity leak. No parity distinguisher or key-recovery algorithm has been demonstrated.
+
+
+## Toy exhaustive related-key candidate experiment
+
+Added `scripts/toy_evalkey_exhaustive_search.py` and `PAPER1/TOY_EVALUATION_KEY_EXPERIMENT.md`. A local deterministic run (seed `0xBF2`, 30 trials per degree) over toy rings `Z_11[X]/(X^N+1)` with `N=4,6,8`, base 3, three evaluation-key levels, and eta=2 errors yielded median surviving ternary candidates of 3.5/7.5/11 using only the public-key sample, versus 1/1/1 when the evaluation-key samples were also imposed. The planted secret remained among the candidates in every trial. These are deliberately tiny exhaustive-search results, not a production-parameter attack, security estimate, or extrapolation to N=8192. The script is now included in the Python CI job; CI for the latest workflow edit is pending and has not yet been claimed as passing.
