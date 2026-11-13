@@ -274,3 +274,33 @@ multiplication rule. Bajard et al. (SAC 2016, DOI
 techniques; therefore no novelty claim is made for full-RNS FV or for
 eliminating multiprecision arithmetic in general. The remaining comparison
 must identify the precise implementation-level and validation differences.
+
+## Exact ternary-transcript MILP correction (2026-11-13)
+
+The tiny-ring MILP audit exposed a modeling bug in the binary-product linearization:
+when a diagonal product used the same binary indicator twice (i=j and equal
+signs), a Python dictionary literal overwrote one of the two -1 coefficients
+in the lower McCormick constraint. The resulting constraint did not enforce
+p = u_i^2 = u_i for a binary indicator and allowed invalid square coefficients.
+The lower-bound coefficients are now accumulated explicitly, including the
+repeated-variable case. The raw-solution audit also checks integrality, all
+linear-row bounds, every auxiliary product, and direct transcript residuals
+against exact negacyclic arithmetic.
+
+Both validation workflow runs #? (43393204281 and 43393210492) completed
+successfully on commit
+`d2ebd22ed64afd2f367e1444cbb14d53c62c2a86`. The SageMath job passed the
+exact comparison against exhaustive enumeration for all eight unique-secret
+cases at q=257 (N=2,4; four seeds each), and both ambiguous stress cases:
+N=2,q=7 (6 survivors) and N=4,q=7 (8 survivors). MILP without parity and
+with the redundant parity constraints produced exactly the same survivor
+sets as the exhaustive oracle in every case. The independent raw-solution
+checks also passed. Python arithmetic audits and Rust tests/benchmark
+compilation passed in both runs.
+
+This closes the identified toy MILP encoding defect and validates this
+finite-domain model on the tested toy instances only. It does not validate
+scalability to production parameters, demonstrate a secret-recovery attack,
+or establish any concrete security estimate. The PR remains open and the
+broader independent cryptographic reviews and publication gates above remain
+outstanding.
