@@ -27,7 +27,9 @@ Reference comparison from the estimator's HE Standard v2 parameter set:
 - secret: ternary
 - error: discrete Gaussian, standard deviation 3.19
 
-For each model the script evaluates m=N and m=infinity. The m=N setting treats one polynomial RLWE sample as N scalar LWE equations after unrolling; the m=infinity setting is a sample-rich sensitivity case. Neither removes the ring structure, so neither is a proof against ring-specific attacks. Evaluation-key samples are not counted as ordinary LWE samples.
+For each model the script evaluates m=N and m=infinity. The m=N setting is a deliberately simplified scalar-LWE proxy with N equations and the same nominal secret dimension; it is **not** an exact distributional equivalence to one polynomial RLWE sample. Unrolling a polynomial sample produces a highly structured negacyclic matrix, whereas generic LWE estimators model matrices from their own sampling assumptions. The m=infinity setting is a sample-rich sensitivity case, not a claim that the implementation exposes infinitely many independent samples. Neither setting removes the ring structure, and neither is a proof against ring-specific attacks. Evaluation-key samples are not counted as ordinary LWE samples.
+
+The estimator's reported work factors are conditional heuristic estimates under its attack coverage, cost model, shape model, and input distributions. They are not a proven lower bound on attack cost, not a concrete security level for the scheme, and not a substitute for analysis of the joint public-key/evaluation-key distribution. In particular, do not convert the minimum reported \\(\\log_2(\\mathrm{rop})\\) into a "bits of security" claim without clearly retaining the proxy label and all model qualifications.
 
 ## Reproduction
 
@@ -44,6 +46,7 @@ Preserve the full output. Record the Sage version, estimator commit, exact param
 ## Interpretation
 
 - The candidate's eta=2 error is narrower than the Gaussian-3.19 reference; the resulting security estimate may be substantially lower.
+- The candidate's Q is 218 bits and its eta=2 centered-binomial error has standard deviation 1; the reference uses a 214-bit power-of-two modulus and Gaussian standard deviation 3.19. These two parameter changes act together, so the comparison is diagnostic rather than a controlled one-variable comparison.
 - The candidate's Q is larger than the HE Standard v2 comparison q. Both differences affect security, and their effects cannot be inferred by a simple bit-length subtraction.
 - A result from this script must be labelled an unstructured-LWE proxy under the power-of-two RLWE heuristic. It must not be called a proved Ring-LWE security level.
 - A separate analysis is required for the evaluation-key exposure, secret-dependent implementation details, and algebraic/structural attacks.
