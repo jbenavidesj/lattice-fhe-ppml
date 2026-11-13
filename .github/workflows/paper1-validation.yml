@@ -93,6 +93,8 @@ jobs:
           cat sage-lwe-proxy-output.txt
           exit "$status"
       - name: Audit exact weighted evaluation-key error distributions
+        env:
+          EVALKEY_PARETO_MODE: "1"
         run: |
           set +e
           sage -python scripts/audit_evalkey_weighted_error_distribution.py > evalkey-weighted-error-distribution.txt 2>&1
