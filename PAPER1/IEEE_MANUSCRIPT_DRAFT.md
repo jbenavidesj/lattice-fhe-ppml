@@ -237,3 +237,8 @@ A dimension sweep for the Paper 1 modulus and eta=2 gives the following base-2 r
 ### Information content of the ternary square
 
 An exhaustive toy audit measures the fibers of the map s -> s^2 in the negacyclic ring for ternary secrets at N in {2,4,6,8}. At minimum, the map is globally sign-invariant: s and -s produce the same square. Thus even an exact, noiseless disclosure of s^2 cannot uniquely identify a nonzero ternary secret without additional information. The experiment also measures any further collisions in these small rings. This is not a model of the complete evaluation-key transcript, where s^2 is mixed with secret-dependent linear terms and noise, and it does not establish a practical attack or a security bound.
+
+
+### Stagewise information from public and evaluation-key equations
+
+A new exhaustive toy experiment filters all ternary candidates first by the public-key equation and then sequentially by each of fourteen original evaluation-key equations, using the exact centered-binomial eta=2 residual support at every stage. It records mean and maximum survivor counts and checks that the planted secret survives. The tested dimensions are N=2, 4, and 6 only. The transcript generator uses independent uniform a-vectors and independent centered-binomial errors as an explicit toy model. These counts describe information accumulation in that synthetic model; they are not a production attack, a proof of independence in the actual key-generation procedure, or a security estimate.
