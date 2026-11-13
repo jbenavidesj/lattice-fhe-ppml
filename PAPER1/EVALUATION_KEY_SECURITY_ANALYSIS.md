@@ -530,3 +530,12 @@ To isolate the information content of the quadratic component, scripts/audit_ter
 A necessary ambiguity is immediate: s and -s have the same square. Therefore the square component alone cannot uniquely determine any nonzero secret, even if s^2 were revealed without noise. Additional collisions, if present, are measured by the fiber histogram rather than assumed away.
 
 This is an information-content diagnostic only. In the actual evaluation-key transcript, s^2 is not directly revealed: it appears mixed with secret-dependent linear terms and bounded errors. The toy fiber counts therefore do not model a complete attack, do not account for the public-key equation, and cannot be interpreted as security estimates.
+
+
+## 13. Stagewise candidate filtering by the public key and evaluation keys
+
+scripts/audit_evalkey_stagewise_filtering.py enumerates every ternary candidate for tiny negacyclic rings and measures the survivor count after (i) the public-key equation and (ii) each original evaluation-key equation in sequence. Each stage uses the original centered-binomial eta=2 support; no transformed wide-box approximation is used. The synthetic transcript follows b_pk = e_pk - a_pk*s and b_j = B^j*s^2 - a_j*s + e_j.
+
+The experiment reports the mean and maximum survivor counts at each stage and verifies that the planted secret survives every filter. It runs N=2, q=23 with two evaluation levels, and N=4 and N=6, q=65537 with fourteen levels. Since the candidate space is at most 3^6, this is strictly an information-accounting toy experiment.
+
+The random a-vectors are sampled independently and uniformly and the errors are independently sampled from the centered-binomial eta=2 distribution. This is an explicit synthetic model; it must not be confused with a proof that the complete production evaluation-key transcript consists of independent samples. Candidate-survivor counts are conditional on this toy generator and do not imply a practical attack or a concrete security level.
