@@ -702,3 +702,27 @@ The SageMath job in GitHub Actions run #729 completed successfully on commit `2b
 All four settings retained a nonempty candidate set at every stage, and the planted secret was retained. The exact anchor-plus-adjacent-differences filter equaled the original-residual filter at every stage for both evaluation-only and joint filtering. The coarse marginal relaxation admitted extra evaluation-only candidates in 4/50, 2/50, 2/30, and 4/30 trials, respectively; it admitted no extra candidates in the joint public-plus-evaluation filter in any of these four settings.
 
 **Interpretation and scope.** In these finite toy distributions, public-key ambiguity remained in a measurable subset of trials, while the conjunction with the first evaluation-key equation was unique in all trials. This supports the limited observation that the evaluation-key constraints can disambiguate the candidate set left by the public-key equation in these toy instances. The evaluation-only results also show progressive filtering, reaching uniqueness by stage 1 in all four settings. These experiments enumerate at most 729 ternary candidates, use tiny moduli and only six levels, and do not demonstrate scalable secret recovery, production-parameter key uniqueness, an attack on (N=8192), or a concrete security estimate. The exact transformed system is an equivalent representation of the original constraints, not an additional source of information. The SageMath job also completed the separate modular-kernel relation diagnostic; its own log explicitly cautions that the derived samples are correlated and that no secret-recovery attack or concrete security estimate is performed.
+
+
+## 21. Conditional disambiguation by evaluation-key level (CI run #734)
+
+GitHub Actions run #734 completed successfully on commit `521d30278d101f88f9e84b6601edca0c7c562663`; the Python arithmetic audits, Rust tests/benchmark compilation, and SageMath diagnostic all passed. The incremental-filtering audit now stratifies each transcript according to whether the public-key equation alone leaves multiple ternary candidates (`public_key_ambiguous`) or exactly one (`public_key_unique`). The reported `newly_unique` count at a stage is the number of transcripts in that group that become unique for the first time after adding that evaluation-key level.
+
+| (N) | (q) | Trials | Public-key ambiguous | Newly unique at level 0 | At level 1 | At level 2 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 17 | 200 | 75 | 62/75 | 13/75 | 0/75 |
+| 2 | 19 | 200 | 66 | 58/66 | 7/66 | 1/66 |
+| 3 | 17 | 100 | 48 | 44/48 | 2/48 | 2/48 |
+| 3 | 19 | 100 | 36 | 30/36 | 5/36 | 1/36 |
+| 4 | 17 | 100 | 26 | 24/26 | 2/26 | 0/26 |
+| 4 | 19 | 100 | 16 | 16/16 | 0/16 | 0/16 |
+| 5 | 17 | 50 | 18 | 18/18 | 0/18 | 0/18 |
+| 5 | 19 | 50 | 10 | 10/10 | 0/10 | 0/10 |
+| 6 | 17 | 30 | 11 | 11/11 | 0/11 | 0/11 |
+| 6 | 19 | 30 | 8 | 8/8 | 0/8 | 0/8 |
+
+Across these ten low-modulus settings, the public-key equation was ambiguous in 314 of 960 transcripts. The first evaluation-key level made 281 of those 314 transcripts unique; the second level made another 29 unique; and the third level resolved the remaining four. Thus all 314 initially ambiguous transcripts were unique after at most three evaluation-key levels in this finite experiment. In the complementary public-key-unique groups, the joint candidate count was already one and no additional candidates were removed by the evaluation-key constraints.
+
+The audit also included five higher-modulus settings: (N=2,q=257) with 40 trials; (N=4,q=65,537) with 20; (N=6,q=65,537) with 10; and (N=8,q=65,537) with 3, plus the additional (N=8,q=65,537,B=4) scaled-sanity case with 10 trials. In the corresponding reported configurations, the public-key equation was already unique in every trial, so these settings provide no conditional evidence that evaluation keys resolve public-key ambiguity.
+
+**Interpretation and limitations.** The conditional measurement isolates the marginal filtering effect of the evaluation-key equations only on transcripts where the public-key equation initially leaves multiple candidates. It avoids crediting evaluation keys for uniqueness already supplied by the public key. The results show strong disambiguation in these deliberately small exhaustive spaces, but the largest ternary search contains only 729 candidates in the low-modulus dimension sweep; the higher-modulus cases likewise have public-key-only uniqueness. These are synthetic finite-instance diagnostics, not scalable secret recovery, an attack on the production ring dimension (N=8192), a concrete security estimate, or evidence that production evaluation keys are exploitable. The exact anchor-plus-differences filter continued to equal the original residual filter at every tested stage, and all tested groups remained nonempty with the planted secret retained. The separate modular-kernel diagnostic also explicitly reports correlated derived samples and performs no secret-recovery attack or concrete security estimate.
