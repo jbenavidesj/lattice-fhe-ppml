@@ -12,11 +12,15 @@ The parameter instance is:
 - public-key and encryption errors sampled from centered-binomial \(\eta=2\), support \([-2,2]\);
 - gadget base \(B=2^{16}\), \(L=14\) digits.
 
-The auxiliary nine-prime NTT/CRT basis used by the integer tensor-product routine has a 468-bit product \(P\), and the executable audit verifies
+The auxiliary nine-prime NTT/CRT basis used by the integer tensor-product routine has a 468-bit product \(P\). For any *single* product of two centered input polynomials, each coefficient has absolute value at most
 \[
-2P>NQ^2,
+N(Q/2)^2.
 \]
-which is equivalent to \(P>2N(Q/2)^2\). Thus it uniquely recovers the signed integer coefficients of each tensor product from the bound on centered input lifts.
+The centered CRT reconstruction is therefore unique when
+\[
+P>2N(Q/2)^2=NQ^2/2,
+\]
+which the Rust unit test checks as \(2P>NQ^2\). An important implementation detail is that the cross component is **not** reconstructed as one combined convolution: \`src/rns.rs\` computes \(\hat c_0\hat d_1\) and \(\hat c_1\hat d_0\) in two separate exact auxiliary-CRT calls, reconstructs each signed product independently under this bound, and only then adds their \`BigInt\` coefficient vectors. Thus the single-product CRT bound is sufficient for all three tensor components. The subsequent addition is exact integer arithmetic and does not require a larger auxiliary CRT modulus.
 
 ## 1. Input encryption error
 
