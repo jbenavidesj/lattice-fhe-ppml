@@ -281,12 +281,10 @@ def main():
             coordinate_order = list(results)
             shift = _ % len(coordinate_order)
             coordinate_order = coordinate_order[shift:] + coordinate_order[:shift]
-            coordinate_order.append(adaptive["k"])
-            for k in coordinate_order:
-                result = (
-                    adaptive_result if k == adaptive["k"] and
-                    coordinate_order.count(k) == 2 else results[k]
-                )
+            work_items = [(k, False) for k in coordinate_order]
+            work_items.append((adaptive["k"], True))
+            for k, is_adaptive in work_items:
+                result = adaptive_result if is_adaptive else results[k]
                 final_stats = None
                 for _repeat in range(TIMING_REPEATS):
                     start = time.perf_counter()
