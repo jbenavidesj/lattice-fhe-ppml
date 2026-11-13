@@ -11,6 +11,26 @@ target = Path("build/IEEE_MANUSCRIPT.md")
 text = source.read_text(encoding="utf-8")
 lines = text.splitlines()
 
+# Markdown prose occasionally contains compact mathematical notation written
+# without delimiters (for example, s^2). Put these simple powers into inline
+# math mode before Pandoc emits LaTeX. Preserve already-delimited math.
+def normalize_plaintext_powers(line):
+    parts = re.split(r"(\\\\\\(.*?\\\\\\)|\\$.*?\\$|\\x60.*?\\x60)", line)
+    for i in range(0, len(parts), 2):
+        parts[i] = re.sub(
+            r"(?<![\\\\\\w])([A-Za-z][A-Za-z0-9]*)\\^([A-Za-z0-9]+)",
+            lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
+            parts[i],
+        )
+        parts[i] = re.sub(
+            r"([A-Za-z])\\^\\(([^)]+)\\)",
+            lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
+            parts[i],
+        )
+    return "".join(parts)
+
+lines = [normalize_plaintext_powers(line) for line in lines]
+
 # Remove the Markdown title (provided by the IEEEtran template) and the
 # internal editorial-status paragraph, neither of which belongs in the paper.
 if lines and lines[0].startswith("# "):
