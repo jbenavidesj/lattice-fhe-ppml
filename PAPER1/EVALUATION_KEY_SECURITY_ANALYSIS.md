@@ -726,3 +726,19 @@ Across these ten low-modulus settings, the public-key equation was ambiguous in 
 The audit also included four higher-modulus settings: (N=2,q=257,B=4) with 40 trials; (N=4,q=65,537,B=16) with 20; (N=6,q=65,537,B=16) with 10; and (N=8,q=65,537,B=16) with 3. In all four settings, the public-key equation was already unique in every trial, so these settings provide no conditional evidence that evaluation keys resolve public-key ambiguity.
 
 **Interpretation and limitations.** The conditional measurement isolates the marginal filtering effect of the evaluation-key equations only on transcripts where the public-key equation initially leaves multiple candidates. It avoids crediting evaluation keys for uniqueness already supplied by the public key. The results show strong disambiguation in these deliberately small exhaustive spaces, but the largest ternary search contains only 729 candidates in the low-modulus dimension sweep; the higher-modulus cases likewise have public-key-only uniqueness. These are synthetic finite-instance diagnostics, not scalable secret recovery, an attack on the production ring dimension (N=8192), a concrete security estimate, or evidence that production evaluation keys are exploitable. The exact anchor-plus-differences filter continued to equal the original residual filter at every tested stage, and all tested groups remained nonempty with the planted secret retained. The separate modular-kernel diagnostic also explicitly reports correlated derived samples and performs no secret-recovery attack or concrete security estimate.
+
+
+### Dimension-growth conditional audit through N=8 (CI run #741)
+
+The conditional stagewise audit was extended to N=7 and N=8 with q in {13,17}, B=2, eta=2, six evaluation-key levels, and 30 seeded trials for each N=7 setting and 20 for each N=8 setting. The ternary search spaces contain 3^7=2,187 and 3^8=6,561 candidates, respectively.
+
+| N | q | Trials | Mean public-key survivors | Public-key ambiguous | Newly unique at evaluation stage 0 |
+|---:|---:|---:|---:|---:|---:|
+| 7 | 13 | 30 | 4.1333 | 28/30 | 28/28 |
+| 7 | 17 | 30 | 1.5000 | 8/30 | 8/8 |
+| 8 | 13 | 20 | 4.3000 | 20/20 | 20/20 |
+| 8 | 17 | 20 | 1.2500 | 4/20 | 4/4 |
+
+Across the 100 transcripts, the public-key equation left multiple candidates in 60 cases. The first joint evaluation-key stage made all 60 of those cases unique; no additional cases became unique at later stages. The other 40 transcripts were already unique under the public-key equation. All groups remained nonempty, and the planted secret was retained. The stagewise audit also completed in the SageMath CI job; the exact anchor-plus-differences representation is checked against the original residual constraints by the audit.
+
+**Interpretation and limitations.** This extends the finite exhaustive observation to N=8, but the largest search still contains only 6,561 ternary candidates, with deliberately tiny moduli q=13 and q=17. The data indicate that, in these generated toy transcripts, the first evaluation-key residual is highly selective conditional on public-key ambiguity. They do not establish scalable recovery, an attack on the production N=8192 ring, a concrete security estimate, or exploitability of production evaluation keys (GitHub Actions run #741, commit `73fbebdab07453896ce06870c5fa716e71ea9b4e`).
