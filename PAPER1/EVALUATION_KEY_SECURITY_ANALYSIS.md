@@ -158,3 +158,9 @@ Even if an attacker could recover a suitable centered integer lift of \(b_j+a_js
 The ternary-square parity identity is a valid structural constraint and is now covered by a deterministic CI audit. However, the present public transcript gives no direct route to read those parities: (i) modular reduction by odd Q does not preserve parity, (ii) the target is masked by the unknown secret-dependent product \(a_js\), and (iii) the adjacent-level cancellation removes the target rather than exposing it. No parity-based distinguisher or key-recovery algorithm has been demonstrated.
 
 A meaningful next experiment would require an explicit attack model that jointly handles the public-key sample, all evaluation-key samples, modular centered lifts, and the ternary constraint. Until such a model exists, this parity observation should be reported as an algebraic property—not as a vulnerability or a security improvement.
+
+## Staged candidate-filtering experiment (toy diagnostic)
+
+A new deterministic audit, `scripts/audit_evalkey_filtering.py`, measures candidate-set sizes after the public-key equation and after each of three successive evaluation-key levels. It exhaustively enumerates ternary secrets for (N\in\{4,6,8\}), using (q=11), (B=3), eta=2, 30 instances per degree, and a fixed seed. It asserts that the planted secret survives every stage and that candidate counts are non-increasing.
+
+The purpose is narrower than a key-recovery claim: it quantifies the incremental filtering effect of the published evaluation-key equations *conditional on* the public-key candidate set in this toy distribution. It does not estimate production attack complexity, extrapolate to (N=8192), or establish a security level. The toy modulus/base and number of levels differ from the implementation parameters, and exhaustive search itself dominates the method. CI output must be recorded before quoting numerical findings.
