@@ -27,7 +27,7 @@ A publication-quality estimate must record:
 
 The Albrecht lattice-estimator project documents LWE, NTRU and SIS estimators and evolving attack coverage. The Homomorphic Encryption Standard discusses using corresponding LWE estimates as a proxy for power-of-two cyclotomic RLWE under the explicit heuristic that no better ring-structure attacks are known for the considered instantiations. Therefore an unstructured LWE run with n=8192, q=Q, ternary secret and eta=2 centered-binomial error is useful as a diagnostic baseline, but the report must state the heuristic and attack-model limitations; it is not a proof against all ring-structure attacks. The estimator's documentation recommends recording the exact version/commit because estimates can change.
 
-A diagnostic unstructured-LWE script is provided at scripts/estimate_lwe_proxy.py. It pins lattice-estimator commit 7d59f866655362ea8eab803dbc833710c2bc362a and compares the candidate with the HE Standard v2 N=8192 ternary/Gaussian-3.19 reference. It runs two sample-count settings (m=N and m=infinity). The m=N case models one flattened RLWE sample as an LWE proxy; the unlimited-sample case is a sensitivity/conservative setting. Neither models the evaluation-key samples, whose target includes s^2, as ordinary LWE samples. The script is intentionally not run in CI because it requires SageMath and a potentially long estimator execution. No estimator has yet been run for this candidate, so this document reports no bit-security figure and makes no 128-bit claim. The candidate has a larger Q (218 bits) and a narrower error (eta=2 centered-binomial, standard deviation 1) than the HE Standard v2 reference (q=2^214, Gaussian standard deviation 3.19); these differences are a reason to investigate the error distribution, not a basis for inferring security.
+A bounded diagnostic unstructured-LWE script is provided at `scripts/estimate_lwe_proxy.py`. It pins lattice-estimator commit `7d59f866655362ea8eab803dbc833710c2bc362a`. The recorded SageMath 10.10 run used `LWE.estimate.rough()` with ADPS16/GSA assumptions and m=N=8192; it reports minimum log2(rop)=93.732 for the candidate and 97.236 for the HE Standard v2 comparison profile. Full output and parameters are recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`. These are conditional scalar unstructured-LWE proxy outputs only, not a Ring-LWE estimate, security lower bound, or scheme-level security claim. They do not model the evaluation-key samples targeting s^2, nor the joint ring-structured transcript. The candidate's larger Q and narrower eta=2 error are reasons for further analysis, not grounds for inferring security.
 
 See `PAPER1/SECURITY_ESTIMATION_PROTOCOL.md` for the pinned estimator and `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` for the structured evaluation-key threat model. The unstructured-LWE script does not model the evaluation-key samples.
 
@@ -91,7 +91,7 @@ The tiny-ring model's proof in `PAPER1/BFV_TOY_SPEC.md` remains specific to N=8,
 - [x] Explicit ternary secret and eta=2 error distributions.
 - [x] Evaluation-key phase relation tested; exhaustive coefficient test included.
 - [x] Secret buffer zeroization on wrapper drop, with direct buffer test.
-- [ ] Execute the pinned unstructured-LWE diagnostic and obtain ring-aware independent cryptographic review.
+- [x] Execute and record the pinned rough-profile unstructured-LWE proxy diagnostic; it is explicitly not a Ring-LWE estimate.\n- [ ] Obtain ring-aware independent cryptographic review.
 - [x] Document the evaluation-key sample relation and its conditional key-switch noise bound.
 - [ ] Analyze the security impact of the structured, related evaluation-key samples (multi-target RLWE, chosen-message/auxiliary-input exposure, and applicable ring-specific attacks); the current LWE proxy deliberately does not include these samples.
 - [ ] Constant-time and side-channel audit.
@@ -106,3 +106,8 @@ Until every relevant gate is passed, describe the work as an experimental RNS ar
 ## Structured evaluation-key model
 
 See `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` for the joint related-secret formulation of the evaluation-key transcript, implementation-grounded decomposition bounds, and unresolved algebraic attack questions. The 14 equations are not ordinary independent RLWE samples; the known scalar sequence `B^j` and dependent secret pair `(s,s^2)` must be modeled jointly with the public-key sample. No concrete security estimate is established.
+
+
+## Status reconciliation (2026-11-13)
+
+The older statements above that the estimator had not yet been run are superseded by `PAPER1/SECURITY_ESTIMATION_RESULTS.md`. The run produced only the bounded unstructured-LWE proxy outputs described there. The structured evaluation-key transcript remains unanalyzed by a validated ring-aware security model and requires specialist review. The one-multiplication noise derivation has passed internal source-to-proof consistency checks and exact-rational CI audit, but has not received independent mathematical certification.
