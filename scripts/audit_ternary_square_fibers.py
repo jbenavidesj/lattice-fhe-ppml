@@ -11,7 +11,8 @@ Q = 65537
 DEGREES = (2, 4, 6, 8)
 
 
-def negacyclic_mul(a, b, q):
+def negacyclic_mul_integer(a, b):
+    """Return the integer-lift negacyclic product, without modular reduction."""
     n = len(a)
     out = [0] * n
     for i, x in enumerate(a):
@@ -21,18 +22,23 @@ def negacyclic_mul(a, b, q):
             if k >= n:
                 k -= n
                 sign = -1
-            out[k] = (out[k] + sign * x * y) % q
+            out[k] += sign * x * y
     return tuple(out)
 
 
-def square_parity_identity(secret, square):
+def negacyclic_mul_mod(a, b, q):
+    return tuple(x % q for x in negacyclic_mul_integer(a, b))
+
+
+def square_parity_identity(secret, integer_square):
+    """Check parity on the integer lift; parity is not well-defined mod odd q."""
     n = len(secret)
     for i in range(n):
         expected = 0
         if i % 2 == 0:
             r = i // 2
             expected = (secret[r] + secret[r + n // 2]) & 1
-        if (square[i] & 1) != expected:
+        if (integer_square[i] & 1) != expected:
             return False
     return True
 
@@ -41,8 +47,9 @@ def analyze(n):
     fibers = defaultdict(list)
     parity_checks = 0
     for secret in product((-1, 0, 1), repeat=n):
-        square = negacyclic_mul(secret, secret, Q)
-        assert square_parity_identity(secret, square)
+        integer_square = negacyclic_mul_integer(secret, secret)
+        square = tuple(x % Q for x in integer_square)
+        assert square_parity_identity(secret, integer_square)
         parity_checks += 1
         fibers[square].append(secret)
 
