@@ -216,3 +216,19 @@ Accordingly, the MITM work should be presented as a reproducible toy algorithm c
 ### MITM resource scaling
 
 The current MITM implementation materializes two half-secret tables, each containing exactly 3^(N/2) ternary assignments. Increasing the number of selected coordinates in the bounded-error join can reduce the heuristic expected number of joined pairs, but does not reduce this exponential table term. For the Paper 1 modulus (218 bits), eta=2, and N=8192, a uniform-residue heuristic selects k=61 to bring the expected join count below one; nevertheless, each half-table has 3^4096 entries (log2 count approximately 6492.0). The corresponding payload-only storage projection is approximately 2^6518.1 bytes, before data-structure overhead. These are analytical resource projections, not measured attack costs. The expected-join heuristic assumes independent uniform residues and is not a rigorous bound in the structured negacyclic setting. The present MITM is therefore a toy validation method, not a plausible production-scale recovery attack in its current form.
+
+
+A dimension sweep for the Paper 1 modulus and eta=2 gives the following base-2 resource exponents (the payload column counts coefficient residues only, excluding Python object and hash-table overhead):
+
+| N | k* | log2(half-table entries) | log2(probe work) | log2(payload bytes) |
+|---:|---:|---:|---:|---:|
+| 8 | 1 | 6.3 | 8.7 | 15.1 |
+| 16 | 1 | 12.7 | 15.0 | 22.5 |
+| 32 | 1 | 25.4 | 27.7 | 36.2 |
+| 64 | 1 | 50.7 | 53.0 | 62.5 |
+| 128 | 1 | 101.4 | 103.8 | 114.2 |
+| 256 | 2 | 202.9 | 207.5 | 216.7 |
+| 512 | 4 | 405.8 | 415.0 | 420.6 |
+| 1024 | 8 | 811.5 | 830.1 | 827.3 |
+| 8192 | 61 | 6492.0 | 6633.6 | 6510.8 |
+
