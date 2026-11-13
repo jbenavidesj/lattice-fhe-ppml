@@ -796,6 +796,71 @@ mod tests {
             "observed key-switch error {observed_inf} exceeds bound {deterministic_bound}");
     }
 
+
+    #[test]
+    fn exact_integer_ntt_crt_matches_sparse_bigint_oracle_at_full_degree_and_large_magnitudes() {
+        let n = 8192;
+        let q = q_product_bigint();
+        let third = &q / BigInt::from(3u8);
+        let quarter = &q / BigInt::from(4u8);
+
+        // Large signed coefficients near the centered CRT range. The sparse
+        // supports deliberately create both ordinary collisions and X^N=-1
+        // wraparound contributions at indices 0, 1, and N-2.
+        let lhs_sparse: Vec<(usize, BigInt)> = vec![
+            (0, third.clone()),
+            (1, -quarter.clone()),
+            (n - 1, &third - BigInt::from(17u8)),
+            (n - 2, -(&quarter - BigInt::from(29u8))),
+            (4095, BigInt::from(12345678901234567890u64)),
+        ];
+        let rhs_sparse: Vec<(usize, BigInt)> = vec![
+            (0, -(&third - BigInt::from(31u8))),
+            (1, quarter.clone()),
+            (2, BigInt::from(-9876543210987654321i128)),
+            (n - 1, third.clone()),
+            (n - 2, -quarter.clone()),
+        ];
+
+        let expand = |sparse: &[(usize, BigInt)]| {
+            let mut dense = vec![BigInt::from(0); n];
+            for (index, value) in sparse {
+                dense[*index] = value.clone();
+            }
+            dense
+        };
+        let lhs = expand(&lhs_sparse);
+        let rhs = expand(&rhs_sparse);
+
+        // Independent schoolbook negacyclic convolution over Z. For i+j >= N,
+        // X^(i+j) is reduced using X^N = -1, not modulo X^N-1.
+        let mut expected = vec![BigInt::from(0); n];
+        for (i, a) in &lhs_sparse {
+            for (j, b) in &rhs_sparse {
+                let product = a * b;
+                let degree = i + j;
+                if degree < n {
+                    expected[degree] += product;
+                } else {
+                    expected[degree - n] -= product;
+                }
+            }
+        }
+
+        let got = exact_integer_negacyclic_mul(&lhs, &rhs).unwrap();
+        assert_eq!(got, expected, "full-degree NTT/CRT product differs from exact schoolbook result");
+
+        // Explicitly check the sign convention at the wrap boundary:
+        // X^(N-1)*X = X^N = -1.
+        let mut x_n_minus_1 = vec![BigInt::from(0); n];
+        let mut x = vec![BigInt::from(0); n];
+        x_n_minus_1[n - 1] = BigInt::from(1);
+        x[1] = BigInt::from(1);
+        let wrap = exact_integer_negacyclic_mul(&x_n_minus_1, &x).unwrap();
+        assert_eq!(wrap[0], BigInt::from(-1));
+        assert!(wrap.iter().enumerate().all(|(i, value)| i == 0 || value == &BigInt::from(0)));
+    }
+
     #[test]
     fn rejects_mismatched_lanes() {
         let bad = [vec![0, 1], vec![0], vec![0, 1], vec![0, 1]];
