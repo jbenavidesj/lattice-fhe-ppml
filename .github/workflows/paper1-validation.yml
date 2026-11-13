@@ -50,6 +50,42 @@ jobs:
       - name: Evaluate frozen MITM selector across held-out q and eta
         run: python scripts/audit_mitm_selector_robustness.py
 
+
+  sage-estimator:
+    name: Pinned LWE proxy diagnostic (SageMath)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: sagemath/sagemath:10.10
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git
+          rm -rf /var/lib/apt/lists/*
+      - name: Check SageMath runtime
+        run: |
+          sage --version
+          git --version
+      - name: Install pinned lattice-estimator revision
+        run: |
+          git clone https://github.com/malb/lattice-estimator.git /tmp/lattice-estimator
+          git -C /tmp/lattice-estimator checkout 7d59f866655362ea8eab803dbc833710c2bc362a
+          cd /tmp/lattice-estimator
+          sage -pip install -e .
+      - name: Run unstructured-LWE proxy diagnostic
+        run: |
+          set -o pipefail
+          sage -python scripts/estimate_lwe_proxy.py 2>&1 | tee sage-lwe-proxy-output.txt
+      - name: Upload diagnostic output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sage-lwe-proxy-diagnostic
+          path: sage-lwe-proxy-output.txt
+          if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
     runs-on: ubuntu-latest
