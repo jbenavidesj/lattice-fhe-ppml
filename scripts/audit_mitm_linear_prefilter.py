@@ -192,7 +192,7 @@ def main():
         print(
             f"N={n}: exact sets agree in {TRIALS}/{TRIALS}; "
             f"median joined pairs={med('joined_pairs', 0):g}; "
-            f"public-pass={med('public_pass', 0):g}; "
+            f"public-pass={med('public_full_pass', 0):g}; "
             f"linear rejects={med('linear_rejects'):g}; "
             f"squares baseline/filtered={med('public_pass', 0):g}/"
             f"{med('square_computations'):g}; "
