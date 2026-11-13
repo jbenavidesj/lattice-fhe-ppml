@@ -838,7 +838,7 @@ mod tests {
         for (i, a) in &lhs_sparse {
             for (j, b) in &rhs_sparse {
                 let product = a * b;
-                let degree = i + j;
+                let degree = *i + *j;
                 if degree < n {
                     expected[degree] += product;
                 } else {
