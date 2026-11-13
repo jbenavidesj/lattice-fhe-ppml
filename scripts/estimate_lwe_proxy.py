@@ -73,9 +73,9 @@ def estimate_case(label, q, error_distribution, sample_count):
     results = LWE.estimate(params, quiet=True)
     finite_costs = []
     for attack, cost in sorted(results.items()):
-        rop = cost.rop
+        rop = cost.get("rop", oo)
         if rop == oo:
-            print(f"{attack}: no finite estimate; details={cost}")
+            print(f"{attack}: no finite estimate returned; available fields={dict(cost)}")
             continue
         bits = float(log(rop, 2))
         finite_costs.append(bits)
