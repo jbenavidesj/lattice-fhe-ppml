@@ -163,4 +163,14 @@ A meaningful next experiment would require an explicit attack model that jointly
 
 A new deterministic audit, `scripts/audit_evalkey_filtering.py`, measures candidate-set sizes after the public-key equation and after each of three successive evaluation-key levels. It exhaustively enumerates ternary secrets for (N\in\{4,6,8\}), using (q=11), (B=3), eta=2, 30 instances per degree, and a fixed seed. It asserts that the planted secret survives every stage and that candidate counts are non-increasing.
 
-The purpose is narrower than a key-recovery claim: it quantifies the incremental filtering effect of the published evaluation-key equations *conditional on* the public-key candidate set in this toy distribution. It does not estimate production attack complexity, extrapolate to (N=8192), or establish a security level. The toy modulus/base and number of levels differ from the implementation parameters, and exhaustive search itself dominates the method. CI output must be recorded before quoting numerical findings.
+The purpose is narrower than a key-recovery claim: it quantifies the incremental filtering effect of the published evaluation-key equations *conditional on* the public-key candidate set in this toy distribution. It does not estimate production attack complexity, extrapolate to (N=8192), or establish a security level. The toy modulus/base and number of levels differ from the implementation parameters, and exhaustive search itself dominates the method.
+
+The Python CI job reported the following 30-instance results (medians; counts are after the public equation and then levels 1, 2, and 3):
+
+| Degree | Median survivors | Mean survivors | Unique instances after public / level 1 / level 2 / level 3 |
+|---|---:|---:|---:|
+| N=4 | 4 / 1 / 1 / 1 | 5.10 / 1.367 / 1.067 / 1.00 | 2 / 24 / 28 / 30 of 30 |
+| N=6 | 8 / 1 / 1 / 1 | 9.10 / 1.20 / 1.00 / 1.00 | 0 / 24 / 30 / 30 of 30 |
+| N=8 | 12.5 / 1 / 1 / 1 | 12.90 / 1.00 / 1.00 / 1.00 | 0 / 30 / 30 / 30 of 30 |
+
+In these toy instances the first evaluation-key level is already highly selective, and later levels remove the remaining ambiguity in some trials. This is a candidate-filtering observation under exhaustive ternary enumeration—not a practical attack: the attacker-side search still enumerates all (3^N) secrets, and the experiment uses (q=11), (B=3), only three levels, and (N\le8). The result does not quantify attack cost at the implementation parameters.
