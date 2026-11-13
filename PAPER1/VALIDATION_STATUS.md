@@ -49,9 +49,10 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 ## Remaining gates
 
 1. Obtain an independent review of the one-multiplication derivation, especially centered-lift quotient handling and the decoding-margin argument.
-2. Execute the pinned lattice-estimator diagnostic in a SageMath environment; assess ring-LWE assumptions, evaluation-key exposure, and structural attacks.
-3. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
-4. Run release benchmarks with repeated samples, raw output, and complete hardware/compiler metadata.
-5. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
+2. Perform a dedicated security analysis of the structured evaluation-key samples; the existing unstructured-LWE proxy omits them.
+3. Execute the pinned lattice-estimator diagnostic in a SageMath environment; assess ring-LWE assumptions and structural attacks.
+4. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
+5. Run release benchmarks with repeated samples, raw output, and complete hardware/compiler metadata.
+6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
 
 Until these gates are passed, describe the work as an experimental RNS-BFV prototype with a one-multiplication correctness argument—not as a production-secure or fully validated new FHE scheme.
