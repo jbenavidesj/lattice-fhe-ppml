@@ -10,7 +10,7 @@ path = "src/lib.rs"
 
 [[bench]]
 name = "arithmetic"
-harness = true
+harness = false
 
 [dependencies]
 num-bigint = "=0.4.8"
