@@ -539,3 +539,12 @@ scripts/audit_evalkey_stagewise_filtering.py enumerates every ternary candidate 
 The experiment reports the mean and maximum survivor counts at each stage and verifies that the planted secret survives every filter. It runs N=2, q=23 with two evaluation levels, and N=4 and N=6, q=65537 with fourteen levels. Since the candidate space is at most 3^6, this is strictly an information-accounting toy experiment.
 
 The random a-vectors are sampled independently and uniformly and the errors are independently sampled from the centered-binomial eta=2 distribution. This is an explicit synthetic model; it must not be confused with a proof that the complete production evaluation-key transcript consists of independent samples. Candidate-survivor counts are conditional on this toy generator and do not imply a practical attack or a concrete security level.
+
+
+## 14. Controlled four-way information comparison
+
+scripts/audit_evalkey_four_way_filtering.py compares four candidate sets on the *same generated transcript* in every trial: (1) public-key equation only, (2) all original evaluation-key equations only, (3) their conjunction, and (4) the public-key equation plus the exact transformed evaluation-key system.
+
+For each ternary candidate c, the script computes the original evaluation residual polynomials r_j(c). The transformed coordinates are r_0(c) and z_j(c)=r_{j+1}(c)-B r_j(c). The map from (r_0,...,r_13) to (r_0,z_0,...,z_12) is an invertible triangular integer transformation. The script anchors r_0 and reconstructs the original residual sequence through r_{j+1}=z_j+B r_j, checking every reconstructed r_j against the original eta=2 support. It therefore preserves the complete joint support and does not substitute independent coordinatewise bounds for correlated transformed errors.
+
+The exact transformed candidate set must equal the original evaluation-key candidate set, and the joint candidate set must equal the public-key-plus-exact-transformed set. This is a deterministic equivalence check, not evidence that transformed equations add independent information. The four-way survivor counts quantify the marginal and combined filtering effects under the explicitly synthetic transcript generator (independent uniform a-polynomials and independent CBD_eta2 errors). Tested dimensions are N=2,3,4,5 with exhaustive ternary enumeration; these toy counts are not an attack or a security estimate.
