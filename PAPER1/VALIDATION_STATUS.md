@@ -99,3 +99,15 @@ Added `scripts/toy_evalkey_mitm.py` and `PAPER1/TOY_MITM_PROTOTYPE.md`. The prot
 ## CI correction: MITM planted-secret assertion
 
 CI run #376 exposed a Python `TypeError` in the new MITM audit: the generated planted secret was a list, while survivor candidates are stored as tuples, so `secret in mitm` attempted to hash an unhashable list. The assertion now checks `tuple(secret) in mitm`. The earlier candidate-set comparison remains an exact set equality assertion. MITM timing values are provisional pending a clean rerun; run #376 is not passing.
+
+
+## MITM CI confirmation and evaluation-key join limitation
+
+CI run #382 on commit `5a29436360206f37a35cb09cfa9928160416833c` completed successfully. Both jobs passed: all Python arithmetic/noise and toy-search audits, 32 Rust unit tests, formatting, Clippy, and benchmark-target compilation. This confirms the code at that commit; it does not constitute a benchmark measurement or a security assessment.
+
+The current MITM implementation joins on selected coordinates of the public-key linear residual, enumerating the bounded error values only on those coordinates, then verifies the complete public-key and evaluation-key equations. The exact candidate-set equality check against exhaustive enumeration passed all 90 deterministic toy trials. Its timings remain exploratory.
+
+A direct split of the evaluation-key equation is not separable. For (s=u+X^{N/2}v) in (R_Q=\mathbb Z_Q[X]/(X^N+1)), the square is
+`u^2 + 2X^{N/2}uv + X^Nv^2` modulo (X^N+1), with the final term reducing to `-v^2`. The cross term couples both halves. Consequently, simply adding independent per-half evaluation-key hashes would be mathematically incorrect unless the cross term is explicitly represented. The current prototype correctly applies evaluation-key equations only after candidate joins; it does not yet gain list-pruning from those equations.
+
+Next algorithmic work must either (a) derive an exact join key that accounts for the cross term and bounded errors, or (b) retain the public-key MITM filter and quantify whether additional safe partial constraints can be applied after a pair is joined. No improved attack or production-scale speedup is claimed.
