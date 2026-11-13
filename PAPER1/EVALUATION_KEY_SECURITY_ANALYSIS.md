@@ -347,3 +347,27 @@ No LLL-reduced row in this run improves on the adjacent relation in \(\ell_1\)-n
 The result gives no secret-recovery algorithm, no distinguisher, and no security estimate. The linear combinations are deterministic functions of one public transcript and are not independent samples. A lower \(\ell_2^2\) value may motivate a follow-up analysis of the exact weighted discrete error law, but it does not justify replacing that law by an iid Gaussian with the same variance. Any further attack experiment must model the coefficient weights, negacyclic ring operations, modular wraparound, and dependencies among multiple derived equations.
 
 The SageMath workflow run completed successfully, including the relation search and artifact upload. The full output is preserved in the `sage-lwe-proxy-diagnostic` workflow artifact for run #595.
+
+
+## 6. Exact one-coefficient weighted-error distribution
+
+For the adjacent vector \((-B,1,0,\ldots,0)\) and the rank-6 LLL vector
+\[
+w=(16395,-2246,11538,-2352,-15966,-4494,13649,15421,21740,-8852,532,11216,-2,11264),
+\]
+we computed the exact marginal distribution of one coefficient of \(E_w=\sum_jw_je_j\), using the exact eta=2 law. Each eta=2 variable is represented as \(\operatorname{Binomial}(4,1/2)-2\); integer dynamic programming therefore gives exact counts, not a Gaussian approximation. Both vectors were verified to cancel \(\sum_jw_jB^j\) modulo \(Q\).
+
+| Statistic | Adjacent vector | Rank-6 vector |
+|---|---:|---:|
+| \(\|w\|_1\) | 65,537 | 135,667 |
+| \(\|w\|_2^2=\operatorname{Var}(E_w)\) | 4,294,967,297 | 1,915,654,407 |
+| Exact support radius | 131,074 | 271,334 |
+| Central 99% quantile | 131,073 | 111,528 |
+| Central 99.9% quantile | 131,074 | 140,667 |
+| Central 99.99% quantile | 131,074 | 164,076 |
+
+The rank-6 vector has lower variance and a narrower central 99% interval, but substantially wider support and worse 99.9% and 99.99% central quantiles. Its distribution is therefore not uniformly better: it has a more concentrated centre and heavier far tails. For example, the exact probability \(\Pr[|E_w|>131074]\) is zero for the adjacent vector and approximately 0.0022724649 for the rank-6 vector. The adjacent vector's support bound is exact and attained only at its extreme outcomes.
+
+This demonstrates why variance alone is inadequate for assessing a discrete error distribution. The exact PMF is a one-coefficient marginal for one fixed linear combination. It does not give a security estimate, does not model the joint distribution across all thirteen transformed equations, and does not establish that a lattice attack can exploit this vector. The cross-equation dependence inherited from the original fourteen errors must be retained in any attack analysis.
+
+The reproducible implementation is `scripts/audit_evalkey_weighted_error_distribution.py`; it is run by the SageMath workflow and its output is uploaded as `evalkey-weighted-error-distribution.txt`.
