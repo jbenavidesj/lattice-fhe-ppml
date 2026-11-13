@@ -24,7 +24,7 @@ The defensible contributions investigated here are:
 4. An explicit joint-transcript formulation for the structured evaluation key and a careful statement of what current unstructured-LWE proxy analysis does not cover.
 5. Reproducible small-parameter exhaustive and MITM candidate-search diagnostics, with exact candidate-set comparisons.
 
-These claims describe implementation and validation work. A literature comparison is still required to establish novelty relative to existing BFV/RNS implementations.
+These claims describe implementation and validation work. The related-work comparison below establishes the principal prior-art boundary; the remaining novelty question is narrower and concerns whether the exact-integer reference path, bounded correctness audit, and reproducible transcript diagnostics together provide a sufficiently distinct methodological contribution beyond the existing full-RNS BFV implementations.
 
 ### Related work and novelty boundary
 
@@ -275,7 +275,7 @@ Reproducibility records: CI run #729, commit `2b862166bf4a84178250b728243995b054
 
 [5] J.-C. Bajard, J. Eynard, N. Merkiche, and T. Plantard, “RNS Arithmetic Approach in Lattice-Based Cryptography: Accelerating the ‘Rounding-off’ Core Procedure,” in *2015 IEEE 22nd Symposium on Computer Arithmetic (ARITH)*, pp. 113–120, 2015, doi: 10.1109/ARITH.2015.30.
 
-[6] J.-P. Bossuat, R. Cammarota, I. Chillotti, B. R. Curtis, W. Dai, H. Gong, E. Hales, D. Kim, B. Kumara, C. Lee, X. Lu, C. Maple, A. Pedrouzo-Ulloa, R. Player, Y. Polyakov, L. A. Ruiz Lopez, Y. Song, and D. Yhee, “Security Guidelines for Implementing Homomorphic Encryption,” *IACR Communications in Cryptology*, vol. 1, no. 4, pp. 1–40, 2025, doi: 10.62056/anxra69p1; ePrint 2024/463.
+[6] J.-P. Bossuat, R. Cammarota, J. H. Cheon, I. Chillotti, B. R. Curtis, W. Dai, H. Gong, E. Hales, D. Kim, B. Kumara, C. Lee, X. Lu, C. Maple, A. Pedrouzo-Ulloa, R. Player, Y. Polyakov, L. A. Ruiz Lopez, Y. Song, D. Yhee, and B. Yildiz, “Security Guidelines for Implementing Homomorphic Encryption,” *IACR Communications in Cryptology*, vol. 1, no. 4, art. 26, 2025, doi: 10.62056/anxra69p1; ePrint 2024/463.
 
 [7] A. Al Badawi, Y. Polyakov, K. M. M. Aung, B. Veeravalli, and K. Rohloff, “Implementation and Performance Evaluation of RNS Variants of the BFV Homomorphic Encryption Scheme,” *IEEE Transactions on Emerging Topics in Computing*, vol. 9, no. 2, pp. 941–956, 2021, doi: 10.1109/TETC.2019.2902799.
 
