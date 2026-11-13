@@ -137,3 +137,9 @@ These documents prepare independent review; they do not mean any external review
 ## Current publication-readiness assessment
 
 The repository has substantial implementation and deterministic correctness evidence, but it is not yet an IEEE submission package. The held-out MITM experiment is a toy algorithm-selection diagnostic, not a cryptographic security result. Still outstanding are: verified held-out CI output; SageMath execution of the pinned unstructured-LWE proxy with careful interpretation; independent mathematical and cryptanalytic review; release-mode performance benchmarks with raw data and environment metadata; related-work/novelty comparison; and final manuscript drafting and technical editing. No concrete security level, production-readiness, arbitrary-depth correctness, or side-channel resistance is claimed.
+
+## Held-out adaptive MITM selector result — CI #434
+
+CI run #434 (43345625418) completed successfully on commit b3a21b0330b55af39a14d7be8e945be7fbf351ca. The selector formula audit passed 80 parameter combinations. The frozen lambda=4 selector was then tested on ten disjoint-seed instances per degree (seed 0xC0FFEE, q=11, eta=2, N=4,6,8), comparing k=1,2,3,4 twice per instance against exact exhaustive candidate sets. The selector chose k=(1,2,2), matching the best fixed-k median for these held-out samples; median regret was 1.000 at each degree. Exact candidate-set comparisons passed 40/40 per degree. Full timings and caveats are in PAPER1/ADAPTIVE_MITM_HOLDOUT_RESULTS.md.
+
+This is a narrow toy-scale held-out result, not evidence of generalization across q/eta or production degrees. Ten instances per degree and CI-host timing noise are insufficient for a broad predictive claim. CI #434 also passed Rust tests, formatting, Clippy, and benchmark-target compilation.
