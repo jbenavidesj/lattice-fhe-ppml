@@ -504,3 +504,20 @@ The expected-join calculation uses 3^N * ((2 eta+1)/q)^k and assumes independent
 ### Consequence
 
 The present MITM implementation is useful for exact toy-instance cross-checks and for validating candidate-filter logic. In its current form it is not a plausible production-scale secret-recovery algorithm at N=8192. A materially different approach would be required to avoid explicit 3^(N/2) half-table enumeration and storage, or to exploit additional algebraic structure before enumerating halves. No claim of security follows from this observation; it is a limitation of this particular MITM strategy.
+
+
+### Dimension sweep (Paper 1 modulus, eta=2)
+
+| N | k* | log2(half-table entries) | log2(probe work) | log2(payload bytes) |
+|---:|---:|---:|---:|---:|
+| 8 | 1 | 6.3 | 8.7 | 15.1 |
+| 16 | 1 | 12.7 | 15.0 | 22.5 |
+| 32 | 1 | 25.4 | 27.7 | 36.2 |
+| 64 | 1 | 50.7 | 53.0 | 62.5 |
+| 128 | 1 | 101.4 | 103.8 | 114.2 |
+| 256 | 2 | 202.9 | 207.5 | 216.7 |
+| 512 | 4 | 405.8 | 415.0 | 420.6 |
+| 1024 | 8 | 811.5 | 830.1 | 827.3 |
+| 8192 | 61 | 6492.0 | 6633.6 | 6510.8 |
+
+The payload column is a lower-bound accounting of the coefficient-residue payload in both tables, not a realistic RAM forecast. Actual Python hash-table and object overhead would be substantially larger.
