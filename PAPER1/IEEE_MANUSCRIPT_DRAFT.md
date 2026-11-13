@@ -165,37 +165,7 @@ semantics and parameters.
 
 This work provides an auditable experimental RNS-BFV implementation and a set of deterministic correctness checks, with particular attention to exact integer-lift multiplication and the structured evaluation-key transcript. The current evidence supports a bounded correctness statement and reproducible toy diagnostics, not a concrete security level or production-readiness claim. Independent mathematical and cryptanalytic review, estimator execution with careful scope, multi-session comparative benchmarking, and a related-work comparison remain necessary before submission.
 
-## References
-
-[1] J. Fan and F. Vercauteren, “Somewhat Practical Fully Homomorphic Encryption,” IACR Cryptology ePrint Archive, Report 2012/144, 2012.
-
-[2] J.-C. Bajard, J. Eynard, M. A. Hasan, and V. Zucca, “A Full RNS Variant of FV Like Somewhat Homomorphic Encryption Schemes,” in *Selected Areas in Cryptography — SAC 2016*, Lecture Notes in Computer Science, vol. 10059, pp. 423–442, Springer, 2017, doi: 10.1007/978-3-319-69453-5_23.
-
-[3] M. R. Albrecht, R. Player, and S. Scott, “On the concrete hardness of Learning with Errors,” *Journal of Mathematical Cryptology*, vol. 9, no. 3, pp. 169–203, 2015, doi: 10.1515/jmc-2015-0016.
-
-[4] M. Albrecht et al., *Homomorphic Encryption Security Standard*, HomomorphicEncryption.org, Nov. 2018.
-
-[5] J.-C. Bajard, J. Eynard, N. Merkiche, and T. Plantard, “RNS Arithmetic Approach in Lattice-Based Cryptography: Accelerating the ‘Rounding-off’ Core Procedure,” in *2015 IEEE 22nd Symposium on Computer Arithmetic (ARITH)*, pp. 113–120, 2015, doi: 10.1109/ARITH.2015.30.
-
-[6] J.-P. Bossuat et al., “Security Guidelines for Implementing Homomorphic Encryption,” *IACR Communications in Cryptology*, vol. 1, no. 4, 2025; also Cryptology ePrint Archive, Report 2024/463, 2024, doi: 10.62056/anxra69p1.
-
-**Positioning note.** References [1] and [2] establish the BFV/FV and full-RNS context. In particular, [2] already develops a full RNS FV-like approach and reports optimized implementations. Therefore, this manuscript must not claim that RNS-BFV, coefficientwise scale-and-round, or the general goal of eliminating multiprecision arithmetic is itself novel. The present implementation uses an exact integer-lift NTT/CRT plus BigInt route as a correctness reference; its contribution, if supported by a fuller comparison, is the particular auditable reference construction, explicit one-operation correctness accounting, and the reproducible diagnostics—not a faster full-RNS scheme.
-
-A further point for the comparison is that the integer-lift multiplication convention
-itself is already part of the original FV presentation [1]: the ciphertext
-polynomials are multiplied in the integer polynomial ring, scaled by t/q, and
-coefficientwise rounded before reduction to the ciphertext modulus. The present
-code makes that lift explicit by centered CRT reconstruction and uses an auxiliary
-NTT/CRT basis to recover each integer product exactly. This should be described as
-an auditable implementation of that arithmetic convention, not as a new
-multiplication rule. The precise implementation difference to investigate against
-[2] is the use of a BigInt exact-reference path versus their optimized full-RNS
-rounding machinery, together with the scope and evidence of the one-operation
-correctness audit.
-
-The bibliography is an initial verified core, not a complete related-work survey. Before submission, add and verify primary references for NTT/negacyclic polynomial multiplication, CRT reconstruction and BFV relinearization; complete a step-by-step comparison of the multiplication, rounding, noise-management, and relinearization conventions with [2]. The bounded SageMath diagnostic has been run; retain its exact estimator revision, SageMath version, cost model, and limitations as documented in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`.
-
-### Exact joint candidate constraints for the evaluation-key transcript
+## Appendix A. Exact joint candidate constraints for the evaluation-key transcript
 
 A further exhaustive toy audit compares the original evaluation-key residual constraints with an exact recurrence using the adjacent target-cancelled equations. The first original evaluation-key equation fixes the initial error vector e_0; each transformed residual z_j=e_{j+1}-Be_j then determines the next error vector exactly through e_{j+1}=z_j+Be_j (mod q). Requiring every reconstructed coefficient to remain in the eta=2 support [-2,2] is therefore equivalent to checking all original evaluation-key residuals, provided centered representatives are unambiguous. This preserves the shared-error dependence and avoids replacing the joint support by the wider coordinatewise box [-2(B+1),2(B+1)].
 
@@ -204,7 +174,7 @@ In exhaustive tests over all ternary secrets, the original and exact-joint filte
 **CI provenance correction.** Inspection of run #617 showed that three audit commands inside the SageMath container failed because they invoked python, which was unavailable; the pipeline's tee exit status masked those failures. The scalar LWE proxy and LLL relation search did execute, but the run does not validate the three affected Python audits. The workflow now uses sage -python and explicitly propagates each script's exit status without a masking tee pipeline. The corrected workflow must pass and its non-empty artifacts must be inspected before these audits are described as CI-validated.
 
 
-### Toy meet-in-the-middle validation and scope
+## Appendix B. Toy meet-in-the-middle validation and scope
 
 The exact toy meet-in-the-middle (MITM) routine was cross-checked against exhaustive candidate enumeration on 30 generated instances for each of N=4, 6, and 8; all tested coordinate counts produced identical candidate sets. For q=11, B=3, three evaluation levels, and eta=2, the selected MITM configuration had median runtimes of 0.000249 s, 0.001518 s, and 0.010250 s, compared with exhaustive medians of 0.000322 s, 0.004129 s, and 0.052275 s, respectively. These correspond to measured toy ratios of 1.29x, 2.72x, and 5.10x in that environment. They are small-instance microbenchmarks only, not asymptotic speedups or evidence of an attack on the production N=8192 parameters.
 
@@ -213,7 +183,7 @@ The frozen selector passed its 80-case parameter-grid audit. On a held-out q=11,
 Accordingly, the MITM work should be presented as a reproducible toy algorithm cross-check and selector study. It does not establish scalable secret recovery, a production attack, or a concrete security estimate for the ring-based scheme.
 
 
-### MITM resource scaling
+## Appendix C. MITM resource scaling
 
 The current MITM implementation materializes two half-secret tables, each containing exactly 3^(N/2) ternary assignments. Increasing the number of selected coordinates in the bounded-error join can reduce the heuristic expected number of joined pairs, but does not reduce this exponential table term. For the Paper 1 modulus (218 bits), eta=2, and N=8192, a uniform-residue heuristic selects k=61 to bring the expected join count below one; nevertheless, each half-table has 3^4096 entries (log2 count approximately 6492.0). The corresponding payload-only storage projection is approximately 2^6510.8 bytes, before data-structure overhead. These are analytical resource projections, not measured attack costs. The expected-join heuristic assumes independent uniform residues and is not a rigorous bound in the structured negacyclic setting. The present MITM is therefore a toy validation method, not a plausible production-scale recovery attack in its current form.
 
@@ -234,17 +204,17 @@ A dimension sweep for the Paper 1 modulus and eta=2 gives the following base-2 r
 
 
 
-### Information content of the ternary square
+## Appendix D. Information content of the ternary square
 
 An exhaustive toy audit measures the fibers of the map s -> s^2 in the negacyclic ring for ternary secrets at N in {2,4,6,8}. At minimum, the map is globally sign-invariant: s and -s produce the same square. Thus even an exact, noiseless disclosure of s^2 cannot uniquely identify a nonzero ternary secret without additional information. The experiment also measures any further collisions in these small rings. This is not a model of the complete evaluation-key transcript, where s^2 is mixed with secret-dependent linear terms and noise, and it does not establish a practical attack or a security bound.
 
 
-### Stagewise information from public and evaluation-key equations
+## Appendix E. Stagewise information from public and evaluation-key equations
 
 A new exhaustive toy experiment filters all ternary candidates first by the public-key equation and then sequentially by each of fourteen original evaluation-key equations, using the exact centered-binomial eta=2 residual support at every stage. It records mean and maximum survivor counts and checks that the planted secret survives. The tested dimensions are N=2, 4, and 6 only. The transcript generator uses independent uniform a-vectors and independent centered-binomial errors as an explicit toy model. These counts describe information accumulation in that synthetic model; they are not a production attack, a proof of independence in the actual key-generation procedure, or a security estimate.
 
 
-### Controlled comparison of public and evaluation-key information
+## Appendix F. Controlled comparison of public and evaluation-key information
 
 A controlled exhaustive experiment compares four filters on identical synthetic transcripts: public key alone, evaluation keys alone, their conjunction, and public key plus the exactly transformed evaluation-key system. The transformed system retains one anchor residual and all adjacent differences, with the original joint CBD_eta2 support reconstructed exactly. Since this triangular transformation is invertible, it must produce exactly the same candidate set as the original evaluation equations; it is not an independent source of information. The measured survivor counts isolate the marginal filtering contribution of the public and evaluation-key equations and their conjunction for N=2,3,4,5. The transcript generator is synthetic, and the results are not a production attack or a concrete security estimate.
 
@@ -253,7 +223,7 @@ For the q=23 small-ring stress-test, the independently reproduced preliminary su
 
 The four-way toy transcript generator follows the source-level distributions and equation conventions in src/keygen.rs: uniform ternary coefficients, independent uniform a-polynomials, and independent eta=2 centered-binomial errors. The implementation's error sampler (Binomial(2,1/2)-Binomial(2,1/2)) has the same law as the experiment's Binomial(4,1/2)-2 sampler. Only q=23 and N<=6 are toy substitutions; the production parameters remain a 218-bit aggregate Q and N=8192. The exhaustive counts therefore establish finite-instance filtering behavior only, not a scalable attack or a production security conclusion. The recorded values are from passing CI run #676.
 
-### Exact error distributions of target-cancelling combinations
+## Appendix G. Exact error distributions of target-cancelling combinations
 
 We additionally examine integer vectors (w) satisfying (sum_j w_j B^j=0pmod Q), which cancel the common (s^2) target in a public linear combination of evaluation-key equations. Rather than ranking such relations only by a worst-case error bound, an exact dynamic-programming audit computes the one-coefficient probability mass function of (sum_j w_j e_j) under the implemented eta=2 centered-binomial law. We compare the adjacent-level relation with the Pareto frontier of the displayed LLL-reduced modular-kernel basis rows, using support radius, variance, central quantiles, and tail probabilities. These derived equations remain correlated linear combinations of the same original errors; marginal error improvements are not independent samples and do not by themselves constitute a distinguisher or key-recovery attack. Numerical findings will be reported only after the new CI artifact is inspected.
 
@@ -279,16 +249,30 @@ The reporting rerun (CI #715) found that the public-key equation alone left mult
 The dimension-growth exhaustive audit in CI run #722 tested (N=3,4), (q\in\{17,19\}), (B=2), six evaluation-key levels, and 100 seeded transcripts per setting. The ternary candidate spaces contained 27 and 81 secrets. The public-key equation alone left multiple candidates in 48/100, 36/100, 26/100, and 16/100 trials for ((N,q)=(3,17),(3,19),(4,17),(4,19)), respectively. After the first evaluation-key equation, the joint public-plus-evaluation filter was unique in 96/100, 94/100, 98/100, and 100/100 trials; after the second, the counts were 98/100, 99/100, 100/100, and 100/100. All four settings were unique in every trial by the third evaluation-key equation. The exact transformed filter matched the original residual filter at every stage. These are small-modulus exhaustive toy results only; in particular, public-key-only filtering already yielded uniqueness in many trials, and no production-dimension recovery or security claim follows.
 
 
-### Additional dimension-growth toy audit (CI run #729)
+## Appendix H. Additional dimension-growth toy audit (CI run #729)
 
 The exhaustive low-modulus audit was extended to (N=5) and (N=6), with (q\in\{17,19\}), (B=2), six evaluation-key levels, and eta=2 errors. Across 50 trials per N=5 setting and 30 per N=6 setting, the public-key equation alone remained ambiguous in 18/50, 10/50, 11/30, and 8/30 trials, respectively. After adding the first evaluation-key equation, the joint public-plus-evaluation filter was unique in every trial in all four settings; evaluation-key-only filtering reached uniqueness by the second tested level. The exact anchor-plus-differences filter matched the original residual constraints at every stage, and the coarse marginal relaxation introduced no extra joint candidates in these runs. These results are exhaustive only over 243 or 729 ternary candidates per instance, with tiny moduli; they support a toy-model disambiguation observation, not scalable key recovery, a production attack, or a concrete security estimate (GitHub Actions run #729, commit `2b862166bf4a84178250b728243995b0547171be`).
 
 
-### Conditional evaluation-key disambiguation (CI run #734)
+## Appendix I. Conditional evaluation-key disambiguation (CI run #734)
 
 A conditional exhaustive audit separates transcripts whose public-key equation leaves multiple ternary candidates from those already unique under the public key alone. For (N=2,3,4,5,6) and (q=17,19), the public-key equation was ambiguous in 314 of 960 seeded toy transcripts. The first evaluation-key level made 281/314 of these ambiguous transcripts unique; the second resolved 29 more, and the third resolved the remaining four. In the public-key-unique groups, evaluation-key constraints removed no further candidates. All tested candidate sets remained nonempty and retained the planted secret, and the exact transformed filter matched the original residual filter. These low-modulus experiments enumerate at most 729 ternary candidates and are finite toy diagnostics only; they do not establish scalable secret recovery, an attack on the production (N=8192) ring, or a concrete security estimate. The higher-modulus test cases were already unique under the public-key equation and therefore do not demonstrate additional evaluation-key disambiguation (GitHub Actions run #734, commit `521d30278d101f88f9e84b6601edca0c7c562663`).
 
 
-### Conditional dimension-growth audit through N=8 (CI run #741)
+## Appendix J. Conditional dimension-growth audit through N=8 (CI run #741)
 
 The conditional exhaustive audit was extended to N=7 and N=8 using q in {13,17}, B=2, eta=2, six evaluation-key levels, and 30 or 20 seeded trials per setting, respectively. The public-key equation was ambiguous in 28/30, 8/30, 20/20, and 4/20 trials for (N,q)=(7,13),(7,17),(8,13),(8,17). In all 60 ambiguous transcripts, the first joint evaluation-key stage reduced the candidate set to one; the remaining 40 transcripts were already unique under the public-key equation. Every tested candidate set remained nonempty and retained the planted secret. These exhaustive spaces contain at most 3^8=6,561 candidates and use tiny moduli. The result is a finite toy-model observation about conditional filtering, not scalable secret recovery, a production attack, or a concrete security estimate (GitHub Actions run #741, commit `73fbebdab07453896ce06870c5fa716e71ea9b4e`).
+
+## References
+
+[1] J. Fan and F. Vercauteren, “Somewhat Practical Fully Homomorphic Encryption,” IACR Cryptology ePrint Archive, Report 2012/144, 2012.
+
+[2] J.-C. Bajard, J. Eynard, M. A. Hasan, and V. Zucca, “A Full RNS Variant of FV Like Somewhat Homomorphic Encryption Schemes,” in *Selected Areas in Cryptography — SAC 2016*, Lecture Notes in Computer Science, vol. 10059, pp. 423–442, Springer, 2017, doi: 10.1007/978-3-319-69453-5_23.
+
+[3] M. R. Albrecht, R. Player, and S. Scott, “On the concrete hardness of Learning with Errors,” *Journal of Mathematical Cryptology*, vol. 9, no. 3, pp. 169–203, 2015, doi: 10.1515/jmc-2015-0016.
+
+[4] M. Albrecht et al., *Homomorphic Encryption Security Standard*, HomomorphicEncryption.org, Nov. 2018.
+
+[5] J.-C. Bajard, J. Eynard, N. Merkiche, and T. Plantard, “RNS Arithmetic Approach in Lattice-Based Cryptography: Accelerating the ‘Rounding-off’ Core Procedure,” in *2015 IEEE 22nd Symposium on Computer Arithmetic (ARITH)*, pp. 113–120, 2015, doi: 10.1109/ARITH.2015.30.
+
+[6] J.-P. Bossuat et al., “Security Guidelines for Implementing Homomorphic Encryption,” *IACR Communications in Cryptology*, vol. 1, no. 4, 2025; also Cryptology ePrint Archive, Report 2024/463, 2024, doi: 10.62056/anxra69p1.
