@@ -14,6 +14,7 @@ LEVELS = 3
 ETA = 2
 SELECTED_COORDINATES = (1, 2, 3, 4)
 TRIALS = 30
+TIMING_REPEATS = 3
 DEGREES = (4, 6, 8)
 
 
@@ -232,7 +233,8 @@ def main():
     rng = random.Random(0xBF2)
     print(
         f"Toy MITM coordinate sweep: q={Q}, B={BASE}, levels={LEVELS}, "
-        f"eta={ETA}, coordinates={SELECTED_COORDINATES}, trials={TRIALS}"
+        f"eta={ETA}, coordinates={SELECTED_COORDINATES}, trials={TRIALS}, "
+        f"timing_repeats={TIMING_REPEATS}"
     )
     for n in DEGREES:
         exhaustive_times = []
@@ -247,17 +249,26 @@ def main():
             exhaustive = exhaustive_candidates(n, public_sample, eval_samples)
             exhaustive_times.append(time.perf_counter() - start)
 
-            for k, result in results.items():
-                start = time.perf_counter()
-                stats = {}
-                mitm = mitm_candidates(n, public_sample, eval_samples, k, stats)
-                result["times"].append(time.perf_counter() - start)
-                result["stats"].append(stats)
-                assert exhaustive == mitm, (
-                    n, k, exhaustive, mitm,
-                    exhaustive - mitm, mitm - exhaustive
-                )
-                assert tuple(secret) in mitm
+            coordinate_order = list(results)
+            shift = _ % len(coordinate_order)
+            coordinate_order = coordinate_order[shift:] + coordinate_order[:shift]
+            for k in coordinate_order:
+                result = results[k]
+                final_stats = None
+                for _repeat in range(TIMING_REPEATS):
+                    start = time.perf_counter()
+                    stats = {}
+                    mitm = mitm_candidates(
+                        n, public_sample, eval_samples, k, stats
+                    )
+                    result["times"].append(time.perf_counter() - start)
+                    final_stats = stats
+                    assert exhaustive == mitm, (
+                        n, k, exhaustive, mitm,
+                        exhaustive - mitm, mitm - exhaustive
+                    )
+                    assert tuple(secret) in mitm
+                result["stats"].append(final_stats)
 
         exhaustive_median = statistics.median(exhaustive_times)
         print(
@@ -295,7 +306,8 @@ def main():
             ]
             print(
                 f"  k={k}: probes/left={5**k}; MITM median={mitm_median:.6f}s; "
-                f"ratio={speedup:.2f}x; joined={median('joined_pairs'):g}; "
+                f"ratio={speedup:.2f}x (median of {len(result['times'])} runs); "
+                f"joined={median('joined_pairs'):g}; "
                 f"public-pass={median('public_full_pass'):g}; "
                 f"survivors={median('survivors'):g}"
             )
