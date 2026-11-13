@@ -858,3 +858,77 @@ The parity equations above are consequently candidate-local algebraic invariants
 ### Experimental status and next test
 
 The existing exhaustive toy filters enumerate ternary candidates and test the public and evaluation-key equations directly. The parity audit independently verifies the square identity and exact pair counts. No SAT, SMT, MILP, or CP-SAT encoding of the complete transcript has yet been implemented; the present Python validation workflow does not install such a solver. The next controlled experiment should therefore be a small-ring exact encoding, compared against exhaustive enumeration on identical synthetic transcripts. It must verify equality of complete survivor sets, not merely recovery of the planted secret. A parity-augmented formulation should be compared with the same formulation without the redundant parity constraints, measuring propagation and runtime while requiring identical survivor sets. No production-dimension complexity or security conclusion should be inferred from such toy results.
+
+## What the exact toy MILP establishes — and its scaling barrier
+
+The finite-domain MILP is an encoding of the *feasibility definition* used by
+the exhaustive oracle. For each candidate ternary secret, it enforces the
+same public-key equation and the same evaluation-key equations with one
+shared secret and one shared square. The error variables are bounded
+coefficientwise by [-2,2]; the model uses these support bounds only and does
+not use the centered-binomial probabilities. Consequently, equality of the
+MILP and exhaustive survivor sets on the tested instances establishes
+encoding correctness for those finite instances, not a probabilistic
+likelihood ranking or an attack.
+
+The binary encoding is
+\[
+s_i=u_i^+-u_i^-,\qquad
+u_i^++u_i^-\leq1,\qquad
+u_i^+,u_i^-\in\{0,1\}.
+\]
+For each ordered pair and sign choice, an auxiliary binary variable represents
+the product of the corresponding indicators. The three McCormick
+inequalities are exact for binary factors. The diagonal case requires
+coefficient accumulation when both factors are the same variable; the
+implementation now does this explicitly. The square coefficients are then
+linear forms in these product variables. Each transcript coefficient is
+enforced by an integer quotient variable and a bounded error variable, so
+the modular equation is represented as an integer equality rather than by
+floating-point modular arithmetic.
+
+For N coefficients and L evaluation-key levels in addition to the public-key
+sample, the current straightforward encoding has:
+- 2N ternary-indicator variables;
+- 4N^2 binary product variables;
+- 2N(L+1) error and modular-quotient variables;
+- N ternary-exclusivity rows, 12N^2 product-linearization rows, and
+  N(L+1) transcript rows.
+
+Thus the dominant model size is quadratic in N even before accounting for
+the solver's branch-and-bound search. With N=8192 and L=14, this direct
+formulation would create 268,435,456 product variables and 805,306,368
+product-linearization constraints, before transcript constraints and
+solver-internal data structures. This is not a practical production-parameter
+MILP. The 3^N candidate-space size of exhaustive enumeration is a separate
+barrier; the quadratic MILP formulation does not remove the underlying
+combinatorial difficulty.
+
+The optional mod-2 square identities add N parity-quotient variables and N
+rows for even N. They are algebraically implied by the ternary square
+definition and do not add information to the transcript or change its
+feasible secret set. Their role in this experiment is to test that a
+redundant algebraic identity is encoded consistently—not to provide the
+solver with secret parity bits.
+
+### Interpretation of candidate counts
+
+A surviving candidate is a ternary polynomial for which every centered
+transcript residual lies in the allowed support. The experiment treats all
+errors in [-2,2] as feasible, regardless of their different probabilities
+under the eta=2 centered-binomial law. Therefore:
+- exact survivor-set agreement is a correctness check on the constraint
+  encoding;
+- a unique survivor in a toy instance is not by itself a practical recovery
+  algorithm at production parameters;
+- survivor counts do not quantify posterior secret entropy unless the
+  candidate likelihoods, prior distribution, and transcript-generation
+  model are included;
+- no concrete attack complexity follows from these tiny-ring MILP runs.
+
+A future solver experiment should first target a structurally reduced
+formulation and report model construction time, peak memory, solver status,
+optimality/completion certificates, and exact comparison with exhaustive
+search wherever exhaustive search remains possible. Any reformulation that
+removes or aggregates product variables must be proved equivalent before
+its candidate sets are used in cryptanalytic conclusions.
