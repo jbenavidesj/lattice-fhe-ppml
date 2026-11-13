@@ -35,6 +35,8 @@ jobs:
         run: python scripts/toy_evalkey_exhaustive_search.py
       - name: Measure staged public/evaluation-key candidate filtering
         run: python scripts/audit_evalkey_filtering.py
+      - name: Audit adjacent-level linear evaluation-key prefilters
+        run: python scripts/audit_evalkey_linear_prefilter.py
       - name: Audit split-secret square and evaluation residual identity
         run: python scripts/audit_split_secret_square.py
       - name: Run toy meet-in-the-middle cross-check
