@@ -627,3 +627,23 @@ because the original error coordinates are independent with unit variance. For t
 In particular, the covariance between the two non-adjacent LLL Pareto rows is 213075963 (correlation approximately 0.10833). These are not independent observations: all rows are deterministic linear combinations of the same 14 error variables. The matrix is a marginal, per-coefficient covariance; it does not by itself characterize the full joint discrete law or prove a distinguisher.
 
 **Conclusion.** The corrected experiment establishes an exact marginal trade-off and quantifies covariance among the selected derived relations. It does not establish a practical filtering advantage, secret recovery, a security reduction, or a concrete security level. The Pareto set is restricted to the tested LLL basis rows and adjacent baseline, not all integer vectors in the modular kernel. A further cryptanalytic step would need to exploit the complete joint law and evaluate an actual attack objective, rather than count correlated derived equations as additional samples.
+
+
+## 17. Exact joint original/transformed candidate constraints (CI run #699)
+
+The candidate-filter audit was extended and passed in GitHub Actions run #699 (commit `9d27900a1c401ca1223b282bc6a0bbe1084dbbe5`). The SageMath job and its uploaded artifact were inspected. The audit enumerates every ternary candidate in each toy ring and compares: (i) all original evaluation residuals constrained to the exact eta=2 support, (ii) an exactly transformed representation consisting of the anchor residual (e_0) and the 13 adjacent differences, and (iii) a coarse transformed relaxation using the marginal bound (|z_j|\le 2(B+1)) together with the anchor. The candidate filter also applies the public-key residual constraint.
+
+The exact transformed check reconstructs the residual sequence recursively as (e_{j+1}=z_j+B e_j\pmod q), centering at each modular step and requiring every reconstructed coefficient to lie in ([-2,2]). Because the transformation from (e\) to ((e_0,z_0,\ldots,z_{12})\) is unimodular (triangular with unit diagonal), the original and exact transformed candidate sets must coincide. The experiment confirms that identity in all tested instances:
+
+| Toy case | (N) | (q) | (B) | Levels | Trials | Ternary candidates | Original = exact joint? | Extra candidates in coarse joint relaxation |
+|---|---:|---:|---:|---:|---:|---:|---|---:|
+| Small ring | 2 | 23 | 4 | 2 | 40 | 9 | Yes, all trials | 0 |
+| Ambiguity stress | 2 | 257 | 4 | 2 | 40 | 9 | Yes, all trials | 0 |
+| Medium toy | 5 | 65,537 | 16 | 6 | 10 | 243 | Yes, all trials | 0 |
+| Larger exhaustive toy | 8 | 65,537 | 16 | 6 | 3 | 6,561 | Yes, all trials | 0 |
+
+All four cases had exactly one surviving candidate on average in the original, exact-joint, and coarse-joint filters. The coarse relaxation did not introduce additional candidates in these particular tests once the public-key equation was also enforced. This is a finite observation, not a general claim that the public-key equation always removes every ambiguity.
+
+A separate evaluation-key-only audit in the same CI run illustrates why the distinction matters. With only the 2 evaluation-key equations, (N=2,q=257,B=4), and 20 trials, the broad marginal transformed support admitted 3 extra ternary candidates across 2 trials (maximum 3 survivors), while the original-support test retained exactly one candidate per trial. In the (N=8,q=65,537,B=4), 14-level sanity case, no extra candidates appeared in 10 trials. These two small experiments are not contradictory: the joint candidate audit additionally imposes the public-key constraint, which removed the observed coarse-relaxation false positives in its 40 stress trials.
+
+**Interpretation and limits.** The exact anchor-plus-differences representation preserves all original support information and therefore gives no additional information or attack advantage over the original equations. The marginal-only transformed relaxation can lose information and admit false candidates; whether other equations happen to eliminate them is instance-dependent. Exhaustive search costs (3^N) candidate secrets. The largest new case enumerated only (3^8=6,561) secrets, compared with (3^{8192}) at the production dimension, so this is not scalable secret recovery and gives no production-key uniqueness or security estimate.
