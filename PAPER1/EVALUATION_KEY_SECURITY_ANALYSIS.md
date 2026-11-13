@@ -552,14 +552,20 @@ The exact transformed candidate set must equal the original evaluation-key candi
 
 ### Controlled four-way experiment: preliminary small-ring output
 
-For q=23, B=16, fourteen evaluation levels, and eta=2, the independently reproduced small-ring results are:
+For q=23, B=16, fourteen evaluation levels, and eta=2, CI run #676 (commit 8df293c58481d2eff78625d7f6bfe954443da5a9) reported the following small-ring results. The transcript sampler follows the source-level laws in src/keygen.rs; only the ring modulus and dimension are toy-sized:
 
 | N | Trials | Mean public-only survivors | Public-only unique | Mean evaluation-only survivors | Evaluation-only unique | Mean joint survivors |
 |---:|---:|---:|---:|---:|---:|---:|
-| 2 | 40 | 1.675 | 29/40 | 1.000 | 40/40 | 1.000 |
-| 3 | 30 | 1.133 | 26/30 | 1.000 | 30/30 | 1.000 |
-| 4 | 30 | 1.067 | 28/30 | 1.000 | 30/30 | 1.000 |
-| 5 | 20 | 1.100 | 18/20 | 1.000 | 20/20 | 1.000 |
-| 6 | 10 | 1.100 | 9/10 | 1.000 | 10/10 | 1.000 |
+| 2 | 40 | 1.900 | 27/40 | 1.000 | 40/40 | 1.000 |
+| 3 | 30 | 1.300 | 23/30 | 1.000 | 30/30 | 1.000 |
+| 4 | 30 | 1.133 | 26/30 | 1.000 | 30/30 | 1.000 |
+| 5 | 20 | 1.050 | 19/20 | 1.000 | 20/20 | 1.000 |
+| 6 | 10 | 1.400 | 8/10 | 1.000 | 10/10 | 1.000 |
 
-In these particular toy trials, the evaluation-key equations alone left one ternary candidate in every instance, while the public-key equation alone left additional candidates in some instances. Adding the public key therefore did not further reduce the evaluation-only survivor set in this sample. This is an observed outcome of a very small modulus and a synthetic independent-sample generator, not evidence that the production evaluation keys alone determine the real secret. The exact transformed test must match the original evaluation-key candidate set trial by trial; its equality is an algebraic equivalence check.
+In these particular toy trials, the evaluation-key equations alone left one ternary candidate in every instance, while the public-key equation alone left additional candidates in some instances (27/40, 23/30, 26/30, 19/20, and 8/10 unique trials respectively). Adding the public key therefore did not further reduce the evaluation-only survivor set in this sample. This is an observed outcome of a very small modulus and dimension, not evidence that the production evaluation keys alone determine the real secret. The exact transformed test matched the original joint candidate set in every trial; its equality is an algebraic equivalence check. The CI Python audit, Rust tests, and SageMath job all passed in run #676.
+
+### Source-sampler correspondence and scope
+
+The small-ring generator uses the same coefficientwise secret law as sample_ternary in src/keygen.rs: uniform on {-1,0,1}. It uses independent uniform ring coefficients for every public/evaluation-key a-polynomial, matching sample_uniform_rq at the distributional level (in the implementation, independent uniform residues in the four pairwise-coprime CRT lanes represent a uniform element of the product ring). Its error sampler uses Binomial(4,1/2)-2, which has exactly the same probability mass function as the implementation's popcount(two low bits)-popcount(two high bits), i.e. Binomial(2,1/2)-Binomial(2,1/2). The public and evaluation-key equations use the same signs and targets as generate_public_key and generate_relinearization_key_with_base.
+
+The deliberate departures are the toy modulus q=23 and tiny dimensions N<=6, rather than the production aggregate Q (218 bits) and N=8192. This preserves the coefficient distributions and algebraic transcript shape for a finite exhaustive experiment, but it does not preserve the production ring size or modulus geometry. Exhaustive ternary enumeration scales as 3^N and is infeasible at N=8192. Therefore the observed uniqueness is only a small-instance candidate-filtering result; it is not a scalable key-recovery method, a proof of production key uniqueness, or a security estimate.
