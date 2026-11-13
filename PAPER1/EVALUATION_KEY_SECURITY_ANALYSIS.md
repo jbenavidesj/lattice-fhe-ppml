@@ -420,3 +420,39 @@ In the first experiment, two trials admit additional candidates after transforma
 This is a useful negative control: eliminating the shared \(s^2\) target and replacing the original residual constraints with wider difference-error bounds can lose filtering information. The small-ring ambiguity is not evidence of a weakness in the real parameter set; the scaled toy experiment's uniqueness is not evidence of security either. These are exhaustive candidate counts only for the stated toy parameters, not a scalable recovery algorithm, attack-cost estimate, or security proof.
 
 The CI step is `Exhaustively compare toy-ring secret candidate filters`; its output is uploaded as `evalkey-toy-secret-filtering.txt`.
+
+
+## 9. Exact joint original/transformed candidate constraints
+
+The earlier toy comparison replaced the original evaluation-key residual tests with the coordinatewise support bound for adjacent differences. That is a deliberately conservative rectangular relaxation: it preserves the planted secret but can admit additional candidates. It does not use the exact joint support induced by the shared original errors.
+
+A new exhaustive audit, scripts/audit_evalkey_joint_candidate_filter.py, compares three filters on the same synthetic transcript, including the ordinary public-key sample:
+
+1. **Original:** require the public-key residual and every original evaluation-key residual to lie in the exact eta=2 support [-2,2].
+2. **Coarse transformed:** require the public-key residual, the first original evaluation-key residual, and each adjacent difference to lie in the coordinatewise support box [-2(B+1),2(B+1)].
+3. **Exact joint transformed:** pin the first error vector e_0 using the first original evaluation-key equation, then use each transformed residual z_j=e_{j+1}-B e_j to reconstruct the same next error vector by
+\[
+e_{j+1}=z_j+B e_j\pmod q,
+\]
+taking centered representatives. The test rejects as soon as any reconstructed coefficient leaves [-2,2]. For the stated toy moduli, the transformed support radius is strictly below q/2, so centered representatives are unambiguous.
+
+This recurrence is important: the thirteen transformed errors are not thirteen independent draws. Once e_0 is fixed, the entire error sequence is determined by the transformed residuals. Therefore the exact joint transformed support test plus the first original equation is algebraically equivalent to checking all original evaluation-key residuals. It does not add information to the transcript and does not create an attack; it is an alternative exact way to enforce the same constraints. By contrast, the coarse rectangular bound forgets the shared-error recurrence and can retain false candidates.
+
+### Exhaustive toy results
+
+The audit exhaustively enumerates all 3^N ternary secrets for each trial:
+
+| Configuration | Trials | Mean original survivors | Mean exact-joint survivors | Mean coarse survivors | Extra coarse candidates |
+|---|---:|---:|---:|---:|---:|
+| N=2, q=23, B=4, L=2 | 40 | 1.000 | 1.000 | 1.250 | 10 total |
+| N=5, q=65537, B=16, L=6 | 10 | 1.000 | 1.000 | 1.000 | 0 |
+
+For every trial, the original and exact-joint candidate sets were identical, and the planted secret survived. In the small-ring case, the coarse filter retained ten extra candidates across 40 trials (some trials retained two, three, or four candidates). In the medium toy case, all three filters retained only the planted candidate in every trial.
+
+These results confirm the set-equivalence of the exact recurrence in the tested toy instances and illustrate the information loss caused by replacing the joint support with a coordinatewise box. They do not demonstrate scalable secret recovery: the largest search space here is only 3^5=243, and all candidates are enumerated. The medium toy's unique candidate is not evidence of production security.
+
+### Validation correction for workflow run #617
+
+Inspection of the downloaded artifact and SageMath job log for run #617 revealed that three Python audit steps in the SageMath container invoked python, which is not installed there. Those commands failed with "python: not found"; because the shell pipeline did not enable pipefail, the subsequent tee exit status masked the failures and the overall job was incorrectly reported as successful. The corresponding three artifact files were empty. The scalar LWE proxy and SageMath LLL relation search did run, but run #617 is **not** valid evidence that the weighted-error, covariance, or earlier toy-filter scripts passed in that container.
+
+The workflow has therefore been corrected to invoke these scripts with sage -python, enable set -euo pipefail, and include the new exact-joint candidate-filter audit. The next CI run must be checked step-by-step and its artifact contents inspected before recording these audits as passed.
