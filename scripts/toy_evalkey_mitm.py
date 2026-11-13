@@ -192,7 +192,7 @@ def main():
             assert exhaustive == mitm, (
                 n, exhaustive, mitm, exhaustive - mitm, mitm - exhaustive
             )
-            assert secret in mitm
+            assert tuple(secret) in mitm
 
         exhaustive_median = statistics.median(exhaustive_times)
         mitm_median = statistics.median(mitm_times)
