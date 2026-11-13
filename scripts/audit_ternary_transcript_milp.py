@@ -118,6 +118,8 @@ def square_coefficient(model, n, k, products):
 
 
 def milp_survivors(n, q, base, levels, masks, bodies, parity_constraints):
+    if parity_constraints and n % 2:
+        raise ValueError("the paired parity identity is defined here only for even N")
     model = LinearModel()
     up, um, products = {}, {}, {}
     for i in range(n):
@@ -248,7 +250,7 @@ def run_case(n, seed):
 def main():
     print("Exact ternary-transcript MILP vs exhaustive oracle; q=257, B=4, levels=2")
     print("All errors have exact CBD_eta2 support [-2,2]; probabilities are not used for feasibility.")
-    for n in (2, 3, 4):
+    for n in (2, 4):
         for seed in range(4):
             run_case(n, seed)
     print("All toy MILP/exhaustive and redundant-parity checks: PASS")
