@@ -810,3 +810,51 @@ Even before hash-table overhead, storing both lists as full N-coefficient residu
 The adaptive coordinate selector has been checked on held-out toy instances and a small cross-parameter grid. These experiments validate implementation consistency and provide narrow timing evidence only. They do not alter the exponential half-list term and must not be extrapolated to N=8192.
 
 **Conclusion.** The current split MITM is an exact toy-scale cross-check and a useful diagnostic, but not a viable production-dimension recovery method. Any further attack work must avoid materializing 3^(N/2) half-lists or establish a materially different representation with a defensible time-memory analysis. The cross-term identity must be preserved in any proposed evaluation-key-aware join.
+
+
+## Exact binary formulation of the ternary-square constraint
+
+This section records an exact finite-domain formulation for subsequent solver experiments. It is a representation of the existing candidate equations, not a new attack.
+
+For each coefficient, introduce binary variables
+\[
+u_i^+,u_i^-\in\{0,1\},\qquad u_i^++u_i^-\leq 1,
+\]
+and define
+\[
+s_i=u_i^+-u_i^-\in\{-1,0,1\},\qquad
+x_i=u_i^++u_i^-=s_i^2\in\{0,1\}.
+\]
+Thus the ternary secret is represented exactly, with one-hot sign/nonzero indicators. For even N, let c=s^2 in the integer negacyclic ring. Its coefficients are
+\[
+c_k=
+\sum_{i+j=k}s_is_j-
+\sum_{i+j=k+N}s_is_j,
+\qquad 0\leq k<N,
+\]
+where each sum ranges over 0<=i,j<N. The parity identities become the redundant constraints
+\[
+c_{2r+1}\equiv0\pmod2,\qquad
+c_{2r}\equiv x_r+x_{r+N/2}\pmod2,
+\quad 0\leq r<N/2.
+\]
+They are redundant because they follow from the ternary encoding and the exact square definition; they can serve as consistency checks or potentially as solver-propagation constraints, but cannot add information to the transcript.
+
+For a complete transcript, the coefficient equations must encode one shared s and one shared c=s^2:
+\[
+b_{pk}+a_{pk}s=e_{pk}\pmod Q,
+\]
+\[
+b_j+a_js-B^jc=e_j\pmod Q,\qquad 0\leq j<14.
+\]
+A coefficientwise integer encoding introduces quotient variables t and imposes the corresponding equality with Q t, together with the exact support of each error coefficient. For the eta=2 centered-binomial law, the support is {-2,-1,0,1,2}; a likelihood-aware model must additionally retain the probabilities (1,4,6,4,1)/16 rather than treating all supported errors as equiprobable. The multiplication terms s_i s_j make this a quadratic finite-domain model unless they are linearized with auxiliary product variables.
+
+### Observability boundary
+
+The parity of an integer is not a function of its residue modulo odd Q. Indeed, z and z+Q represent the same residue and have opposite parity. Therefore no coefficientwise parity map from Z/QZ to F_2 exists for odd Q. In particular, reducing a public coefficient modulo Q and then taking its parity is not a valid way to obtain the parity of an integer lift of s^2.
+
+The parity equations above are consequently candidate-local algebraic invariants: once a candidate s is specified, its integer square and its parity vector can be computed and checked. They are not observed bits supplied by the public transcript. The full modular equations may constrain candidate secrets, but any claim that they reveal the parity vector would require a separate derivation that accounts for the unknown integer lifts, the bounded errors, and all shared-secret evaluation-key equations.
+
+### Experimental status and next test
+
+The existing exhaustive toy filters enumerate ternary candidates and test the public and evaluation-key equations directly. The parity audit independently verifies the square identity and exact pair counts. No SAT, SMT, MILP, or CP-SAT encoding of the complete transcript has yet been implemented; the present Python validation workflow does not install such a solver. The next controlled experiment should therefore be a small-ring exact encoding, compared against exhaustive enumeration on identical synthetic transcripts. It must verify equality of complete survivor sets, not merely recovery of the planted secret. A parity-augmented formulation should be compared with the same formulation without the redundant parity constraints, measuring propagation and runtime while requiring identical survivor sets. No production-dimension complexity or security conclusion should be inferred from such toy results.
