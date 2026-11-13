@@ -143,3 +143,16 @@ The repository has substantial implementation and deterministic correctness evid
 CI run #434 (43345625418) completed successfully on commit b3a21b0330b55af39a14d7be8e945be7fbf351ca. The selector formula audit passed 80 parameter combinations. The frozen lambda=4 selector was then tested on ten disjoint-seed instances per degree (seed 0xC0FFEE, q=11, eta=2, N=4,6,8), comparing k=1,2,3,4 twice per instance against exact exhaustive candidate sets. The selector chose k=(1,2,2), matching the best fixed-k median for these held-out samples; median regret was 1.000 at each degree. Exact candidate-set comparisons passed 40/40 per degree. Full timings and caveats are in PAPER1/ADAPTIVE_MITM_HOLDOUT_RESULTS.md.
 
 This is a narrow toy-scale held-out result, not evidence of generalization across q/eta or production degrees. Ten instances per degree and CI-host timing noise are insufficient for a broad predictive claim. CI #434 also passed Rust tests, formatting, Clippy, and benchmark-target compilation.
+
+## Proof cross-check refinement (2026-11-13)
+
+The current proof and IEEE manuscript draft were cross-checked against `src/rns.rs`, `src/keygen.rs`, and `scripts/audit_rns_bfv_noise.py`.
+
+- Clarified the auxiliary CRT range argument: each negacyclic product is reconstructed independently under the single-product bound (N(Q/2)^2); the two cross products are added only after signed BigInt reconstruction. No combined cross coefficient is sent through the smaller CRT range.
+- Expanded the algebraic derivation of the quotient/carry, scale-bias, mixed-error, and error-product terms in `PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md`.
+- Added the centered BFV decoding-margin derivation, including the offset caused by (Q=t\Delta+r).
+- Updated `PAPER1/IEEE_MANUSCRIPT_DRAFT.md` to summarize the actual numerical bounds and point to the full derivation.
+
+The documentation commits are present on `paper1-validation-corrections`. CI runs #456 and #457 for commit `f04e5909f551904aa8ba12324bf9002864d58cb5` were observed in progress at the time of this update; they must complete successfully before claiming validation of this exact head. The latest completed full CI before these refinements was run #449 on commit `4800c0dc279c17bbfb0f7aca8a1f6e820645b1d4`, which passed both the Rust and Python audit jobs.
+
+This cross-check is an internal consistency review, not independent mathematical peer review. The one-multiplication scope and all security limitations above remain unchanged.
