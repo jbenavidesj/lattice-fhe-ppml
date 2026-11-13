@@ -199,6 +199,8 @@ def main():
     print("Stagewise comparison of original, exact-joint, and coarse transformed filters")
     print("The exact transform is a bijective reparameterization; it must match original filters.")
     print("The coarse bound is a marginal support relaxation, not an equivalent joint law.")
+    run_case("low_modulus_q17", n=2, q=17, B=2, levels=6, trials=200)
+    run_case("low_modulus_q19", n=2, q=19, B=2, levels=6, trials=200)
     run_case("ambiguity_q257", n=2, q=257, B=4, levels=6, trials=40)
     run_case("small_q65537", n=4, q=65537, B=16, levels=14, trials=20)
     run_case("medium_q65537", n=6, q=65537, B=16, levels=14, trials=10)
