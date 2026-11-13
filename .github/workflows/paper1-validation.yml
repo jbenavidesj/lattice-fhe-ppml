@@ -54,7 +54,7 @@ jobs:
   sage-estimator:
     name: Pinned LWE proxy diagnostic (SageMath)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     container:
       image: sagemath/sagemath:10.10
       options: --user root
@@ -75,7 +75,7 @@ jobs:
           git -C /tmp/lattice-estimator checkout 7d59f866655362ea8eab803dbc833710c2bc362a
           cd /tmp/lattice-estimator
           sage -pip install -e .
-      - name: Run unstructured-LWE proxy diagnostic
+      - name: Run bounded rough-profile LWE proxy diagnostic
         run: |
           if sage -python scripts/estimate_lwe_proxy.py > sage-lwe-proxy-output.txt 2>&1; then
             status=0
