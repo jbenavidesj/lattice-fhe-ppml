@@ -50,9 +50,19 @@ This argument covers one multiplication followed by one relinearization only. It
 
 ## 5. Evaluation-key structure and security limitations
 
-The evaluation-key transcript contains fourteen equations sharing the same secret s and related target s^2. It is therefore not justified to count them as fourteen ordinary independent RLWE samples or to apply an unstructured-LWE estimator to them without a valid distributional argument.
+The evaluation-key transcript contains fourteen equations
+\[
+b_j+a_js=B^js^2+e_j\pmod Q,
+\]
+sharing the same secret \(s\) and related target \(s^2\). The full public transcript also includes the conventional public-key equation \(b_{pk}+a_{pk}s=e_{pk}\pmod Q\). It is therefore not justified to count the fourteen evaluation-key equations as fourteen ordinary independent RLWE samples or to estimate the public and evaluation keys separately and combine nominal security levels.
 
-Adjacent-level subtraction cancels the formal s^2 target, but creates correlated transformed errors. The exact identity and covariance structure are documented in PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md. This algebraic observation is not, by itself, a demonstrated attack or security reduction.
+An exact adjacent-level transformation illustrates both the structure and the limitation. Setting \(y_j=b_j+a_js\), one obtains
+\[
+b_{j+1}-Bb_j+(a_{j+1}-Ba_j)s=e_{j+1}-Be_j\pmod Q.
+\]
+The transformed coefficient vector \((a_{j+1}-Ba_j)_{j=0}^{12}\) is jointly uniform over \(R_Q^{13}\), because the difference map from the fourteen independent uniform \(a_j\)'s is surjective. However, the transformed errors are correlated. For the implemented eta=2 sampler, an original coefficient has probability mass \((1,4,6,4,1)/16\) on \((-2,-1,0,1,2)\), with variance one. Before modular reduction, each transformed coefficient has support in \([-2(1+B),2(1+B)]\), variance \(1+B^2\), and adjacent covariance \(-B\); nonadjacent transformed errors are uncorrelated. Thus the transformation gives thirteen RLWE-shaped equations with a banded, non-iid error vector—not thirteen independent standard eta=2 samples. Centered modular representatives may wrap, so these unreduced support and covariance values cannot be inserted uncritically into a conventional estimator.
+
+This transformation is deterministic post-processing of the public evaluation key: it provides an alternative cryptanalytic representation, not additional information-theoretic leakage. Neither the original related-target system nor the transformed correlated-error system has been shown to yield a practical attack or a security reduction. The exact model and caveats are detailed in PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md.
 
 The pinned lattice-estimator diagnostic has not yet been executed in a SageMath environment. Even if executed, the current unstructured-LWE proxy would not cover the structured evaluation-key samples or prove Ring-LWE security. No concrete bit-security claim is made.
 
