@@ -135,3 +135,21 @@ To reduce sensitivity to a single timing observation, the coordinate sweep was r
 Every configuration again achieved exact-set agreement in all 30 instances for each degree. The fastest observed setting remained \(k=1\) for N=4 and \(k=2\) for N=6 and N=8. The \(k=4\) setting sharply reduced the median join output, but its 625 error probes per left entry made it slower than exhaustive search at N=4 and N=6. At N=8 it retained a 1.43x ratio, still well behind \(k=2\).
 
 The timing repetition improves the stability of the toy comparison but does not turn it into a controlled benchmark: all runs share one CI environment, and the parameters remain q=11 and N<=8. The data support choosing \(k\) based on the balance between \(5^k\) probes and collision reduction; they do not establish a production-scale optimum.
+
+## Cost-model adaptive coordinate selection
+
+A deterministic selector now chooses \(k\) from the tested set \(\{1,2,3,4\}\) by minimizing the transparent proxy
+\[
+\widehat C_N(k)=3^{N/2}5^k+4\cdot 3^N(5/q)^k.
+\]
+The first term counts bounded-error hash probes. The second approximates expected retrieved pairs under an independence/uniform-residue heuristic; the factor 4 is a toy-scale relative-cost weight for a retrieved pair. This is a heuristic policy, not a theorem or a cryptographic complexity bound. It does not use the measured winner as an input.
+
+For q=11, the selector chooses \(k=1\) at N=4 and \(k=2\) at N=6 and N=8. In CI run #417, the adaptive setting and every fixed setting were measured on the same 30 generated instances per degree, with three MITM timings per instance (90 timings per setting). Exact candidate-set equality with exhaustive search held in all 30 instances for every fixed setting and for the adaptive choice.
+
+| N | Adaptive k | Adaptive median time | Exhaustive median time | Ratio | Median joined pairs |
+|---:|---:|---:|---:|---:|---:|
+| 4 | 1 | 0.000209 s | 0.000308 s | 1.47x | 37 |
+| 6 | 2 | 0.001303 s | 0.003879 s | 2.98x | 150 |
+| 8 | 2 | 0.008805 s | 0.051501 s | 5.85x | 1356 |
+
+The adaptive selection matched the fastest fixed setting in this run: k=1 for N=4 and k=2 for N=6,8. This is encouraging but not independent evidence of general optimality: the coefficient 4 and the uniform-residue model are heuristic, and the experiment covers only three tiny degrees over q=11. The model should next be tested on additional moduli, error widths, and degrees, with the weight chosen on a training set and evaluated on held-out instances. The exact exhaustive cross-check remains the correctness criterion.
