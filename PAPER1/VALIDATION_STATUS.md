@@ -1,8 +1,7 @@
 # Paper 1 — validation status
 
-> **Latest full validation run — 2026-11-13, validated source commit `01f46aa0fb87d4dbc72e7cc99b9a8ebb289ef910`.**
-> Paper 1 validation workflow #798 (run ID 43522369561) completed successfully on that commit. All three jobs passed: Python arithmetic/toy audits; Rust formatting, unit tests, Clippy, and benchmark-target compilation; and the pinned SageMath proxy/security-diagnostic job. The later commits `cf8ef08`, `121a96a`, and `707a5c6` change validation/manuscript documentation only; no source code or audit scripts were changed. Thus the automated checks passed on the validated code state, while the current documentation edits have not themselves triggered another workflow. This is not an independent mathematical review, a cryptanalytic review, or a security certification.
-> Paper 1 validation workflow #788 (run ID 43394112697) completed successfully on that source commit. Subsequent commits `1ec1c428` and `acc86dde` update documentation and manuscript structure only; no code or test scripts were changed in those commits. No workflow run is yet recorded for the current documentation-only head. The successful run confirms the configured checks on its source commit; it is not an independent mathematical review, a cryptanalytic review, or a security certification.
+> **Latest full code-validation run — 2026-11-13, source commit `01f46aa0fb87d4dbc72e7cc99b9a8ebb289ef910`.**
+> Paper 1 validation workflow #798 (run ID 43522369561) completed successfully on that source commit. All three jobs passed: Python arithmetic/toy audits; Rust formatting, unit tests, Clippy, and benchmark-target compilation; and the pinned SageMath proxy/security-diagnostic job. All subsequent branch commits through `19b55058839705baaf8b71334108016389f63e1f` modify manuscript or validation documentation only; they do not modify source code or audit scripts. Thus the automated checks passed on the current code state, while the later editorial changes did not themselves trigger a new workflow. This is not an independent mathematical review, a cryptanalytic review, or a security certification.
 >
 > The SageMath proxy diagnostic is now executed and recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`: minimum reported `log2(rop)=93.732` for the scalar unstructured-LWE proxy under the pinned rough profile. **This is not a Ring-LWE estimate, not a security lower bound, and not a scheme-level security claim.** It does not model the structured evaluation-key transcript.
 >
@@ -66,7 +65,8 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 1. Obtain an independent review of the one-multiplication derivation, especially centered-lift quotient handling and the decoding-margin argument.
 2. Obtain independent review of `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md`, especially joint public-key/evaluation-key attacks and algebraic exploitation of s^2; the existing unstructured-LWE proxy omits these samples.
 3. The pinned scalar unstructured-LWE proxy has been executed and documented. What remains is specialist assessment of its relevance and, separately, a joint ring-specific analysis of the public/evaluation-key transcript; the proxy must not be presented as that analysis.
-4. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
+4. Complete an algorithm-by-algorithm comparison with the BEHZ and HPS RNS-BFV variants, including the published CPU/GPU implementation study; explain the narrower role of this exact-integer reference path without claiming competitive performance.
+5. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
 5. Repeat release benchmarks in independent sessions and preferably on bare-metal hardware; add missing primitive-level and equivalent external BFV baselines before any performance claim.
 6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
 
