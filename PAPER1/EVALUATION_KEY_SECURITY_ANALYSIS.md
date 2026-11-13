@@ -785,3 +785,28 @@ The present evidence supports the following bounded conclusion:
 4. No scalable candidate-generation, lattice-reduction, algebraic-solving, or hybrid algorithm has yet been implemented or analyzed with a defensible complexity bound for the production parameters.
 
 The next cryptanalytic milestone is therefore not to extrapolate toy survivor counts. It is to specify a concrete production-dimension attack model, derive the exact induced distribution (including modular centered lifts and cross-level error dependence), and identify an algorithm whose time and memory costs can be estimated. Until such an algorithm or a valid reduction is available, the scheme's security remains unresolved; neither a break nor a concrete security level follows from these experiments.
+
+
+## Split-secret meet-in-the-middle (MITM): exactness versus production cost
+
+A two-list MITM prototype splits an even-degree ternary candidate as
+\[
+s=u+X^{N/2}v,
+\]
+with each half containing N/2 ternary coefficients. It hashes selected coordinates of the public-key linear residual, retrieves candidate pairs, and then verifies the complete public residual and all evaluation-key residuals. For the tested toy instances, its candidate sets agree exactly with exhaustive enumeration. This is a correctness result for the toy implementation, not evidence of production-scale recovery.
+
+The evaluation-key equations do not yield independent left/right hash contributions under this split. In the negacyclic ring,
+\[
+s^2=u^2+2X^{N/2}uv-v^2.
+\]
+The mixed term depends on both halves. Omitting it from a split hash would be unsound; computing it for every pair can restore the original pairwise cost. The current prototype therefore uses the public-key equation for the join and evaluation-key equations only for subsequent full verification.
+
+For N=8192, each half-list contains exactly 3^4096 entries, so
+\[
+\log_2(3^{4096})=6492.0.
+\]
+Even before hash-table overhead, storing both lists as full N-coefficient residue vectors requires a payload on the order of 2^6510.8 bytes under the script's conservative 28-byte-per-residue accounting. The coordinate-selection proxy reports about 2^6633.6 probe operations for its selected k=61. The expected-join count in that projection relies on an independent-uniform-residue heuristic; it is not a theorem. The exact half-list cardinality alone is sufficient to reject this particular materialized two-list implementation as a production attack.
+
+The adaptive coordinate selector has been checked on held-out toy instances and a small cross-parameter grid. These experiments validate implementation consistency and provide narrow timing evidence only. They do not alter the exponential half-list term and must not be extrapolated to N=8192.
+
+**Conclusion.** The current split MITM is an exact toy-scale cross-check and a useful diagnostic, but not a viable production-dimension recovery method. Any further attack work must avoid materializing 3^(N/2) half-lists or establish a materially different representation with a defensible time-memory analysis. The cross-term identity must be preserved in any proposed evaluation-key-aware join.
