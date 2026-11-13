@@ -237,8 +237,16 @@ def run_case(n, seed, q=257, base=4, levels=2):
         n, q, base, levels, masks, bodies, parity_constraints=True
     )
     assert tuple(planted) in exhaustive
-    assert without_parity == exhaustive, (n, seed, "MILP/exhaustive mismatch")
-    assert with_parity == exhaustive, (n, seed, "parity model changed survivors")
+    if without_parity != exhaustive:
+        print(f"DEBUG N={n}, q={q}, seed={seed}: exhaustive={len(exhaustive)}, MILP={len(without_parity)}")
+        print("DEBUG missing_from_MILP=", sorted(exhaustive - without_parity))
+        print("DEBUG extra_from_MILP=", sorted(without_parity - exhaustive))
+        raise AssertionError((n, seed, "MILP/exhaustive mismatch"))
+    if with_parity != exhaustive:
+        print(f"DEBUG parity N={n}, q={q}, seed={seed}: exhaustive={len(exhaustive)}, MILP={len(with_parity)}")
+        print("DEBUG parity_missing=", sorted(exhaustive - with_parity))
+        print("DEBUG parity_extra=", sorted(with_parity - exhaustive))
+        raise AssertionError((n, seed, "parity model changed survivors"))
     print(
         f"N={n}; q={q}; B={base}; levels={levels}; seed={seed}; "
         f"exhaustive={len(exhaustive)}; "
