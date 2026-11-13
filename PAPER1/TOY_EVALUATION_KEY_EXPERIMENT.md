@@ -74,7 +74,7 @@ A meet-in-the-middle method could enumerate the \(3^m\) possible left contributi
 
 If a wrong ternary candidate produces a coefficientwise uniform residual modulo q, the probability that one residual coefficient lies in the accepted centered set \([-2,2]\) is \(5/q\). Under the simplifying independence heuristic, the expected number of false candidates passing one public sample is
 \[ (3^N-1)(5/q)^N \approx (15/q)^N. \]
-For q=11 this heuristic gives approximately 3.46, 6.82, and 13.43 false candidates for N=4,6,8, respectively. These are close in scale to the observed public-only medians (3.5, 7.5, 11), but the model is not exact: residual coefficients and candidate events can be correlated, and the planted candidate always passes. The agreement is a sanity check, not a proof.
+For q=11 this heuristic gives approximately 3.46, 6.43, and 11.96 false candidates for N=4,6,8, respectively. These are close in scale to the observed public-only medians (3.5, 7.5, 11), but the model is not exact: residual coefficients and candidate events can be correlated, and the planted candidate always passes. The agreement is a sanity check, not a proof.
 
 If each of the three evaluation-key equations contributed an independent uniform residual constraint of the same width, the heuristic false-candidate expectation would acquire another factor \((5/q)^{3N}\). The actual equations share the same candidate and related target \(s^2\), so independence is not established; this calculation only explains why the toy combined system is highly selective.
 
