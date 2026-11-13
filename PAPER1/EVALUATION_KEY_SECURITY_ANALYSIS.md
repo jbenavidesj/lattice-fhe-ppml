@@ -686,3 +686,19 @@ Here level 0 is the first evaluation-key equation, level 1 the second, and level
 The marginal relaxation was strictly weaker in the evaluation-only experiment: it admitted extra candidates in 30/100, 16/100, 19/100, and 7/100 trials for ((N,q)=(3,17),(3,19),(4,17),(4,19)), respectively. For the joint public-plus-evaluation filter, the corresponding counts were 1/100, 2/100, 2/100, and 0/100; the maximum number of extra candidates in any joint trial was one.
 
 **Scope.** These experiments are exhaustive only over the (3^N) ternary candidates for (N\le4), use deliberately tiny moduli, and have 100 trials per setting. They show how the constraints behave in this finite toy model and verify implementation-level equivalence of the exact reparameterization. They do not provide an asymptotic algorithm, a production-parameter attack, a probability estimate for (N=8192), or a concrete security bound. The public-key-only filter is already unique in a substantial fraction of these toy trials, so joint uniqueness must not be attributed entirely to evaluation-key equations.
+
+
+## 20. Dimension-growth toy audit: (N=5,6) (CI run #729)
+
+The SageMath job in GitHub Actions run #729 completed successfully on commit `2b862166bf4a84178250b728243995b0547171be`. It extended the deliberately low-modulus exhaustive audit to (N=5) and (N=6), retaining (q\in\{17,19\}), (B=2), six evaluation-key levels, and eta=2 centered-binomial errors. It used 50 seeded transcripts per (N=5,q) setting and 30 per (N=6,q) setting; the ternary search spaces contain 243 and 729 candidates, respectively.
+
+| (N) | (q) | Trials | Mean survivors after public key | Public-key ambiguity | Eval-only unique after level 0 | Eval-only unique after level 1 | Joint unique after level 0 | Joint unique after level 1 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 5 | 17 | 50 | 1.42 | 18/50 | 25/50 | 49/50 | 50/50 | 50/50 |
+| 5 | 19 | 50 | 1.20 | 10/50 | 36/50 | 50/50 | 50/50 | 50/50 |
+| 6 | 17 | 30 | 1.4333 | 11/30 | 19/30 | 30/30 | 30/30 | 30/30 |
+| 6 | 19 | 30 | 1.4333 | 8/30 | 23/30 | 30/30 | 30/30 | 30/30 |
+
+All four settings retained a nonempty candidate set at every stage, and the planted secret was retained. The exact anchor-plus-adjacent-differences filter equaled the original-residual filter at every stage for both evaluation-only and joint filtering. The coarse marginal relaxation admitted extra evaluation-only candidates in 4/50, 2/50, 2/30, and 4/30 trials, respectively; it admitted no extra candidates in the joint public-plus-evaluation filter in any of these four settings.
+
+**Interpretation and scope.** In these finite toy distributions, public-key ambiguity remained in a measurable subset of trials, while the conjunction with the first evaluation-key equation was unique in all trials. This supports the limited observation that the evaluation-key constraints can disambiguate the candidate set left by the public-key equation in these toy instances. The evaluation-only results also show progressive filtering, reaching uniqueness by stage 1 in all four settings. These experiments enumerate at most 729 ternary candidates, use tiny moduli and only six levels, and do not demonstrate scalable secret recovery, production-parameter key uniqueness, an attack on (N=8192), or a concrete security estimate. The exact transformed system is an equivalent representation of the original constraints, not an additional source of information. The SageMath job also completed the separate modular-kernel relation diagnostic; its own log explicitly cautions that the derived samples are correlated and that no secret-recovery attack or concrete security estimate is performed.
