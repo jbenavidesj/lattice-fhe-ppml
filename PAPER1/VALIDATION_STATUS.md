@@ -335,3 +335,19 @@ outstanding.
 
 **Do not submit the current manuscript as a new cryptographic construction or as a security-validated BFV scheme.** It may be considered for an implementation/reproducibility-oriented venue only after the two technical external reviews and a venue-specific novelty assessment. If those reviews cannot be obtained promptly, retain the work as a technical report/preprint and proceed with Paper 2 rather than extending Paper 1 indefinitely.
 
+
+
+## Current-head CI #851 — completed SageMath transcript diagnostics (2026-11-13)
+
+Workflow run #851 (ID 43527761531) completed successfully on branch `paper1-validation-corrections`, head commit `dc484e496ee9deda1ce8ec256b60e4848b89ba5f`. All three jobs passed: Rust tests/format/Clippy/benchmark compilation; Python arithmetic and toy audits; and the pinned SageMath diagnostic. The SageMath artifact is `sage-lwe-proxy-diagnostic` (artifact ID 14086391421; SHA-256 `a2ac2f4f992c3486869705e32230bc3d767108872bc3ff2b79d3d762a641ae22`).
+
+The completed SageMath output confirms the following bounded results:
+
+- The pinned lattice-estimator commit `7d59f866655362ea8eab803dbc833710c2bc362a`, SageMath 10.10, ADPS16/GSA rough profile, and scalar unstructured-LWE assumptions return minimum `log2(rop)=93.7320` for the candidate (versus 97.2360 for the stated HE Standard comparison profile). This is strictly a rough unstructured-LWE proxy; evaluation-key samples are not modeled. It is not Ring-LWE, a lower bound, or a scheme-level security estimate.
+- Exact eta=2 weighted-error calculations enumerate 14-dimensional modular target-cancellation relations. The adjacent-level baseline has L1=65,537 and exact support radius 131,074. LLL also finds non-adjacent relations, including rows with larger L1/support; these are correlated derived equations from the same transcript, not independent keys. Marginal error distributions do not establish a usable attack or security cost.
+- The exact covariance audit reports diagonal 4,294,967,297, adjacent covariance -65,536, non-adjacent covariance zero for the transformed 13-coordinate system, with exact positive-definiteness check passing. The joint characteristic-function factorization is retained in the artifact; this is a distributional characterization, not an independence claim.
+- Toy candidate-filter audits confirm equality between the original and exact transformed constraints on the tested finite instances. Coarse transformed filters can retain extra candidates in some toy trials; the joint exact filter matched the original constraints. The scripts explicitly label this deterministic post-processing, not extra information or an attack.
+- The ternary-transcript MILP matched exhaustive enumeration exactly in all tested toy cases: eight unique-survivor cases (N=2,4; q=257; four seeds each) and two ambiguity-stress cases (N=2,q=7 with 6 survivors; N=4,q=7 with 8 survivors). Redundant parity constraints did not change the exact feasible sets. This validates only those toy instances.
+- The modular short-relation search verified every reported row against the exact target-cancellation relation. The output explicitly cautions that the rows are correlated derived samples and performs no secret-recovery attack or concrete security estimate.
+
+**Interpretation:** CI #851 closes the pending automated execution and artifact-capture gate for this commit. It does not close independent cryptanalysis, ring-aware security estimation, mathematical review, or venue-level novelty review. Do not promote the 93.732-bit proxy value into a claimed security level. The PR remains draft and unmerged.
