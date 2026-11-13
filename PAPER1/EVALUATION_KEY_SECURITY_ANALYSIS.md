@@ -569,3 +569,17 @@ In these particular toy trials, the evaluation-key equations alone left one tern
 The small-ring generator uses the same coefficientwise secret law as sample_ternary in src/keygen.rs: uniform on {-1,0,1}. It uses independent uniform ring coefficients for every public/evaluation-key a-polynomial, matching sample_uniform_rq at the distributional level (in the implementation, independent uniform residues in the four pairwise-coprime CRT lanes represent a uniform element of the product ring). Its error sampler uses Binomial(4,1/2)-2, which has exactly the same probability mass function as the implementation's popcount(two low bits)-popcount(two high bits), i.e. Binomial(2,1/2)-Binomial(2,1/2). The public and evaluation-key equations use the same signs and targets as generate_public_key and generate_relinearization_key_with_base.
 
 The deliberate departures are the toy modulus q=23 and tiny dimensions N<=6, rather than the production aggregate Q (218 bits) and N=8192. This preserves the coefficient distributions and algebraic transcript shape for a finite exhaustive experiment, but it does not preserve the production ring size or modulus geometry. Exhaustive ternary enumeration scales as 3^N and is infeasible at N=8192. Therefore the observed uniqueness is only a small-instance candidate-filtering result; it is not a scalable key-recovery method, a proof of production key uniqueness, or a security estimate.
+
+## 15. Exact error-law comparison for modular target-cancellation relations
+
+The SageMath audit `scripts/audit_evalkey_weighted_error_distribution.py` now evaluates the Pareto frontier of the 14-dimensional modular kernel lattice, restricted to the adjacent-level baseline and the rows of the exact-integer LLL-reduced basis. Every reported integer vector (w) is checked against
+[
+sum_{j=0}^{13} w_j B^j = 0 pmod Q,
+]
+so the (s^2) target cancels exactly. The derived relation has coefficient error (E_w=sum_j w_j e_j).
+
+For eta=2, each coefficient error has the exact law (e_jsimmathrm{Binomial}(4,1/2)-2). The script computes the integer probability mass function of (E_w) by exact dynamic programming, reporting its support radius (2|w|_1), variance (|w|_2^2), central quantiles, and tail probabilities. The frontier minimizes the pair ((|w|_1,|w|_2^2)) within the finite set being compared; it is not claimed to be the global shortest-vector frontier of the full modular kernel lattice.
+
+The motivation is to distinguish worst-case support from typical error magnitude. A vector with lower (ell_2^2) can have lower variance and better central quantiles while having a larger worst-case support radius. Such a marginal improvement does not establish a useful attack: all derived equations are deterministic linear combinations of the same 14 original errors and remain correlated. The companion exact joint covariance/characteristic-function analysis remains necessary, and no independent-sample count may be inferred from the number of reduced vectors.
+
+The audit is added to the SageMath CI artifact. Its output must be reviewed before any numerical conclusion is inserted into the manuscript. No secret-recovery attack or concrete security estimate is claimed.
