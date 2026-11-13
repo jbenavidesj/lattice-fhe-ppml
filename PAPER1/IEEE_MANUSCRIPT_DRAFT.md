@@ -144,4 +144,14 @@ This work provides an auditable experimental RNS-BFV implementation and a set of
 
 ## References
 
-**To complete:** add primary BFV, RNS/NTT, lattice-estimator, and homomorphic-encryption-standard references. Verify bibliographic metadata and ensure every claim is supported by an appropriate primary source.
+[1] J. Fan and F. Vercauteren, “Somewhat Practical Fully Homomorphic Encryption,” IACR Cryptology ePrint Archive, Report 2012/144, 2012.
+
+[2] J.-C. Bajard, J. Eynard, M. A. Hasan, and V. Zucca, “A Full RNS Variant of FV Like Somewhat Homomorphic Encryption Schemes,” in *Selected Areas in Cryptography — SAC 2016*, Lecture Notes in Computer Science, vol. 10059, pp. 423–442, Springer, 2017, doi: 10.1007/978-3-319-69453-5_23.
+
+[3] M. R. Albrecht, R. Player, and S. Scott, “On the concrete hardness of Learning with Errors,” *Journal of Mathematical Cryptology*, vol. 9, no. 3, pp. 169–203, 2015, doi: 10.1515/jmc-2015-0016.
+
+[4] M. Albrecht et al., *Homomorphic Encryption Security Standard*, HomomorphicEncryption.org, Nov. 2018.
+
+**Positioning note.** References [1] and [2] establish the BFV/FV and full-RNS context. In particular, [2] already develops a full RNS FV-like approach and reports optimized implementations. Therefore, this manuscript must not claim that RNS-BFV, coefficientwise scale-and-round, or the general goal of eliminating multiprecision arithmetic is itself novel. The present implementation uses an exact integer-lift NTT/CRT plus BigInt route as a correctness reference; its contribution, if supported by a fuller comparison, is the particular auditable reference construction, explicit one-operation correctness accounting, and the reproducible diagnostics—not a faster full-RNS scheme.
+
+The bibliography is an initial verified core, not a complete related-work survey. Before submission, add and verify primary references for NTT/negacyclic polynomial multiplication, CRT reconstruction and BFV relinearization, compare the precise multiplication and rounding conventions with [2], and include the exact estimator/software version used if a SageMath diagnostic is eventually run.
