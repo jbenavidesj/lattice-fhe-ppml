@@ -103,12 +103,10 @@ def mitm_with_linear_prefilter(n, public_sample, eval_samples, k, stats):
                 for level, (a_j, b_j) in enumerate(eval_samples):
                     stats["eval_ring_products"] += 1
                     factor = pow(BASE, level, Q)
-                    a_times = mitm.negacyclic_mul(a_j, candidate)
-                    residual = [
-                        (b_j[i] + a_times[i] - factor * square[i]) % Q
-                        for i in range(n)
-                    ]
-                    if not small_with_radius(residual, ETA):
+                    level_ok, _ = mitm.residual_product_is_small(
+                        a_j, candidate, b_j, square, factor
+                    )
+                    if not level_ok:
                         stats["eval_rejects"][level] += 1
                         accepted = False
                         break
