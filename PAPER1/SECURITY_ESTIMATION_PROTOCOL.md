@@ -1,17 +1,18 @@
 # Security-estimation protocol for Paper 1
 
-## Purpose
+## Purpose and status
 
-Run a reproducible unstructured-LWE diagnostic for the power-of-two cyclotomic RNS-BFV candidate. This is a heuristic proxy, **not a Ring-LWE security certificate**. It does not model the evaluation-key samples whose target contains s^2.
+Run a **preliminary, bounded-cost unstructured-LWE screening diagnostic** for the power-of-two cyclotomic RNS-BFV candidate. This is not a Ring-LWE estimator or a security certificate. It does not model the evaluation-key samples whose target contains s^2.
 
-## Pinned software
+The first-pass script intentionally uses `LWE.estimate.rough()` from the pinned estimator revision. At this revision that profile evaluates uSVP and dual-hybrid attacks (and Arora-GB only under its documented sample/noise conditions), rather than the full default attack sweep. It uses the estimator's ADPS16 reduction-cost model and GSA shape assumption. Its figures are **rough-profile screening outputs** and must not be described as the estimator's full default results or as a concrete security level.
+
+## Pinned software and models
 
 - Estimator: `malb/lattice-estimator`
-- Commit: `7d59f866655362ea8eab803dbc833710c2bc362a` (2026-11-09)
-- SageMath: record the exact version printed by the script.
-- Cost and shape models: record the values printed by the script from the pinned estimator configuration.
-
-The estimator API accepts LWE parameters and evaluates multiple lattice attacks; its output depends on attack coverage, reduction cost model, and shape model. The exact estimator commit must be retained with the output.
+- Commit: `7d59f866655362ea8eab803dbc833710c2bc362a`
+- Runtime: SageMath 10.10 container; exact runtime version is printed.
+- Rough-profile reduction cost model: ADPS16.
+- Rough-profile reduction shape model: GSA.
 
 ## Candidate and comparison models
 
@@ -21,15 +22,22 @@ Candidate:
 - secret: coefficientwise ternary {-1,0,1}
 - error: centered-binomial eta=2, support [-2,2], standard deviation 1
 
-Reference comparison from the estimator's HE Standard v2 parameter set:
+Reference comparison:
 - n=8192
 - q=2^214
 - secret: ternary
 - error: discrete Gaussian, standard deviation 3.19
 
-For each model the script evaluates m=N and m=infinity. The m=N setting is a deliberately simplified scalar-LWE proxy with N equations and the same nominal secret dimension; it is **not** an exact distributional equivalence to one polynomial RLWE sample. Unrolling a polynomial sample produces a highly structured negacyclic matrix, whereas generic LWE estimators model matrices from their own sampling assumptions. The m=infinity setting is a sample-rich sensitivity case, not a claim that the implementation exposes infinitely many independent samples. Neither setting removes the ring structure, and neither is a proof against ring-specific attacks. Evaluation-key samples are not counted as ordinary LWE samples.
+The bounded first-pass diagnostic uses m=N=8192 for each model. It does not run m=infinity. The m=N setting is a deliberately simplified scalar-LWE proxy with N equations and the same nominal secret dimension; it is **not** an exact distributional equivalence to one polynomial RLWE sample. Unrolling a polynomial sample produces a highly structured negacyclic matrix, whereas generic LWE estimators model matrices from their own sampling assumptions. Neither this proxy nor the rough attack profile removes the ring structure or proves security against ring-specific attacks. Evaluation-key samples are not counted as ordinary LWE samples.
 
-The estimator's reported work factors are conditional heuristic estimates under its attack coverage, cost model, shape model, and input distributions. They are not a proven lower bound on attack cost, not a concrete security level for the scheme, and not a substitute for analysis of the joint public-key/evaluation-key distribution. In particular, do not convert the minimum reported \\(\\log_2(\\mathrm{rop})\\) into a "bits of security" claim without clearly retaining the proxy label and all model qualifications.
+## Interpretation and limitations
+
+- The rough profile is deliberately narrower than the full default estimator API. Its results are suitable only for an initial screening comparison.
+- The estimator's reported work factors are conditional heuristic estimates under the selected attacks, ADPS16 cost model, GSA shape assumption, and input distributions. They are not a proven lower bound, not a concrete security level for the scheme, and not a substitute for analysis of the joint public-key/evaluation-key distribution.
+- Do not convert the minimum reported \\(\\log_2(\\mathrm{rop})\\) into an unqualified "bits of security" claim.
+- Candidate and reference differ in both modulus and error distribution, so the comparison is diagnostic rather than a controlled one-variable comparison.
+- A separate analysis is required for the evaluation-key exposure, secret-dependent implementation details, and algebraic/structural attacks.
+- If the estimator fails, returns no finite cost, or omits an applicable attack, report that limitation rather than manufacturing a security number.
 
 ## Reproduction
 
@@ -41,16 +49,7 @@ sage -pip install -e .
 sage -python /path/to/lattice-fhe-ppml/scripts/estimate_lwe_proxy.py
 ```
 
-Preserve the full output. Record the Sage version, estimator commit, exact parameter values, m, attack names, reduction cost/shape models, and any estimator warnings or failed attacks. Do not select only the most favorable attack result; report the minimum finite estimated attack cost and the complete per-attack table.
-
-## Interpretation
-
-- The candidate's eta=2 error is narrower than the Gaussian-3.19 reference; the resulting security estimate may be substantially lower.
-- The candidate's Q is 218 bits and its eta=2 centered-binomial error has standard deviation 1; the reference uses a 214-bit power-of-two modulus and Gaussian standard deviation 3.19. These two parameter changes act together, so the comparison is diagnostic rather than a controlled one-variable comparison.
-- The candidate's Q is larger than the HE Standard v2 comparison q. Both differences affect security, and their effects cannot be inferred by a simple bit-length subtraction.
-- A result from this script must be labelled an unstructured-LWE proxy under the power-of-two RLWE heuristic. It must not be called a proved Ring-LWE security level.
-- A separate analysis is required for the evaluation-key exposure, secret-dependent implementation details, and algebraic/structural attacks.
-- If the estimator fails, returns no finite cost, or omits an applicable attack, report that limitation rather than manufacturing a security number.
+Preserve the full output. Record Sage version, estimator commit, exact parameter values, sample count, attack names, reduction model, shape assumption, and estimator warnings. A later full-profile run, if attempted, must be a separate explicitly budgeted experiment; it must not silently replace or be conflated with this rough screening pass.
 
 ## References
 
