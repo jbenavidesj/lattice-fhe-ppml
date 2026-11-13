@@ -40,15 +40,18 @@ These are implementation, validation, and analysis contributions. Novelty relati
 - Performance table: only release benchmarks with raw data, environment metadata, repeated samples and dispersion.
 - Toy MITM table: N, q, eta, k, list sizes, probes, joined pairs, exact-set agreement, runtime; labelled toy-only.
 
+## Closure status (2026-11-13)
+
+The held-out selector audits, pinned rough-profile unstructured-LWE diagnostic, single-session release benchmark, source/proof consistency pass, focused BEHZ/HPS comparison, and internal claim/citation consolidation have been completed and recorded in the manuscript and validation ledger. The diagnostic estimator output is not a Ring-LWE security estimate. The benchmark is descriptive only; no performance superiority is claimed.
+
+Remaining external gates are independent mathematical review, specialist cryptanalytic review of the joint public/evaluation-key transcript, and a venue-specific novelty assessment. The current branch contains a Markdown manuscript, not a final IEEEtran typeset submission package. A final production layout and page count still require conversion into the target journal's current template and review of the generated PDF.
+
 ## Submission blockers
 
-- Complete held-out selector experiment and report regret without tuning on held-out samples.
 - Obtain independent review of the noise proof and joint public/evaluation-key security model.
-- Run the pinned estimator in SageMath and report all attacks and limitations; do not convert an unstructured-LWE proxy into a Ring-LWE certificate.
-- Run release benchmarks with raw outputs and hardware/compiler metadata.
-- Complete a related-work comparison and confirm the actual novelty claim.
-- Reconcile source, parameter, and manuscript statements; remove speculative README performance targets from any evidence section.
-- Obtain a technical language/editing pass and IEEE formatting check.
+- Obtain a venue-specific novelty assessment for an implementation/reproducibility contribution.
+- Convert the manuscript into the target venue's current IEEE template and inspect the generated PDF, references, equations, figures, and page count.
+- Reconcile any reviewer findings and re-run relevant tests if source code changes.
 
 ## Abstract drafting rule
 
