@@ -1,6 +1,6 @@
 # An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits
 
-**Manuscript status:** working draft for internal development; not submission-ready. A release-mode CI benchmark baseline and a bounded SageMath unstructured-LWE proxy diagnostic are now recorded, and the toy filtering audits have been extended through N=8. The remaining gates are independent mathematical and cryptanalytic review, a complete related-work comparison, and stronger multi-session comparative benchmarking. The abstract and novelty claims remain provisional.
+**Manuscript status:** research draft; not yet submission-ready. The current code state has passed the recorded CI checks, including arithmetic audits, Rust tests and linting, benchmark-target compilation, and a bounded SageMath unstructured-LWE proxy diagnostic. The manuscript now includes a source-to-proof consistency record, an expanded comparison with BEHZ and HPS RNS-BFV implementations, and consolidated conditional toy-audit results through N=8. Remaining gates are independent mathematical review, specialist review of the structured evaluation-key security discussion, final reference verification, and a decision on whether additional comparative benchmarking is necessary for the claims retained. The abstract describes the implemented scope; novelty claims remain subject to the completed related-work assessment.
 
 ## Abstract
 
