@@ -54,6 +54,30 @@ def residual_is_small(residual):
     return all(abs(centered(x)) <= ETA for x in residual)
 
 
+def residual_product_is_small(a, candidate, offset, square=None, factor=0):
+    """Check b + a*c - factor*c^2 coefficientwise, stopping at first failure.
+
+    The caller supplies offset=b. If square is None, this checks b+a*c.
+    Returns (accepted, number_of_coefficients_examined).
+    """
+    n = len(candidate)
+    checked = 0
+    for k in range(n):
+        product_coefficient = sum(
+            a[i] * candidate[k - i] for i in range(k + 1)
+        ) - sum(
+            a[i] * candidate[k - i + n] for i in range(k + 1, n)
+        )
+        value = offset[k] + product_coefficient
+        if square is not None:
+            value -= factor * square[k]
+        checked += 1
+        if abs(centered(value)) > ETA:
+            return False, checked
+    return True, checked
+
+
+
 def candidate_matches(candidate, public_sample, eval_samples):
     a_pk, b_pk = public_sample
     a_times_candidate = negacyclic_mul(a_pk, candidate)
@@ -149,6 +173,8 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
             "eval_level_checks": [0] * len(eval_samples),
             "eval_level_rejects": [0] * len(eval_samples),
             "survivors": 0,
+            "public_coeff_checks": 0,
+            "eval_coeff_checks": [0] * len(eval_samples),
         })
     error_patterns = product(range(-ETA, ETA + 1), repeat=selected_coordinates)
     error_patterns = tuple(error_patterns)
@@ -167,11 +193,12 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
                 if stats is not None:
                     stats["joined_pairs"] += 1
                 candidate = left_half + right_half
-                full_residual = [
-                    (b_pk[i] + left_contribution[i] + right_contribution[i]) % Q
-                    for i in range(n)
-                ]
-                if not residual_is_small(full_residual):
+                public_ok, public_checked = residual_product_is_small(
+                    a_pk, candidate, b_pk
+                )
+                if stats is not None:
+                    stats["public_coeff_checks"] += public_checked
+                if not public_ok:
                     continue
                 if stats is not None:
                     stats["public_full_pass"] += 1
@@ -183,14 +210,13 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
                 for level, (a_j, b_j) in enumerate(eval_samples):
                     if stats is not None:
                         stats["eval_level_checks"][level] += 1
-                    a_times_candidate = negacyclic_mul(a_j, candidate)
                     factor = pow(BASE, level, Q)
-                    residual = [
-                        (b_j[i] + a_times_candidate[i]
-                         - factor * candidate_square[i]) % Q
-                        for i in range(n)
-                    ]
-                    if not residual_is_small(residual):
+                    level_ok, coeffs_checked = residual_product_is_small(
+                        a_j, candidate, b_j, candidate_square, factor
+                    )
+                    if stats is not None:
+                        stats["eval_coeff_checks"][level] += coeffs_checked
+                    if not level_ok:
                         if stats is not None:
                             stats["eval_level_rejects"][level] += 1
                         accepted = False
@@ -259,9 +285,19 @@ def main():
             f"public-pass={median('public_full_pass'):g}, "
             f"survivors={median('survivors'):g}"
         )
+        median_eval_coeff_checks = [
+            statistics.median([item["eval_coeff_checks"][level]
+                               for item in trial_stats])
+            for level in range(LEVELS)
+        ]
         print(
             f"  median eval checks by level={median_level_checks}; "
-            f"rejections by level={median_level_rejects}"
+            f"rejections by level={median_level_rejects}; "
+            f"coefficient checks by level={median_eval_coeff_checks}"
+        )
+        print(
+            f"  median public coefficient checks="
+            f"{median('public_coeff_checks'):g}"
         )
 
 
