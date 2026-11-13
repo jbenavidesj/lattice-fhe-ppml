@@ -232,3 +232,8 @@ A dimension sweep for the Paper 1 modulus and eta=2 gives the following base-2 r
 | 1024 | 8 | 811.5 | 830.1 | 827.3 |
 | 8192 | 61 | 6492.0 | 6633.6 | 6510.8 |
 
+
+
+### Information content of the ternary square
+
+An exhaustive toy audit measures the fibers of the map s -> s^2 in the negacyclic ring for ternary secrets at N in {2,4,6,8}. At minimum, the map is globally sign-invariant: s and -s produce the same square. Thus even an exact, noiseless disclosure of s^2 cannot uniquely identify a nonzero ternary secret without additional information. The experiment also measures any further collisions in these small rings. This is not a model of the complete evaluation-key transcript, where s^2 is mixed with secret-dependent linear terms and noise, and it does not establish a practical attack or a security bound.
