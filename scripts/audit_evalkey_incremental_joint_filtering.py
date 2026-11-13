@@ -254,6 +254,11 @@ def main():
     run_case("small_q65537", n=4, q=65537, B=16, levels=14, trials=20)
     run_case("medium_q65537", n=6, q=65537, B=16, levels=14, trials=10)
     run_case("larger_q65537", n=8, q=65537, B=16, levels=14, trials=3)
+    # Predeclared low-modulus dimension extension: larger exhaustive spaces.
+    run_case("dimension7_q13", n=7, q=13, B=2, levels=6, trials=30)
+    run_case("dimension7_q17", n=7, q=17, B=2, levels=6, trials=30)
+    run_case("dimension8_q13", n=8, q=13, B=2, levels=6, trials=20)
+    run_case("dimension8_q17", n=8, q=17, B=2, levels=6, trials=20)
 
 
 if __name__ == "__main__":
