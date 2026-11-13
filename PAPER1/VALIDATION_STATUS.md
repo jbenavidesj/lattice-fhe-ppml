@@ -1,5 +1,13 @@
 # Paper 1 — validation status
 
+> **Current-head record — 2026-11-13, commit 094652234fcc960317c8bae7a7adfa531d9a93f1.**
+> The latest Paper 1 validation workflow (#788; run ID 43394112697) completed successfully on this exact commit. Python arithmetic audits, the pinned SageMath unstructured-LWE proxy diagnostic, Rust tests, and benchmark-target compilation passed. This confirms the configured checks ran successfully; it is not an independent mathematical review, a cryptanalytic review, or a security certification.
+>
+> The SageMath proxy diagnostic is now executed and recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`: minimum reported `log2(rop)=93.732` for the scalar unstructured-LWE proxy under the pinned rough profile. **This is not a Ring-LWE estimate, not a security lower bound, and not a scheme-level security claim.** It does not model the structured evaluation-key transcript.
+>
+> The manuscript remains a research draft pending editorial restructuring, complete related-work verification, and independent review of its correctness derivation and joint public/evaluation-key security model. The one-session CI benchmark is diagnostic only. See the dated historical log below; older statements about checks not yet being run are historical and superseded by this current-head record.
+
+
 **Status: experimental RNS-BFV research prototype; not submission-ready.**
 
 The selected architecture remains leveled RNS-BFV as the core, with refresh/bootstrapping kept as a separate future extension.
@@ -42,7 +50,7 @@ CI run 319 on commit `c8547a9db15b2b40c44f4f81c8bd824fb3912dcc` completed succes
 
 ## Not established
 
-- A concrete RLWE security estimate or 128-bit security claim. A pinned unstructured-LWE diagnostic script and protocol are prepared in `scripts/estimate_lwe_proxy.py` and `PAPER1/SECURITY_ESTIMATION_PROTOCOL.md`, but the estimator has not been executed because this runtime has no SageMath installation; no security number is reported.
+- A concrete RLWE security estimate or 128-bit security claim. The pinned unstructured-LWE proxy has been executed and is recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`; its heuristic output is not a Ring-LWE estimate, security lower bound, or scheme-level security claim.
 - Independent cryptographic review or a proof against ring-structure attacks.
 - Constant-time behavior, side-channel resistance, or comprehensive memory-remanence protection.
 - Arbitrary multiplicative depth, modulus switching, or bootstrapping.
@@ -233,9 +241,7 @@ correctness-path costs, not optimized BFV performance.
 - Obtain independent mathematical review of the one-multiplication derivation.
 - Obtain independent cryptanalytic review of the joint public/evaluation-key
   transcript and related-secret structure.
-- Run the pinned lattice-estimator diagnostic in SageMath, while preserving
-  the caveat that the unstructured-LWE proxy does not certify Ring-LWE or the
-  structured evaluation-key transcript.
+- The pinned SageMath unstructured-LWE proxy diagnostic has run successfully; preserve its narrow interpretation and do not treat it as a Ring-LWE estimate or an analysis of the structured evaluation-key transcript.
 - Complete related-work and bibliographic verification.
 
 
