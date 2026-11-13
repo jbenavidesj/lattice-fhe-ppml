@@ -258,3 +258,19 @@ line-by-line comparison against the prior full-RNS FV construction and
 additional primary NTT/relinearization references is still required.
 
 The current source head must be revalidated after these documentation edits.
+
+
+## FV multiplication convention and novelty boundary
+
+A source-level comparison against Fan–Vercauteren (IACR ePrint 2012/144,
+Section 4, especially the basic multiplication derivation) confirms that the
+integer polynomial lift followed by t/Q scaling and coefficientwise rounding
+is part of the original FV multiplication convention. The present code makes
+the centered lifts explicit and reconstructs each integer negacyclic product
+using an auxiliary NTT/CRT basis before BigInt addition and rounding. This is
+an auditable exact-reference realization of that convention, not a new
+multiplication rule. Bajard et al. (SAC 2016, DOI
+10.1007/978-3-319-69453-5_23) already describe optimized full-RNS FV-like
+techniques; therefore no novelty claim is made for full-RNS FV or for
+eliminating multiprecision arithmetic in general. The remaining comparison
+must identify the precise implementation-level and validation differences.
