@@ -98,6 +98,7 @@ def one_trial(seed, n, q, B, levels):
 
     # Stage 0: anchor residual r_0. Later stages add one level/difference.
     eval_original = set(candidates)
+    eval_exact = set(candidates)
     eval_coarse = set(candidates)
     joint_original = set(public_ok)
     joint_exact = set(public_ok)
@@ -105,6 +106,7 @@ def one_trial(seed, n, q, B, levels):
 
     counts = {
         "eval_original": [],
+        "eval_exact": [],
         "eval_coarse": [],
         "joint_original": [],
         "joint_exact": [],
@@ -115,6 +117,7 @@ def one_trial(seed, n, q, B, levels):
     for j in range(levels):
         if j == 0:
             eval_original = {c for c in eval_original if in_support(eval_residuals[c][0])}
+            eval_exact = {c for c in eval_exact if in_support(eval_residuals[c][0])}
             eval_coarse = {c for c in eval_coarse if in_support(eval_residuals[c][0])}
             joint_original = {c for c in joint_original if in_support(eval_residuals[c][0])}
             joint_exact = {c for c in joint_exact if in_support(eval_residuals[c][0])}
@@ -134,6 +137,7 @@ def one_trial(seed, n, q, B, levels):
                 return all(abs(v) <= ETA * (B + 1) for v in z)
 
             eval_original = {c for c in eval_original if in_support(eval_residuals[c][j])}
+            eval_exact = {c for c in eval_exact if exact_step(c)}
             eval_coarse = {c for c in eval_coarse if coarse_step(c)}
             joint_original = {c for c in joint_original if in_support(eval_residuals[c][j])}
             joint_exact = {c for c in joint_exact if exact_step(c)}
@@ -143,11 +147,13 @@ def one_trial(seed, n, q, B, levels):
             c for c in candidates
             if all(in_support(eval_residuals[c][k]) for k in range(j + 1))
         }
+        assert eval_original == eval_exact, (seed, j, eval_original, eval_exact)
         assert joint_original == joint_exact, (seed, j, joint_original, joint_exact)
         assert joint_original.issubset(joint_coarse)
         assert eval_original.issubset(eval_coarse)
 
         counts["eval_original"].append(len(eval_original))
+        counts["eval_exact"].append(len(eval_exact))
         counts["eval_coarse"].append(len(eval_coarse))
         counts["joint_original"].append(len(joint_original))
         counts["joint_exact"].append(len(joint_exact))
@@ -167,15 +173,18 @@ def run_case(label, n, q, B, levels, trials):
     print(f"[{label}] N={n}; q={q}; B={B}; eta={ETA}; levels={levels}; trials={trials}")
     print(f"ternary_secret_space={3**n}")
     print(f"mean_after_public_key={mean(pub_counts):.4f}; max_after_public_key={max(pub_counts)}")
-    print("stage,eval_original_mean,eval_coarse_mean,eval_coarse_extra_mean,"
+    print("stage,eval_original_mean,eval_exact_mean,eval_coarse_mean,eval_coarse_extra_mean,"
           "joint_original_mean,joint_exact_mean,joint_coarse_mean,joint_coarse_extra_mean")
     for j in range(levels):
         avg = {key: mean(r[1][key][j] for r in rows) for key in rows[0][1]}
         ex_eval = mean(r[2]["eval"][j] for r in rows)
         ex_joint = mean(r[2]["joint"][j] for r in rows)
-        print(f"{j},{avg['eval_original']:.4f},{avg['eval_coarse']:.4f},{ex_eval:.4f},"
+        print(f"{j},{avg['eval_original']:.4f},{avg['eval_exact']:.4f},"
+              f"{avg['eval_coarse']:.4f},{ex_eval:.4f},"
               f"{avg['joint_original']:.4f},{avg['joint_exact']:.4f},"
               f"{avg['joint_coarse']:.4f},{ex_joint:.4f}")
+    print(f"exact_eval_equals_original_at_every_stage="
+          f"{all(r[1]['eval_original'] == r[1]['eval_exact'] for r in rows)}")
     print(f"exact_joint_equals_original_at_every_stage="
           f"{all(r[1]['joint_original'] == r[1]['joint_exact'] for r in rows)}")
     print(f"trials_with_any_eval_only_coarse_extra="
