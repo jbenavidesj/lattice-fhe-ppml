@@ -26,6 +26,14 @@ The defensible contributions investigated here are:
 
 These claims describe implementation and validation work. A literature comparison is still required to establish novelty relative to existing BFV/RNS implementations.
 
+### Related work and novelty boundary
+
+The arithmetic studied here is situated within the original FV construction and subsequent full-RNS implementations. Fan and Vercauteren describe the FV multiplication/relinearization framework and its noise analysis [1]. Bajard, Eynard, Hasan, and Zucca develop a full-RNS FV-like scheme, including RNS-compatible decryption and multiplication procedures that avoid multiprecision positional arithmetic and report implementation speedups [2]. Their work already establishes that full-RNS FV-like arithmetic and efficient RNS rounding are prior art; neither RNS-BFV itself nor the general goal of removing multiprecision arithmetic is claimed here as novel. Earlier work by Bajard, Eynard, Merkiche, and Plantard specifically studies RNS arithmetic for accelerating the rounding-off procedure [5].
+
+The implementation in this paper takes a deliberately different engineering point: it uses centered integer lifts, an auxiliary NTT/CRT basis, and exact BigInt reconstruction as a correctness-reference path. This is not a faster alternative to the optimized full-RNS rounding machinery in [2], and the single-session benchmarks below do not support a competitiveness claim. The potential contribution is narrower: a transparent exact-integer reference implementation, an executable bound for one multiplication followed by relinearization under explicitly bounded samplers, and reproducible diagnostics for its arithmetic and structured evaluation-key transcript. A complete algorithm-by-algorithm comparison with [2] remains necessary before asserting a distinct methodological contribution.
+
+For security context, the current community guidance is the 2024 *Security Guidelines for Implementing Homomorphic Encryption*, published in IACR Communications in Cryptology in 2025 [6]. The guideline's parameter examples and attack-estimation framework are relevant context, but they do not directly validate this prototype's related-target evaluation-key transcript. In particular, an ordinary unstructured-LWE proxy cannot be substituted for a joint analysis of the implemented public/evaluation-key distribution.
+
 ## 2. Mathematical and cryptographic setting
 
 Let R_Q=Z_Q[X]/(X^N+1), with N=8192 for the implementation target. The prototype uses a four-lane RNS representation of the ciphertext modulus, plaintext modulus t=65537, ternary secret coefficients, and centered-binomial error coefficients supported on [-2,2]. The relinearization gadget uses base B=2^16 and L=14 levels.
@@ -152,6 +160,10 @@ This work provides an auditable experimental RNS-BFV implementation and a set of
 
 [4] M. Albrecht et al., *Homomorphic Encryption Security Standard*, HomomorphicEncryption.org, Nov. 2018.
 
+[5] J.-C. Bajard, J. Eynard, N. Merkiche, and T. Plantard, “RNS Arithmetic Approach in Lattice-Based Cryptography: Accelerating the ‘Rounding-off’ Core Procedure,” in *2015 IEEE 22nd Symposium on Computer Arithmetic (ARITH)*, pp. 113–120, 2015, doi: 10.1109/ARITH.2015.30.
+
+[6] J.-P. Bossuat et al., “Security Guidelines for Implementing Homomorphic Encryption,” *IACR Communications in Cryptology*, vol. 1, no. 4, 2025; also Cryptology ePrint Archive, Report 2024/463, 2024, doi: 10.62056/anxra69p1.
+
 **Positioning note.** References [1] and [2] establish the BFV/FV and full-RNS context. In particular, [2] already develops a full RNS FV-like approach and reports optimized implementations. Therefore, this manuscript must not claim that RNS-BFV, coefficientwise scale-and-round, or the general goal of eliminating multiprecision arithmetic is itself novel. The present implementation uses an exact integer-lift NTT/CRT plus BigInt route as a correctness reference; its contribution, if supported by a fuller comparison, is the particular auditable reference construction, explicit one-operation correctness accounting, and the reproducible diagnostics—not a faster full-RNS scheme.
 
 A further point for the comparison is that the integer-lift multiplication convention
@@ -166,4 +178,4 @@ multiplication rule. The precise implementation difference to investigate agains
 rounding machinery, together with the scope and evidence of the one-operation
 correctness audit.
 
-The bibliography is an initial verified core, not a complete related-work survey. Before submission, add and verify primary references for NTT/negacyclic polynomial multiplication, CRT reconstruction and BFV relinearization, compare the precise multiplication and rounding conventions with [2], and include the exact estimator/software version used if a SageMath diagnostic is eventually run.
+The bibliography is an initial verified core, not a complete related-work survey. Before submission, add and verify primary references for NTT/negacyclic polynomial multiplication, CRT reconstruction and BFV relinearization; complete a step-by-step comparison of the multiplication, rounding, noise-management, and relinearization conventions with [2]; and include the exact estimator/software version used if a SageMath diagnostic is eventually run.
