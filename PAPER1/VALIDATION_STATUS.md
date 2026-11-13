@@ -182,3 +182,45 @@ The new exhaustive toy audit uses (q=29), (B=3), eta=3, and (N=4,6,8), with 30 i
 The public equation already had median one candidate at every degree. The two linear cancellation filters modestly increased the number of unique-candidate instances: N=4, 23/30 to 27/30; N=6, 27/30 to 29/30; N=8 remained 30/30. Mean survivor counts fell from 1.300 to 1.100 at N=4 and from 1.267 to 1.033 at N=6. The subsequent three quadratic evaluation-key levels yielded one candidate in every tested instance. These data do not establish a practical attack or a production-scale speedup.
 
 CI for the latest documentation commits is still pending full Rust validation; record success only against the exact current branch head.
+
+
+## Release-mode benchmark baseline (first CI session)
+
+A dedicated Criterion release workflow completed successfully on commit
+be820f044647e8e2444d5e415503172bb1498a6f (workflow run #3,
+43351911212). The workflow recorded Linux/Azure VM, virtualized AMD EPYC
+9V74 (4 visible vCPUs, approximately 16 GiB RAM), x86_64, rustc/cargo
+1.100.0 and LLVM 23.1.5 metadata, and uploaded raw results as artifact
+paper1-release-benchmarks-be820f044647e8e2444d5e415503172bb1498a6f
+(artifact ID 14004805733).
+
+Single-session Criterion estimates: RNS four-lane NTT multiplication at
+N=8192, 6.948 ms (95% within-run CI 6.938–6.969 ms); exact-reference BFV
+tensor multiplication, 415.90 ms (415.06–416.73 ms); encryption, 22.460 ms
+(22.449–22.470 ms); decryption, 54.348 ms (54.314–54.418 ms); addition,
+163.37 us (163.02–163.88 us); multiply plus relinearization, 685.83 ms
+(685.48–686.20 ms); relinearization-key generation, 375.69 ms
+(375.42–376.04 ms). AsymRed over 20,000 inputs measured 170.20 us
+(169.85–170.67 us), versus 38.52 us (38.285–38.840 us) for the same-input
+u128 remainder baseline; thus AsymRed was about 4.42x slower in this
+microbenchmark.
+
+These are a first CI baseline only. The VM is virtualized, only one independent
+session has been run, and Criterion's within-session confidence intervals do
+not quantify between-session or between-machine variation. No headline
+performance, production optimization, or competitiveness claim is supported.
+The exact-reference BFV multiplication numbers should be interpreted as
+correctness-path costs, not optimized BFV performance.
+
+## Remaining validation gates (updated)
+
+- Repeat release benchmarks in independent sessions and preferably on
+  documented bare-metal hardware; add missing primitive comparisons and a
+  matching external BFV baseline before making performance claims.
+- Obtain independent mathematical review of the one-multiplication derivation.
+- Obtain independent cryptanalytic review of the joint public/evaluation-key
+  transcript and related-secret structure.
+- Run the pinned lattice-estimator diagnostic in SageMath, while preserving
+  the caveat that the unstructured-LWE proxy does not certify Ring-LWE or the
+  structured evaluation-key transcript.
+- Complete related-work and bibliographic verification.
