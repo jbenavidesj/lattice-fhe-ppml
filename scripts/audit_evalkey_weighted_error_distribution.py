@@ -47,8 +47,16 @@ def exact_counts(weights):
                 updated[i + int(weight)] += count
             counts = updated
     assert len(counts) == 2 * int(radius) + 1
-    assert sum(counts) == 2 ** (4 * LEVELS)
-    return counts, int(radius), ZZ(2) ** (4 * LEVELS)
+    total = ZZ(2) ** (4 * LEVELS)
+    assert sum(counts) == total
+    # Exact first two moments cross-check the coefficient law.
+    mean_num = sum(ZZ(i - radius) * count for i, count in enumerate(counts))
+    second_num = sum(ZZ(i - radius) ** 2 * count for i, count in enumerate(counts))
+    assert mean_num == 0
+    expected_variance = 2 * sum(ZZ(w) ** 2 for w in weights)
+    assert second_num == total * expected_variance
+    assert counts == list(reversed(counts)), "PMF must be symmetric"
+    return counts, int(radius), total
 
 
 def central_quantile(counts, radius, total, probability_num, probability_den):
@@ -69,14 +77,14 @@ def central_quantile(counts, radius, total, probability_num, probability_den):
             lo = mid + 1
     left, right = radius - lo, radius + lo
     inside = cumulative[right] - (cumulative[left - 1] if left else 0)
-    return lo, inside / total
+    return lo, float(inside / total)
 
 
 def tail_probability(counts, radius, total, threshold):
     left = max(0, radius - threshold)
     right = min(len(counts) - 1, radius + threshold)
     inside = sum(counts[left:right + 1])
-    return (total - inside) / total
+    return float((total - inside) / total)
 
 
 def relation_holds(w, powers):
