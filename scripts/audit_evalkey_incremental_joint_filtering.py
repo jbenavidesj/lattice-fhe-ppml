@@ -6,7 +6,7 @@ candidate secrets and records survivors after:
   * the public-key equation;
   * each original evaluation-key equation in sequence;
   * the exact anchor-plus-adjacent-differences representation;
-  * the coarse marginal difference bound |z_j| <= 2*ETA*(B+1).
+  * the coarse marginal difference bound |z_j| <= ETA*(B+1).
 
 Both evaluation-only and public-plus-evaluation filters are measured. The
 exact transformed sets must equal the original sets at every stage. The coarse
