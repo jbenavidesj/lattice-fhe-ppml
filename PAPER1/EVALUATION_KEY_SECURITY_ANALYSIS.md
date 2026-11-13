@@ -456,3 +456,32 @@ These results confirm the set-equivalence of the exact recurrence in the tested 
 Inspection of the downloaded artifact and SageMath job log for run #617 revealed that three Python audit steps in the SageMath container invoked python, which is not installed there. Those commands failed with "python: not found"; because the shell pipeline did not enable pipefail, the subsequent tee exit status masked the failures and the overall job was incorrectly reported as successful. The corresponding three artifact files were empty. The scalar LWE proxy and SageMath LLL relation search did run, but run #617 is **not** valid evidence that the weighted-error, covariance, or earlier toy-filter scripts passed in that container.
 
 The workflow has therefore been corrected to invoke these scripts with sage -python, capture and propagate each Sage script's exit status explicitly (without a masking tee pipeline), and include the new exact-joint candidate-filter audit. The next CI run must be checked step-by-step and its artifact contents inspected before recording these audits as passed.
+
+
+## 10. Toy meet-in-the-middle (MITM) cross-check and selector evaluation
+
+The Python arithmetic-audit job in workflow run [#629](https://github.com/jbenavidesj/lattice-fhe-ppml/actions/runs/43365041532) also completed the existing exact toy MITM experiment and selector audits. The MITM implementation compares its candidate set against exhaustive enumeration for every tested instance; the log reports exact-set agreement for all 30 trials at each of N=4, 6, and 8, for every tested coordinate count k.
+
+### Development-grid timing (q=11, B=3, L=3, eta=2)
+
+| N | Exhaustive median | Selected k | MITM median | Reported ratio |
+|---:|---:|---:|---:|---:|
+| 4 | 0.000322 s | 1 | 0.000249 s | 1.29x |
+| 6 | 0.004129 s | 2 | 0.001518 s | 2.72x |
+| 8 | 0.052275 s | 2 | 0.010250 s | 5.10x |
+
+These are microbenchmarks of a tiny synthetic search with 30 generated instances and three timing repeats. The ratios are implementation- and environment-dependent; they are not asymptotic improvements, do not establish an attack against the actual N=8192 construction, and must not be described as a cryptographic speedup or security break. For N=4 the absolute times are especially small and sensitive to timer/runtime overhead.
+
+### Frozen selector checks
+
+The selector's parameter-grid audit passed 80 cases and preserved the established default choices. The held-out q=11, eta=2 check used 10 instances per N in {4,6,8}, two timing repeats, and exact candidate-set comparisons (40/40 for each N); the frozen selector matched the fastest tested k in all three toy dimensions. A separate cross-parameter held-out audit used q in {17,31}, eta in {1,2}, N in {4,6,8}, eight instances per cell, two repeats, and four candidate k values. All 12 cells passed exact candidate-set comparisons (64/64 comparisons per cell), and the frozen selector's measured median regret was 1.000 in every cell.
+
+The latter is a limited, finite-grid result, not a guarantee of optimality outside the tested q, eta, N, implementation, or timing conditions. The selector minimizes a toy cost proxy; no production-scale search was attempted.
+
+### Split-square identity audit
+
+The split-secret negacyclic-square identity and its induced evaluation residual identity passed 6,000 checks across the configured toy degrees and moduli in the same Python job. This validates the implementation identity on those test cases; it does not provide a candidate-space reduction by itself. The square decomposition is an exact algebraic rearrangement, not a new independent constraint.
+
+### Scope and conclusion
+
+These experiments establish that the existing toy MITM routine is an exact alternative to exhaustive search on the tested tiny instances and that its selector behaved consistently on a small held-out grid. They do not demonstrate scalable recovery of the ternary secret, and they do not estimate the security of the N=8192 ring construction or the structured evaluation-key transcript. The production-parameter security question remains open and requires ring-aware cryptanalysis of the complete public transcript, including all evaluation-key samples.
