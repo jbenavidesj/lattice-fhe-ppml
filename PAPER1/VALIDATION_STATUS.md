@@ -1,6 +1,7 @@
 # Paper 1 — validation status
 
-> **Latest full validation run — 2026-11-13, source commit 094652234fcc960317c8bae7a7adfa531d9a93f1.**
+> **Latest full validation run — 2026-11-13, current branch commit 01f46aa0fb87d4dbc72e7cc99b9a8ebb289ef910.**
+> Paper 1 validation workflow #798 (run ID 43522369561) completed successfully on this exact commit. All three jobs passed: Python arithmetic/toy audits; Rust formatting, unit tests, Clippy, and benchmark-target compilation; and the pinned SageMath proxy/security-diagnostic job. This confirms the configured automated checks on the current branch head. It is not an independent mathematical review, a cryptanalytic review, or a security certification.
 > Paper 1 validation workflow #788 (run ID 43394112697) completed successfully on that source commit. Subsequent commits `1ec1c428` and `acc86dde` update documentation and manuscript structure only; no code or test scripts were changed in those commits. No workflow run is yet recorded for the current documentation-only head. The successful run confirms the configured checks on its source commit; it is not an independent mathematical review, a cryptanalytic review, or a security certification.
 >
 > The SageMath proxy diagnostic is now executed and recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`: minimum reported `log2(rop)=93.732` for the scalar unstructured-LWE proxy under the pinned rough profile. **This is not a Ring-LWE estimate, not a security lower bound, and not a scheme-level security claim.** It does not model the structured evaluation-key transcript.
@@ -263,7 +264,7 @@ NTT/CRT plus BigInt path is described as a correctness reference. A fuller
 line-by-line comparison against the prior full-RNS FV construction and
 additional primary NTT/relinearization references is still required.
 
-The current source head must be revalidated after these documentation edits.
+The current source head was revalidated successfully by workflow #798 (run ID 43522369561) on 2026-11-13; see the current-head status at the top of this file.
 
 
 ## FV multiplication convention and novelty boundary
