@@ -271,7 +271,7 @@ Reproducibility records: CI run #729, commit `2b862166bf4a84178250b728243995b054
 
 [3] M. R. Albrecht, R. Player, and S. Scott, “On the concrete hardness of Learning with Errors,” *Journal of Mathematical Cryptology*, vol. 9, no. 3, pp. 169–203, 2015, doi: 10.1515/jmc-2015-0016.
 
-[4] HomomorphicEncryption.org, *Homomorphic Encryption Standard*, community security-guidelines white paper, adopted at the Third Standards Meeting, Toronto, Canada, Nov. 2018. This is community guidance, not a formal standard.
+[4] HomomorphicEncryption.org, *Homomorphic Encryption Standard*, community security-guidelines white paper adopted at the Third Standards Meeting, Toronto, Canada, Nov. 2018; IACR Cryptology ePrint Archive, Report 2019/939. This is community guidance, not a formal standard.
 
 [5] J.-C. Bajard, J. Eynard, N. Merkiche, and T. Plantard, “RNS Arithmetic Approach in Lattice-Based Cryptography: Accelerating the ‘Rounding-off’ Core Procedure,” in *2015 IEEE 22nd Symposium on Computer Arithmetic (ARITH)*, pp. 113–120, 2015, doi: 10.1109/ARITH.2015.30.
 
