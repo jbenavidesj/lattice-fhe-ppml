@@ -5,10 +5,10 @@
 >
 > The SageMath proxy diagnostic is now executed and recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`: minimum reported `log2(rop)=93.732` for the scalar unstructured-LWE proxy under the pinned rough profile. **This is not a Ring-LWE estimate, not a security lower bound, and not a scheme-level security claim.** It does not model the structured evaluation-key transcript.
 >
-> The manuscript has undergone an editorial consolidation of its validation section and toy-audit appendices, and now cites the primary HPS RNS-BFV paper alongside the BEHZ and comparative implementation studies. The bibliography audit has verified the primary FV paper, BEHZ full-RNS paper, HPS RNS-BFV paper, Al Badawi et al. implementation comparison, the LWE-estimator paper, and the 2024 security-guidelines article. Reference [2]'s LNCS volume was corrected to 10532. Remaining gates are a final pass over citation-to-claim alignment, independent review of the correctness derivation, and specialist review of the joint public/evaluation-key security model. The one-session CI benchmark is diagnostic only. See the dated historical log below; older statements about checks not yet being run are historical and superseded by this current-head record.
+> **Final internal editorial disposition — 2026-11-13.** The manuscript's internal scope/claim pass, citation-to-claim mapping for references [1]–[8], bibliography metadata check, and interpretation of the single-session benchmark are complete for the narrowed experimental-implementation scope. The BEHZ/HPS comparison is an explicit principal-difference comparison, not an exhaustive survey of all RNS-BFV implementations. No performance-superiority, production-security, or new-scheme claim is made. Additional benchmark sessions are not required for the present descriptive-only performance section; they are required before any comparative-performance claim. External blockers remain: independent mathematical review of the one-multiplication/relinearization derivation; specialist cryptanalytic review of the joint public/evaluation-key transcript; and independent assessment of the novelty threshold for a target journal. These cannot be marked complete by internal CI or self-review. Historical notes below are retained as a development log and are superseded where they conflict with this current disposition.
 
 
-**Status: experimental RNS-BFV research prototype; not submission-ready.**
+**Status: internal manuscript consolidation complete; external-review gates remain open; not submission-ready.**
 
 The selected architecture remains leveled RNS-BFV as the core, with refresh/bootstrapping kept as a separate future extension.
 
@@ -311,3 +311,27 @@ scalability to production parameters, demonstrate a secret-recovery attack,
 or establish any concrete security estimate. The PR remains open and the
 broader independent cryptographic reviews and publication gates above remain
 outstanding.
+
+
+## Final internal closure record (2026-11-13)
+
+### Closed internally
+
+- [x] Narrowed the abstract and conclusion to an experimental RNS-BFV implementation and a single multiplication followed by one relinearization.
+- [x] Explicitly disclaimed novelty for BFV multiplication semantics, full-RNS FV/BFV, and general elimination of multiprecision arithmetic.
+- [x] Added and retained the principal BEHZ/HPS distinction and the published BEHZ-versus-HPS implementation comparison; the scope is stated as a focused comparison, not an exhaustive survey.
+- [x] Mapped every bibliography item [1]–[8] to its intended in-text use; all eight references occur in the manuscript. Bibliographic metadata was checked in the preceding reference audit.
+- [x] Kept the benchmark as a single virtualized-CI descriptive baseline, including the negative AsymRed result. No performance superiority or competitiveness claim is retained, so repeated comparative benchmarking is not an internal blocker for this narrowed paper.
+- [x] Kept the scalar unstructured-LWE proxy explicitly separate from Ring-LWE and from the structured evaluation-key security question.
+- [x] Preserved the distinction between internal source/proof consistency checks and independent mathematical certification.
+
+### External gates — not represented as complete
+
+- [ ] Independent mathematical review of the centered-lift quotient, complete noise decomposition, and strict decoding-margin argument.
+- [ ] Specialist cryptanalytic review of the joint public-key/evaluation-key transcript, including ring structure and the dependent target s^2.
+- [ ] Independent venue-level novelty assessment: the current paper's distinct methodological contribution beyond BEHZ/HPS has not been established conclusively.
+
+### Submission decision
+
+**Do not submit the current manuscript as a new cryptographic construction or as a security-validated BFV scheme.** It may be considered for an implementation/reproducibility-oriented venue only after the two technical external reviews and a venue-specific novelty assessment. If those reviews cannot be obtained promptly, retain the work as a technical report/preprint and proceed with Paper 2 rather than extending Paper 1 indefinitely.
+
