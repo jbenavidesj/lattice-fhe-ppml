@@ -112,3 +112,26 @@ The MITM prototype was extended to test (k=1,2,3,4) selected public-key coordina
 The median number of candidates passing the full public residual and the final evaluation-key survivor count were independent of (k) for a fixed instance set: 3.5 and 1 (N=4), 7.5 and 1 (N=6), 11 and 1 (N=8). Increasing (k) reduces join collisions, but the (5^k) probe growth eventually dominates. In this single CI run, (k=1) was fastest for N=4, while (k=2) was fastest for N=6 and N=8. This supports a degree- and cost-dependent choice of (k), not a universal optimum.
 
 These timings are exploratory CI medians, not repeated controlled benchmarks. The tests use q=11 and N<=8 and do not establish performance at cryptographic parameters. The sweep is exact only because all candidate pairs retrieved through the selected-coordinate error patterns are subsequently checked against every coefficient of the full public residual and all evaluation-key equations.
+
+## Repeated timing sweep (three runs per instance)
+
+To reduce sensitivity to a single timing observation, the coordinate sweep was repeated three times for each of the 30 generated instances at each degree. The reported MITM timing below is the median over 90 executions per \(k,N\); the exhaustive baseline is the median over the 30 exhaustive executions.
+
+| N | k | Probes per left entry | Median joined pairs | MITM median | Exhaustive/MITM ratio |
+|---:|---:|---:|---:|---:|---:|
+| 4 | 1 | 5 | 37 | 0.000181 s | 1.36x |
+| 4 | 2 | 25 | 16 | 0.000222 s | 1.11x |
+| 4 | 3 | 125 | 8 | 0.000624 s | 0.39x |
+| 4 | 4 | 625 | 3.5 | 0.002876 s | 0.09x |
+| 6 | 1 | 5 | 331.5 | 0.001234 s | 2.50x |
+| 6 | 2 | 25 | 150 | 0.001116 s | 2.77x |
+| 6 | 3 | 125 | 68 | 0.002117 s | 1.46x |
+| 6 | 4 | 625 | 31.5 | 0.008689 s | 0.36x |
+| 8 | 1 | 5 | 2982 | 0.010555 s | 3.77x |
+| 8 | 2 | 25 | 1356 | 0.007531 s | 5.28x |
+| 8 | 3 | 125 | 615 | 0.008914 s | 4.46x |
+| 8 | 4 | 625 | 276 | 0.027773 s | 1.43x |
+
+Every configuration again achieved exact-set agreement in all 30 instances for each degree. The fastest observed setting remained \(k=1\) for N=4 and \(k=2\) for N=6 and N=8. The \(k=4\) setting sharply reduced the median join output, but its 625 error probes per left entry made it slower than exhaustive search at N=4 and N=6. At N=8 it retained a 1.43x ratio, still well behind \(k=2\).
+
+The timing repetition improves the stability of the toy comparison but does not turn it into a controlled benchmark: all runs share one CI environment, and the parameters remain q=11 and N<=8. The data support choosing \(k\) based on the balance between \(5^k\) probes and collision reduction; they do not establish a production-scale optimum.
