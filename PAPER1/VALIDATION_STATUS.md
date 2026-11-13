@@ -181,7 +181,20 @@ The new exhaustive toy audit uses (q=29), (B=3), eta=3, and (N=4,6,8), with 30 i
 
 The public equation already had median one candidate at every degree. The two linear cancellation filters modestly increased the number of unique-candidate instances: N=4, 23/30 to 27/30; N=6, 27/30 to 29/30; N=8 remained 30/30. Mean survivor counts fell from 1.300 to 1.100 at N=4 and from 1.267 to 1.033 at N=6. The subsequent three quadratic evaluation-key levels yielded one candidate in every tested instance. These data do not establish a practical attack or a production-scale speedup.
 
-CI for the latest documentation commits is still pending full Rust validation; record success only against the exact current branch head.
+The cross-parameter selector robustness audit is recorded in
+`scripts/audit_mitm_selector_robustness.py`. With lambda=4 frozen, it tested
+q={17,31}, eta={1,2}, N={4,6,8}, eight independent toy instances per cell,
+and two timing repeats per fixed k. All 12 cells selected the k with the lowest
+observed median among k={1,2,3,4}; median regret was 1.000 in every cell, and
+each cell passed 64 exact candidate-set comparisons against exhaustive search.
+This is a small-domain empirical result only, not a production-scale guarantee.
+
+The current branch head at the time of this record is
+`4a1b75f6be23e245b31dd886acf31d255a95db1a`. Both latest validation runs
+#548 (`43352560725`) and #549 (`43352567153`) completed successfully on
+that exact commit: Python arithmetic audits and Rust tests/benchmark compilation
+both passed. This validates the current head before the subsequent manuscript
+documentation-only commit; CI must be checked again for that newer head.
 
 
 ## Release-mode benchmark baseline (first CI session)
