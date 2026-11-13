@@ -94,3 +94,8 @@ The toy experiment report now explains the noisy modular join required by a spli
 ## Toy meet-in-the-middle prototype
 
 Added `scripts/toy_evalkey_mitm.py` and `PAPER1/TOY_MITM_PROTOTYPE.md`. The prototype splits an even-degree ternary candidate into two halves, hashes right-half contributions on two selected coordinates, probes the 5^2 possible eta=2 centered errors on those coordinates, and verifies full public and evaluation-key residuals. In 30 deterministic trials at each N=4,6,8, its candidate set exactly matched exhaustive enumeration in all 90 trials. Median observed times were 0.000211/0.000854/0.004212 s for MITM versus 0.000240/0.003516/0.049400 s for exhaustive enumeration (single-machine exploratory measurements only). This is a toy algorithmic result; the lists still scale as 3^(N/2), selected-coordinate filtering and full residual checks are required, and no production-parameter attack is claimed. The new script is included in CI; latest CI result is pending verification.
+
+
+## CI correction: MITM planted-secret assertion
+
+CI run #376 exposed a Python `TypeError` in the new MITM audit: the generated planted secret was a list, while survivor candidates are stored as tuples, so `secret in mitm` attempted to hash an unhashable list. The assertion now checks `tuple(secret) in mitm`. The earlier candidate-set comparison remains an exact set equality assertion. MITM timing values are provisional pending a clean rerun; run #376 is not passing.
