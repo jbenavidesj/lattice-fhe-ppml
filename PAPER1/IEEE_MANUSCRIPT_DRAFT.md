@@ -85,7 +85,7 @@ The transformed coefficient vector \((a_{j+1}-Ba_j)_{j=0}^{12}\) is jointly unif
 
 This transformation is deterministic post-processing of the public evaluation key: it provides an alternative cryptanalytic representation, not additional information-theoretic leakage. Neither the original related-target system nor the transformed correlated-error system has been shown to yield a practical attack or a security reduction. The exact model and caveats are detailed in PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md.
 
-The pinned lattice-estimator diagnostic has not yet been executed in a SageMath environment. Even if executed, the current unstructured-LWE proxy would not cover the structured evaluation-key samples or prove Ring-LWE security. No concrete bit-security claim is made.
+A bounded `LWE.estimate.rough()` diagnostic has now been executed under SageMath 10.10 using the pinned lattice-estimator revision, ADPS16 reduction-cost model, and GSA shape assumption. For the scalar unstructured-LWE proxy, the minimum among the reported attacks is \(\log_2(\mathrm{rop})=93.732\) for the candidate (uSVP and dual-hybrid tie). This is a preliminary heuristic screening output only: it is not a Ring-LWE estimate, security lower bound, or concrete security level, and it does not model the structured evaluation-key samples targeting \(s^2\). The candidate/reference comparison also changes both modulus and error distribution. Full run output and limitations are recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`; the joint public/evaluation-key transcript still requires dedicated cryptanalysis and independent review. No concrete scheme-level bit-security claim is made.
 
 ## 6. Implementation validation
 
