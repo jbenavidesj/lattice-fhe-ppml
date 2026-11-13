@@ -1,13 +1,14 @@
-#!/usr/bin/env python3
-"""Exact coefficient-error PMF for selected evaluation-key cancellation vectors.
+#!/usr/bin/env sage -python
+"""Exact weighted eta=2 error laws for LLL modular target-cancellation relations.
 
-For eta=2, X has masses (1,4,6,4,1)/16 on {-2,-1,0,1,2},
-equivalently X = Binomial(4,1/2)-2. Thus sum_j w_j X_j can be
-computed exactly by integer dynamic programming over 4*len(w) Bernoulli
-variables. This is a one-coefficient marginal; it does not model dependencies
-across derived equations or constitute an attack/security estimate.
+For w in Z^14 with sum_j w_j B^j = 0 mod Q, the derived equation cancels
+the common B^j*s^2 target. Its one-coefficient error is sum_j w_j*e_j.
+This script computes exact integer PMFs for the Pareto frontier of the LLL
+reduced modular-kernel basis, and compares them with adjacent cancellation.
+
+This is distribution analysis of derived samples, not a key-recovery attack.
 """
-from math import isclose
+from sage.all import ZZ, matrix
 
 B = 1 << 16
 LEVELS = 14
@@ -17,52 +18,52 @@ Q_PRIMES = [
     18014398508400641,
     18014398507892737,
 ]
-Q = 1
-for prime in Q_PRIMES:
-    Q *= prime
-
-# Rank-6 vector from the recorded exact-integer LLL run: lowest L2^2 among
-# the 14 displayed reduced basis rows.
-LOW_VARIANCE_VECTOR = [
-    16395, -2246, 11538, -2352, -15966, -4494, 13649,
-    15421, 21740, -8852, 532, 11216, -2, 11264,
-]
+Q = ZZ.prod(Q_PRIMES)
 
 
-def modular_relation(weights):
-    return sum(int(w) * pow(B, j, Q) for j, w in enumerate(weights)) % Q == 0
+def kernel_basis():
+    powers = [pow(B, j, Q) for j in range(LEVELS)]
+    inv_last = ZZ(powers[-1]).inverse_mod(Q)
+    basis = matrix(ZZ, LEVELS, LEVELS)
+    for i in range(LEVELS - 1):
+        basis[i, i] = 1
+        basis[i, LEVELS - 1] = (-powers[i] * inv_last) % Q
+    basis[LEVELS - 1, LEVELS - 1] = Q
+    assert abs(basis.det()) == Q
+    return basis, powers
 
 
-def exact_centered_pmf(weights):
-    """Return exact integer counts indexed by uncentered weighted Bernoulli sum."""
-    expanded = [abs(int(w)) for w in weights for _ in range(4)]
-    counts = [1]
-    for weight in expanded:
-        updated = [0] * (len(counts) + weight)
-        for index, count in enumerate(counts):
-            updated[index] += count
-            updated[index + weight] += count
-        counts = updated
-    total = sum(counts)
-    assert total == 1 << len(expanded)
-    radius = 2 * sum(abs(int(w)) for w in weights)
-    assert len(counts) == 2 * radius + 1
-    return counts, radius, total
+def exact_counts(weights):
+    """PMF counts for sum w_j*(Binomial(4,1/2)-2), exactly."""
+    abs_weights = [abs(ZZ(w)) for w in weights]
+    radius = 2 * sum(abs_weights)
+    # The uncentered weighted Bernoulli sum has total weight 4*sum |w|.
+    counts = [ZZ(1)]
+    for weight in abs_weights:
+        for _ in range(4):
+            updated = [ZZ(0)] * (len(counts) + int(weight))
+            for i, count in enumerate(counts):
+                updated[i] += count
+                updated[i + int(weight)] += count
+            counts = updated
+    assert len(counts) == 2 * int(radius) + 1
+    assert sum(counts) == 2 ** (4 * LEVELS)
+    return counts, int(radius), ZZ(2) ** (4 * LEVELS)
 
 
-def central_quantile(counts, radius, total, probability):
+def central_quantile(counts, radius, total, probability_num, probability_den):
+    # Find smallest r with P(|E|<=r) >= probability_num/probability_den.
     cumulative = []
-    running = 0
+    running = ZZ(0)
     for count in counts:
         running += count
         cumulative.append(running)
     lo, hi = 0, radius
     while lo < hi:
         mid = (lo + hi) // 2
-        left = radius - mid
-        right = radius + mid
+        left, right = radius - mid, radius + mid
         inside = cumulative[right] - (cumulative[left - 1] if left else 0)
-        if inside / total >= probability:
+        if inside * probability_den >= total * probability_num:
             hi = mid
         else:
             lo = mid + 1
@@ -78,33 +79,74 @@ def tail_probability(counts, radius, total, threshold):
     return (total - inside) / total
 
 
-def report(label, weights):
-    assert len(weights) == LEVELS
-    assert modular_relation(weights), f"{label}: target does not cancel modulo Q"
-    counts, radius, total = exact_centered_pmf(weights)
-    l1 = sum(abs(w) for w in weights)
-    l2_sq = sum(w * w for w in weights)
-    assert l2_sq == sum((w * w) for w in weights)
+def relation_holds(w, powers):
+    return sum(ZZ(w[j]) * powers[j] for j in range(LEVELS)) % Q == 0
+
+
+def pareto(rows):
+    # Minimize L1 (worst-case support radius) and L2^2 (variance).
+    out = []
+    for row in rows:
+        l1, l2, _, _ = row
+        dominated = any(
+            other[0] <= l1 and other[1] <= l2
+            and (other[0] < l1 or other[1] < l2)
+            for other in rows
+        )
+        if not dominated:
+            out.append(row)
+    return sorted(out, key=lambda x: (x[0], x[1]))
+
+
+def report(label, row, powers):
+    l1, l2, max_abs, w = row
+    assert relation_holds(w, powers), "nonzero target remains"
+    counts, radius, total = exact_counts(w)
     print(f"[{label}]")
-    print(f"L1={l1}; L2_squared={l2_sq}; variance={l2_sq}; exact_support_radius={radius}")
-    print(f"exact_integer_outcomes={total}; pmf_length={len(counts)}")
-    for p in (0.99, 0.999, 0.9999):
-        q, mass = central_quantile(counts, radius, total, p)
-        print(f"central_quantile_{p}={q}; achieved_mass={mass:.12f}")
-    for threshold in (50000, 100000, 131074, 160000):
+    print(f"w={w}")
+    print(f"L1={l1}; L2_squared={l2}; max_abs={max_abs}; exact_support_radius={radius}")
+    for num, den, name in (
+        (99, 100, "q99"),
+        (999, 1000, "q999"),
+        (9999, 10000, "q9999"),
+        (999999, 1000000, "q999999"),
+    ):
+        q, mass = central_quantile(counts, radius, total, num, den)
+        print(f"{name}={q}; achieved_mass={mass:.12f}")
+    for threshold in (50000, 100000, 131074, 160000, 200000, 250000):
         print(f"Pr_abs_error_gt_{threshold}={tail_probability(counts, radius, total, threshold):.12g}")
 
 
 def main():
-    adjacent = [0] * LEVELS
-    adjacent[0], adjacent[1] = -B, 1
-    assert modular_relation(adjacent)
-    print("Exact weighted eta=2 one-coefficient error distributions")
-    print("Each eta=2 variable is represented exactly as Binomial(4,1/2)-2.")
-    print("Counts are integer-exact; probabilities are ratios of integer counts.")
-    print("The PMF is a marginal for one polynomial coefficient, not a full transcript model.")
-    report("adjacent_baseline", adjacent)
-    report("lowest_L2_squared_LLL_row", LOW_VARIANCE_VECTOR)
+    basis, powers = kernel_basis()
+    reduced = basis.LLL(delta=0.99)
+    rows = []
+    for i in range(LEVELS):
+        w = [ZZ(reduced[i, j]) for j in range(LEVELS)]
+        if not any(w):
+            continue
+        assert relation_holds(w, powers)
+        l1 = sum(abs(x) for x in w)
+        l2 = sum(x*x for x in w)
+        rows.append((int(l1), int(l2), int(max(abs(x) for x in w)), w))
+
+    adjacent = [ZZ(0)] * LEVELS
+    adjacent[0], adjacent[1] = -B, ZZ(1)
+    baseline = (int(sum(abs(x) for x in adjacent)),
+                int(sum(x*x for x in adjacent)),
+                B, adjacent)
+
+    frontier = pareto(rows + [baseline])
+    print("Exact Pareto analysis of weighted eta=2 cancellation errors")
+    print(f"N=8192; Q_bits={Q.nbits()}; B={B}; levels={LEVELS}; CBD_eta2")
+    print("All w satisfy sum_j w_j*B^j = 0 (mod Q).")
+    print("Variance is L2^2; exact support radius is 2*L1.")
+    print("Pareto frontier is restricted to the adjacent baseline plus the displayed LLL basis rows.")
+    print(f"LLL_basis_rows={len(rows)}; pareto_frontier_size={len(frontier)}")
+    for rank, row in enumerate(frontier, 1):
+        report(f"pareto_{rank}", row, powers)
+    print("These are one-coefficient marginals; derived equations remain correlated.")
+    print("No attack cost, secret recovery, or concrete security estimate is computed.")
 
 
 if __name__ == "__main__":
