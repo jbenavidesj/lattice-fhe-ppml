@@ -29,7 +29,7 @@ The Albrecht lattice-estimator project documents LWE, NTRU and SIS estimators an
 
 A diagnostic unstructured-LWE script is provided at scripts/estimate_lwe_proxy.py. It pins lattice-estimator commit 7d59f866655362ea8eab803dbc833710c2bc362a and compares the candidate with the HE Standard v2 N=8192 ternary/Gaussian-3.19 reference. It runs two sample-count settings (m=N and m=infinity). The m=N case models one flattened RLWE sample as an LWE proxy; the unlimited-sample case is a sensitivity/conservative setting. Neither models the evaluation-key samples, whose target includes s^2, as ordinary LWE samples. The script is intentionally not run in CI because it requires SageMath and a potentially long estimator execution. No estimator has yet been run for this candidate, so this document reports no bit-security figure and makes no 128-bit claim. The candidate has a larger Q (218 bits) and a narrower error (eta=2 centered-binomial, standard deviation 1) than the HE Standard v2 reference (q=2^214, Gaussian standard deviation 3.19); these differences are a reason to investigate the error distribution, not a basis for inferring security.
 
-See PAPER1/SECURITY_ESTIMATION_PROTOCOL.md for the pinned estimator commit, candidate/reference models, sample-count assumptions, execution instructions, and interpretation limits.
+See `PAPER1/SECURITY_ESTIMATION_PROTOCOL.md` for the pinned estimator and `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` for the structured evaluation-key threat model. The unstructured-LWE script does not model the evaluation-key samples.
 
 References:
 - https://github.com/malb/lattice-estimator
