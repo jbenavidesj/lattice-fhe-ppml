@@ -87,6 +87,9 @@ jobs:
       - name: Audit exact weighted evaluation-key error distributions
         run: |
           python scripts/audit_evalkey_weighted_error_distribution.py | tee evalkey-weighted-error-distribution.txt
+      - name: Audit exact joint evaluation-key error covariance
+        run: |
+          python scripts/audit_evalkey_joint_error_covariance.py | tee evalkey-joint-error-covariance.txt
       - name: Search short modular target-cancellation relations
         run: |
           if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
@@ -105,6 +108,7 @@ jobs:
             sage-lwe-proxy-output.txt
             evalkey-short-relations.txt
             evalkey-weighted-error-distribution.txt
+            evalkey-joint-error-covariance.txt
           if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
