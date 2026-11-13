@@ -78,7 +78,7 @@ def analyze(n):
     )
     # Square is invariant under global sign. For every nonzero s, -s is distinct.
     assert len(fibers[(0,) * n]) >= 1
-    assert sum(sizes.values()) == 3 ** n
+    assert sum(size * multiplicity for size, multiplicity in sizes.items()) == 3 ** n
     assert parity_checks == 3 ** n
 
 
