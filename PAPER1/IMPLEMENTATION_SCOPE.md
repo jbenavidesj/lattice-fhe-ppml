@@ -21,7 +21,12 @@ The RNS BFV relinearization accepts evaluation-key digit pairs satisfying b_j+a_
 ## Correctness and benchmark caveats
 AsymRed checks 0 <= z < q^2, checks intermediate arithmetic, and rejects any case where the two-fold result is not below 2q. This fails closed if the range lemma does not hold. Tests must pass before relying on the lemma in the paper.
 
-The Criterion benchmark harness is exploratory and currently only compiled by CI; no release benchmark campaign, raw timing dataset, confidence intervals, CPU/compiler metadata, or end-to-end BFV measurement has been published. It cannot support a speedup claim.
+A single release-mode Criterion session was collected in virtualized GitHub Actions CI and is documented in `PAPER1/BENCHMARK_PROTOCOL.md` and the manuscript, with raw artifact and environment metadata. It is a descriptive baseline only, not a multi-session campaign or evidence of competitiveness. The exact auxiliary NTT/CRT plus BigInt tensor multiplication is a correctness-reference path. AsymRed was about 4.42x slower than the u128 remainder baseline in the measured microbenchmark; no speedup is claimed.
 
 ## Security caveats
-No ring-aware RLWE estimator, concrete security level, constant-time audit, comprehensive memory-zeroization review, or side-channel evaluation is included. The secret-key wrapper zeroizes its owned RNS buffers on drop, but temporary copies and other memory remnants are not comprehensively controlled. The NTT is a correctness-oriented prototype, not an optimized or audited implementation.
+A pinned rough-profile scalar unstructured-LWE proxy diagnostic is recorded in `PAPER1/SECURITY_ESTIMATION_RESULTS.md`; it is not a ring-aware RLWE estimate and does not model the structured evaluation-key transcript. No concrete security level, constant-time audit, comprehensive memory-zeroization review, or side-channel evaluation is included. The secret-key wrapper zeroizes its owned RNS buffers on drop, but temporary copies and other memory remnants are not comprehensively controlled. The NTT is a correctness-oriented prototype, not an optimized or audited implementation.
+
+
+## Editorial closure update (2026-11-13)
+
+The manuscript's internal scope, claim discipline, bibliography [1]–[8], focused BEHZ/HPS comparison, and descriptive benchmark interpretation have been consolidated. The remaining items are external mathematical/cryptanalytic reviews and IEEE production typesetting; they are not missing code-validation tasks. The exact current status is recorded in `PAPER1/VALIDATION_STATUS.md`.
