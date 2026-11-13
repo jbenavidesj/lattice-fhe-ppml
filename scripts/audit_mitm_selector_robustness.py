@@ -36,6 +36,18 @@ def main():
             # The toy generator and checker read these module-level parameters.
             mitm.Q = q
             mitm.ETA = eta
+
+            # Match the requested centered-binomial eta exactly. The legacy
+            # toy generator is fixed to eta=2, so replace only its error sampler
+            # for this cross-parameter audit.
+            def sample_error(local_rng, n):
+                return [
+                    sum(local_rng.getrandbits(1) for _ in range(eta))
+                    - sum(local_rng.getrandbits(1) for _ in range(eta))
+                    for _ in range(n)
+                ]
+
+            mitm.sample_error = sample_error
             for n in DEGREES:
                 selected = mitm.choose_coordinates(
                     n, q=q, eta=eta, candidate_ks=CANDIDATE_KS,
