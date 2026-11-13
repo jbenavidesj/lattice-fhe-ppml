@@ -240,7 +240,21 @@ def run_case(n, seed, q=257, base=4, levels=2):
     if without_parity != exhaustive:
         print(f"DEBUG N={n}, q={q}, seed={seed}: exhaustive={len(exhaustive)}, MILP={len(without_parity)}")
         print("DEBUG missing_from_MILP=", sorted(exhaustive - without_parity))
-        print("DEBUG extra_from_MILP=", sorted(without_parity - exhaustive))
+        extras = sorted(without_parity - exhaustive)
+        print("DEBUG extra_from_MILP=", extras)
+        for candidate in extras:
+            sq = negacyclic_mul(candidate, candidate, q)
+            residuals = []
+            for lev in range(levels + 1):
+                aa = negacyclic_mul(masks[lev], candidate, q)
+                target = [0] * n if lev == 0 else [
+                    pow(base, lev - 1, q) * x % q for x in sq
+                ]
+                residuals.append([
+                    centered(bodies[lev][k] + aa[k] - target[k], q)
+                    for k in range(n)
+                ])
+            print("DEBUG candidate_residuals=", candidate, residuals)
         raise AssertionError((n, seed, "MILP/exhaustive mismatch"))
     if with_parity != exhaustive:
         print(f"DEBUG parity N={n}, q={q}, seed={seed}: exhaustive={len(exhaustive)}, MILP={len(with_parity)}")
