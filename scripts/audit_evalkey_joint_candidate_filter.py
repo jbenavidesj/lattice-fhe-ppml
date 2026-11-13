@@ -138,7 +138,9 @@ def main():
     print("The exact transformed test pins e_0 and uses e[j+1]=z[j]+B*e[j].")
     print("It is deterministic post-processing, not extra information or an attack.")
     run_case("small_ring", n=2, q=23, B=4, levels=2, trials=40)
+    run_case("ambiguity_stress", n=2, q=257, B=4, levels=2, trials=40)
     run_case("medium_toy", n=5, q=65537, B=16, levels=6, trials=10)
+    run_case("larger_exhaustive_toy", n=8, q=65537, B=16, levels=6, trials=3)
 
 
 if __name__ == "__main__":
