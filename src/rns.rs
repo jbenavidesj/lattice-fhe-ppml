@@ -378,6 +378,37 @@ fn low_u64(x: &BigUint) -> u64 { x.to_u64_digits().first().copied().unwrap_or(0)
 mod tests {
     use super::*;
 
+    // Deterministic Miller-Rabin for the full u64 range, using the
+    // established seven-base witness set. mul_mod is exact via u128 products.
+    fn is_prime_u64(n: u64) -> bool {
+        if n < 2 { return false; }
+        for p in [2u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] {
+            if n % p == 0 { return n == p; }
+        }
+        let mut d = n - 1;
+        let mut s = 0u32;
+        while d % 2 == 0 {
+            d /= 2;
+            s += 1;
+        }
+        for a in [2u64, 325, 9375, 28178, 450775, 9780504, 1795265022] {
+            let base = a % n;
+            if base == 0 { continue; }
+            let mut x = crate::pow_mod(base, d, n);
+            if x == 1 || x == n - 1 { continue; }
+            let mut reaches_minus_one = false;
+            for _ in 1..s {
+                x = crate::mul_mod(x, x, n);
+                if x == n - 1 {
+                    reaches_minus_one = true;
+                    break;
+                }
+            }
+            if !reaches_minus_one { return false; }
+        }
+        true
+    }
+
     #[test]
     fn auxiliary_ntt_crt_basis_covers_exact_integer_product_bound() {
         let q = MODULI.iter().fold(BigUint::from(1u8), |p, &qi| p * BigUint::from(qi));
@@ -385,6 +416,7 @@ mod tests {
         // P > 2*N*(Q/2)^2, expressed without fractional arithmetic.
         assert!((&p << 1usize) > BigUint::from(8192u64) * &q * &q);
         for (i, (&modulus, &root)) in AUX_MODULI.iter().zip(AUX_ROOTS.iter()).enumerate() {
+            assert!(is_prime_u64(modulus), "auxiliary modulus {i} is not prime");
             assert_eq!(pow_mod(root, 16384, modulus), 1, "auxiliary root {i}");
             assert_eq!(pow_mod(root, 8192, modulus), modulus - 1, "auxiliary root {i}");
         }
