@@ -64,3 +64,20 @@ Thus the fact that the toy experiment leaves one candidate does **not** make exh
 ### Local runtime sanity check
 
 A separate local timing sanity check using the same straightforward implementation and deterministic instances completed 30 trials at N=4, 6, and 8 in approximately 0.009 s, 0.112 s, and 1.556 s respectively; 10 trials at N=10 took approximately 6.436 s, and 3 trials at N=12 took approximately 25.082 s. These are single-machine exploratory timings, not benchmark claims, and the seeds for this timing run differ from the fixed-seed candidate-count table above. They illustrate the rapid growth of exhaustive enumeration and must not be used to extrapolate precise runtimes to large N.
+## Why meet-in-the-middle is not yet an attack
+
+Split the coefficient vector into two blocks, \(s=u+X^m v\), where \(m=N/2\). For a fixed public polynomial \(a\), negacyclic multiplication is linear, so
+\[a s=a u+aX^m v.\]
+A meet-in-the-middle method could enumerate the \(3^m\) possible left contributions \(a u\) and right contributions \(aX^m v\), then seek pairs whose sum is within the centered error box around \(-b\). This reduces the raw list size from \(3^N\) to two lists of size \(3^{N/2}\), but it does **not** yield a simple exact hash lookup: the residual is not zero; every coefficient may lie in an interval of width five (for eta=2), and the target is modular. A correct join must enumerate or efficiently index the full error box, or use a rigorously analyzed approximate-neighbor data structure. Naively probing all \(5^N\) error vectors removes the apparent advantage.
+
+### Random-residual heuristic for the toy counts
+
+If a wrong ternary candidate produces a coefficientwise uniform residual modulo q, the probability that one residual coefficient lies in the accepted centered set \([-2,2]\) is \(5/q\). Under the simplifying independence heuristic, the expected number of false candidates passing one public sample is
+\[ (3^N-1)(5/q)^N \approx (15/q)^N. \]
+For q=11 this heuristic gives approximately 3.46, 6.82, and 13.43 false candidates for N=4,6,8, respectively. These are close in scale to the observed public-only medians (3.5, 7.5, 11), but the model is not exact: residual coefficients and candidate events can be correlated, and the planted candidate always passes. The agreement is a sanity check, not a proof.
+
+If each of the three evaluation-key equations contributed an independent uniform residual constraint of the same width, the heuristic false-candidate expectation would acquire another factor \((5/q)^{3N}\). The actual equations share the same candidate and related target \(s^2\), so independence is not established; this calculation only explains why the toy combined system is highly selective.
+
+### Current algorithmic conclusion
+
+Meet-in-the-middle remains a possible research direction, but the noisy modular join is the central unresolved subproblem. The current repository contains no MITM implementation and makes no claim of a faster-than-exhaustive attack. A future implementation must report (i) exact join semantics including centered modular errors, (ii) memory and time as functions of N and q, (iii) false-positive/false-negative checks against exhaustive search at toy sizes, and (iv) whether evaluation-key equations can be incorporated without destroying the list-size advantage.
