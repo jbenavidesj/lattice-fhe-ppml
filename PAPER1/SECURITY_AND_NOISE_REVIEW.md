@@ -111,3 +111,19 @@ See `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` for the joint related-secret fo
 ## Status reconciliation (2026-11-13)
 
 The older statements above that the estimator had not yet been run are superseded by `PAPER1/SECURITY_ESTIMATION_RESULTS.md`. The run produced only the bounded unstructured-LWE proxy outputs described there. The structured evaluation-key transcript remains unanalyzed by a validated ring-aware security model and requires specialist review. The one-multiplication noise derivation has passed internal source-to-proof consistency checks and exact-rational CI audit, but has not received independent mathematical certification.
+
+
+## Completed CI #851 transcript diagnostics (2026-11-13)
+
+The current branch head `dc484e496ee9deda1ce8ec256b60e4848b89ba5f` passed all three CI jobs in workflow run #851 (ID 43527761531), including the pinned SageMath job. The SageMath artifact is `sage-lwe-proxy-diagnostic` (artifact ID 14086391421; SHA-256 `a2ac2f4f992c3486869705e32230bc3d767108872bc3ff2b79d3d762a641ae22`).
+
+The run reproduced the rough scalar unstructured-LWE proxy output `log2(rop)=93.7320` (ADPS16/GSA; pinned estimator commit `7d59f866655362ea8eab803dbc833710c2bc362a`; SageMath 10.10). The script explicitly excludes evaluation-key samples. This output is not a Ring-LWE estimate, not a security lower bound, and not a scheme-level security claim.
+
+Additional exact/transcript diagnostics completed:
+
+- The transformed eta=2 evaluation-key error vector has exact tridiagonal covariance: diagonal 4,294,967,297, adjacent covariance -65,536, and zero non-adjacent covariance in the displayed 13-coordinate representation. Exact positive-definiteness check passed. The joint characteristic function retains the shared underlying-error dependence.
+- The weighted modular-kernel search found exact short relations, including the adjacent-level baseline (L1=65,537; support radius 131,074) and longer non-adjacent combinations. Every reported relation satisfies the modular cancellation identity. These are correlated transformations of one transcript, not independent samples.
+- Exact transformed candidate constraints agreed with the original constraints in all tested toy cases. Coarse approximations sometimes retained extra candidates, which is why they cannot replace exact feasibility checks.
+- The ternary-transcript MILP and exhaustive oracle produced identical feasible sets in all tested unique and ambiguity-stress toy cases, including checks with redundant parity constraints.
+
+These results improve the transcript's algebraic and finite-toy-model characterization. They do not provide a production-parameter secret-recovery attack, a ring-aware security estimate, or a proof of security. Independent specialist cryptanalysis of the joint public/evaluation-key transcript remains mandatory; the candidate must not be assigned a concrete security level from this CI run.
