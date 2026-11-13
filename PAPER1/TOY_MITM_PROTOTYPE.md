@@ -67,3 +67,25 @@ CI run #397's Python audit completed successfully, with exact candidate-set agre
 The median coefficient checks for the evaluation-key equations, by level, were [9, 4, 4] at N=4, [16, 6, 6] at N=6, and [26, 8, 8] at N=8. Median public-residual coefficient checks were 56.5, 564, and 5173, respectively. These are diagnostic counts, not operation-normalized benchmarks.
 
 The coefficientwise version retained exactness but did **not** improve the observed MITM timing ratios relative to the previous staged implementation (1.32x, 4.17x, and 10.70x in CI #391). The current implementation therefore remains an experiment, not an established optimization. The measurements are noisy single-run CI timings and do not isolate interpreter overhead; a dedicated repeated microbenchmark is needed before deciding whether to retain this strategy in the main path. The Rust CI job for run #397 was still compiling benchmarks when these Python results were recorded.
+
+## Exact form of the evaluation-key residual under the half split
+
+For \(N=2m\), write \(s=u+X^m v\), with \(\deg u,\deg v<m\). In the negacyclic ring,
+\[
+s^2=u^2+2X^muv-v^2.
+\]
+For evaluation-key level \(j\), the residual is therefore
+\[
+r_j(u,v)=b_j+a_ju+X^ma_jv-B^ju^2-2B^jX^muv+B^jv^2.
+\]
+Grouping by halves gives
+\[
+r_j(u,v)=
+\underbrace{b_j+a_ju-B^ju^2}_{\text{depends only on }u}
++
+\underbrace{X^ma_jv+B^jv^2}_{\text{depends only on }v}
+-
+\underbrace{2B^jX^muv}_{\text{couples }u\text{ and }v}.
+\]
+
+The last term is the obstruction to an independent right-list hash: its value changes with the left half \(u\). Precomputing \(v^2\) and \(X^ma_jv\) for each right entry does not remove this \(u\)-dependent cross term. A correct alternative join would need to represent or otherwise account for \(uv\) exactly; simply hashing the two independent half contributions would be unsound. Computing the cross term separately for every \((u,v)\) pair risks restoring the original \(3^N\) pairwise work. This is an algebraic limitation of the naive split, not a proof that every more sophisticated join is impossible.
