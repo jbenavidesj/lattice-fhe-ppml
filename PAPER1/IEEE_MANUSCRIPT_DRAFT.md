@@ -84,21 +84,53 @@ The adaptive coordinate selector uses a heuristic cost proxy. A frozen lambda=4 
 
 ## 8. Performance evaluation
 
-No headline performance claim is currently supported. CI compiles the Criterion benchmark target but does not run a release benchmark campaign. A publishable evaluation must compare equivalent operations and parameters, use release builds, record CPU/compiler/OS/source metadata, preserve raw samples, repeat independent sessions, and report dispersion or confidence intervals. Setup/key-generation time must be separated from steady-state operations. Debug or CI timings must not be used as headline results.
+A first Criterion release-mode baseline was collected in a dedicated GitHub Actions
+workflow on commit be820f044647e8e2444d5e415503172bb1498a6f (run #3).
+The runner was a virtualized Azure Linux VM with an AMD EPYC 9V74 host,
+four visible vCPUs, approximately 16 GiB RAM, x86_64, Linux kernel
+7.0.0-1017-azure, rustc/cargo 1.100.0 and LLVM 23.1.5. Raw Criterion
+outputs and environment metadata were retained in workflow artifact
+paper1-release-benchmarks-be820f044647e8e2444d5e415503172bb1498a6f.
+
+| Operation | Estimate | 95% within-run CI |
+|---|---:|---:|
+| Four-lane RNS negacyclic NTT multiplication, N=8192 | 6.948 ms | 6.938–6.969 ms |
+| Exact-reference BFV tensor multiplication, N=8192 | 415.90 ms | 415.06–416.73 ms |
+| BFV encryption | 22.460 ms | 22.449–22.470 ms |
+| BFV decryption | 54.348 ms | 54.314–54.418 ms |
+| BFV addition | 163.37 us | 163.02–163.88 us |
+| BFV multiply plus relinearization | 685.83 ms | 685.48–686.20 ms |
+| Relinearization-key generation | 375.69 ms | 375.42–376.04 ms |
+
+For the same 20,000 modular-reduction inputs, AsymRed measured 170.20 us
+(169.85–170.67 us), while the u128 % q baseline measured 38.52 us
+(38.285–38.840 us). AsymRed was therefore approximately 4.42 times slower
+in this microbenchmark; no speedup is claimed.
+
+These results are a single virtualized-CI session. Criterion's intervals
+describe within-run sampling uncertainty and do not capture variation across
+independent sessions, machines, CPU frequency, or co-tenancy. The exact
+auxiliary NTT/CRT plus BigInt multiplication is a correctness-reference path,
+so its cost is not representative of a future optimized implementation.
+These measurements provide a reproducible baseline only, not evidence of
+production performance or competitiveness. A publishable comparison still
+requires independent sessions, preferably bare-metal measurements, additional
+primitive-level baselines, and a recognized BFV implementation with matching
+semantics and parameters.
 
 ## 9. Limitations and responsible claims
 
 - No concrete Ring-LWE security level or 128-bit security claim.
 - No independent cryptanalytic review of the joint public/evaluation-key transcript.
 - No arbitrary multiplicative-depth proof, modulus switching, or bootstrapping.
-- No production-optimized BFV multiplication or release benchmark campaign.
+- No production-optimized BFV multiplication or multi-session comparative benchmark evaluation; only a single CI release baseline is available.
 - No constant-time, side-channel-resistance, or comprehensive memory-remanence claim.
 - No production-parameter attack demonstrated by the toy exhaustive/MITM experiments.
 - No independent review of the multiplication/noise proof completed yet.
 
 ## 10. Conclusion
 
-This work provides an auditable experimental RNS-BFV implementation and a set of deterministic correctness checks, with particular attention to exact integer-lift multiplication and the structured evaluation-key transcript. The current evidence supports a bounded correctness statement and reproducible toy diagnostics, not a concrete security level or production-readiness claim. Independent mathematical and cryptanalytic review, estimator execution with careful scope, release benchmarking, and a related-work comparison remain necessary before submission.
+This work provides an auditable experimental RNS-BFV implementation and a set of deterministic correctness checks, with particular attention to exact integer-lift multiplication and the structured evaluation-key transcript. The current evidence supports a bounded correctness statement and reproducible toy diagnostics, not a concrete security level or production-readiness claim. Independent mathematical and cryptanalytic review, estimator execution with careful scope, multi-session comparative benchmarking, and a related-work comparison remain necessary before submission.
 
 ## References
 
