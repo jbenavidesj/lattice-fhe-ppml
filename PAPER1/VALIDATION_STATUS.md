@@ -166,3 +166,9 @@ The security note now gives the full (13\times13) tridiagonal covariance matrix 
 The implementation was checked against `src/keygen.rs`: each evaluation-key (a_j) is sampled independently and uniformly per RNS lane; each eta=2 error is generated as the difference of two independent two-bit population counts; and the public-key sample uses the same secret with an independent uniform (a_{pk}) and eta=2 error. The public and evaluation keys must therefore be treated as one joint transcript.
 
 CI runs #458 and #459 completed successfully on commit `1ab591b64fb9542831a1ffe7cc1be94b9aabbc1e`, including both Python audit and Rust validation jobs. CI for the subsequent manuscript/security-note commits must still be checked against the exact latest head. Independent specialist cryptanalysis remains outstanding.
+
+## Staged evaluation-key filtering diagnostic (2026-11-13)
+
+Added `scripts/audit_evalkey_filtering.py` and wired it into `.github/workflows/paper1-validation.yml`. The audit exhaustively counts ternary candidates surviving (a) the public-key equation and (b) each of three successive evaluation-key levels, for (q=11), (B=3), eta=2, (N\in\{4,6,8\}), 30 deterministic instances per degree. It asserts planted-secret survival and monotone candidate counts. This measures toy incremental filtering only; it is not a production attack or a security estimate.
+
+CI runs #468 and #469 were triggered on commit `70ab05e5b52038b59eb5edfd98c5aeba3a89943d`; at the time of this note both jobs were still running. The subsequent documentation commits are also awaiting CI. Do not quote audit results or mark the latest head validated until the exact current-head workflow runs complete successfully.
