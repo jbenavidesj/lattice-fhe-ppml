@@ -742,3 +742,46 @@ The conditional stagewise audit was extended to N=7 and N=8 with q in {13,17}, B
 Across the 100 transcripts, the public-key equation left multiple candidates in 60 cases. The first joint evaluation-key stage made all 60 of those cases unique; no additional cases became unique at later stages. The other 40 transcripts were already unique under the public-key equation. All groups remained nonempty, and the planted secret was retained. The stagewise audit also completed in the SageMath CI job; the exact anchor-plus-differences representation is checked against the original residual constraints by the audit.
 
 **Interpretation and limitations.** This extends the finite exhaustive observation to N=8, but the largest search still contains only 6,561 ternary candidates, with deliberately tiny moduli q=13 and q=17. The data indicate that, in these generated toy transcripts, the first evaluation-key residual is highly selective conditional on public-key ambiguity. They do not establish scalable recovery, an attack on the production N=8192 ring, a concrete security estimate, or exploitability of production evaluation keys (GitHub Actions run #741, commit `73fbebdab07453896ce06870c5fa716e71ea9b4e`).
+
+
+## Candidate-recovery complexity and limits of the current experiments
+
+### Exhaustive ternary search baseline
+
+The implemented toy filters enumerate the coefficientwise ternary secret space. For dimension N, this space has exactly 3^N candidates. At the production dimension N=8192,
+
+\[
+\log_2(3^{8192})=8192\log_2 3\approx 12,984.7\text{ bits},
+\qquad
+3^{8192}\approx 10^{3,908.7}.
+\]
+
+Consequently, exhaustive enumeration is not a plausible production attack. Even if one candidate were checked in one nanosecond, enumerating the full space would take approximately 10^(3,891) seconds. This is only an illustrative lower-bound calculation for a deliberately unrealistic per-candidate cost; it is not a security estimate.
+
+A direct candidate check evaluates the public-key residual and the evaluation-key residuals, including negacyclic products. A straightforward implementation costs on the order of O(L N^2) ring-coefficient operations per candidate; fast polynomial multiplication can reduce the per-candidate arithmetic cost, but it does not make a search over 3^8192 candidates feasible.
+
+### What the existing toy experiments actually measure
+
+The exhaustive experiments for N up to 8 establish correctness and candidate-filter behavior only in those toy spaces. In particular:
+
+- They enumerate all 3^N ternary candidates; they do not construct a candidate-generation algorithm for N=8192.
+- The exact anchor-plus-adjacent-differences representation is an algebraically equivalent reparameterization of the same residual constraints. Agreement between the original and exact-joint survivor sets is a consistency check, not an independent attack and not additional leakage.
+- The marginal bound |z_j| <= 2(B+1) discards dependence information. Its survivor set is a relaxation (a superset) and cannot be interpreted as the exact joint likelihood or as a valid independent-sample model.
+- A unique survivor in a toy instance says that exhaustive filtering identifies the planted secret in that particular finite instance. It does not establish an algorithm with practical complexity at production dimension.
+
+### What the LLL experiment does and does not solve
+
+The 14-dimensional LLL computation searches for short integer coefficient vectors w satisfying the public modular cancellation condition sum_j w_j B^j = 0 (mod Q). It is a search in the *level-combination coefficient lattice*. It is not an LLL attack on the 8192-dimensional secret, and its short vectors do not themselves recover s.
+
+For any such w, the derived error is sum_j w_j e_j. Under independent eta=2 coefficient errors, its coefficient variance is ||w||_2^2 and its worst-case absolute support is at most 2||w||_1 before modular reduction. These statistics describe the derived error; they do not supply an algorithm for solving the resulting ring equations. The reported LLL basis and Pareto comparisons are also restricted to the computed basis rows and stated baseline, not a proof of global optimality over every modular relation.
+
+### Complexity conclusion and open work
+
+The present evidence supports the following bounded conclusion:
+
+1. The public transcript admits exact target-cancelling linear combinations.
+2. The toy exhaustive filters can identify planted secrets in their tested small dimensions, but their cost is exponential in N and they do not scale to N=8192.
+3. The level-combination LLL calculation finds short relations among the 14 gadget-level weights, not short secret-recovery vectors.
+4. No scalable candidate-generation, lattice-reduction, algebraic-solving, or hybrid algorithm has yet been implemented or analyzed with a defensible complexity bound for the production parameters.
+
+The next cryptanalytic milestone is therefore not to extrapolate toy survivor counts. It is to specify a concrete production-dimension attack model, derive the exact induced distribution (including modular centered lifts and cross-level error dependence), and identify an algorithm whose time and memory costs can be estimated. Until such an algorithm or a valid reduction is available, the scheme's security remains unresolved; neither a break nor a concrete security level follows from these experiments.
