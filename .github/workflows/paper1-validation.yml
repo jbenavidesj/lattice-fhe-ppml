@@ -84,6 +84,9 @@ jobs:
           fi
           cat sage-lwe-proxy-output.txt
           exit "$status"
+      - name: Audit exact weighted evaluation-key error distributions
+        run: |
+          python scripts/audit_evalkey_weighted_error_distribution.py | tee evalkey-weighted-error-distribution.txt
       - name: Search short modular target-cancellation relations
         run: |
           if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
@@ -101,6 +104,7 @@ jobs:
           path: |
             sage-lwe-proxy-output.txt
             evalkey-short-relations.txt
+            evalkey-weighted-error-distribution.txt
           if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
