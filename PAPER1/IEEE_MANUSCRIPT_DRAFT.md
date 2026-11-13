@@ -70,6 +70,8 @@ The pinned lattice-estimator diagnostic has not yet been executed in a SageMath 
 
 The validation suite includes Rust unit and integration tests, formatting, Clippy, benchmark-target compilation, and deterministic Python audits. The audits cover candidate parameters, AsymRed, negacyclic arithmetic, toy and N=8192 noise bounds, ternary-square parity, split-secret square identities, exhaustive toy evaluation-key candidate search, and MITM candidate-set equality.
 
+A new staged-filtering audit records ternary candidate counts after the public-key equation and each successive evaluation-key level for toy instances. It measures incremental filtering conditional on the public-key survivors; it is an exhaustive (q=11), (B=3), (N\in\{4,6,8\}) diagnostic, not an attack-complexity estimate for the implementation parameters. Numerical results will be included only after CI passes.
+
 The CI workflow runs Rust unit tests, formatting, Clippy, benchmark-target compilation, and the Python arithmetic audits. The last fully completed validation before the present proof-documentation refinements passed on commit 4800c0dc279c17bbfb0f7aca8a1f6e820645b1d4, including the N=8192 noise audit, adaptive-selector parameter-grid audit, and held-out selector experiment. CI for the current proof refinements is running; its result must be recorded against the exact final manuscript commit before this section is frozen.
 
 ## 7. Toy meet-in-the-middle diagnostics
