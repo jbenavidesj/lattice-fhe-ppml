@@ -154,4 +154,16 @@ This work provides an auditable experimental RNS-BFV implementation and a set of
 
 **Positioning note.** References [1] and [2] establish the BFV/FV and full-RNS context. In particular, [2] already develops a full RNS FV-like approach and reports optimized implementations. Therefore, this manuscript must not claim that RNS-BFV, coefficientwise scale-and-round, or the general goal of eliminating multiprecision arithmetic is itself novel. The present implementation uses an exact integer-lift NTT/CRT plus BigInt route as a correctness reference; its contribution, if supported by a fuller comparison, is the particular auditable reference construction, explicit one-operation correctness accounting, and the reproducible diagnostics—not a faster full-RNS scheme.
 
+A further point for the comparison is that the integer-lift multiplication convention
+itself is already part of the original FV presentation [1]: the ciphertext
+polynomials are multiplied in the integer polynomial ring, scaled by t/q, and
+coefficientwise rounded before reduction to the ciphertext modulus. The present
+code makes that lift explicit by centered CRT reconstruction and uses an auxiliary
+NTT/CRT basis to recover each integer product exactly. This should be described as
+an auditable implementation of that arithmetic convention, not as a new
+multiplication rule. The precise implementation difference to investigate against
+[2] is the use of a BigInt exact-reference path versus their optimized full-RNS
+rounding machinery, together with the scope and evidence of the one-operation
+correctness audit.
+
 The bibliography is an initial verified core, not a complete related-work survey. Before submission, add and verify primary references for NTT/negacyclic polynomial multiplication, CRT reconstruction and BFV relinearization, compare the precise multiplication and rounding conventions with [2], and include the exact estimator/software version used if a SageMath diagnostic is eventually run.
