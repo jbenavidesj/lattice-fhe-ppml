@@ -13,7 +13,7 @@ import statistics
 Q = 31
 BASE = 3
 LEVELS = 3
-ETA = 2
+ETA = 3
 CANCEL_RADIUS = ETA * (1 + BASE)
 TRIALS = 30
 DEGREES = (4, 6, 8)
@@ -38,9 +38,9 @@ def negacyclic_mul(a, b):
     return out
 
 
-def cbd_eta2(rng):
-    return (rng.getrandbits(1) + rng.getrandbits(1)) - (
-        rng.getrandbits(1) + rng.getrandbits(1)
+def cbd_eta(rng):
+    return sum(rng.getrandbits(1) for _ in range(ETA)) - sum(
+        rng.getrandbits(1) for _ in range(ETA)
     )
 
 
@@ -49,7 +49,7 @@ def sample_poly(rng, n):
 
 
 def sample_error(rng, n):
-    return [cbd_eta2(rng) for _ in range(n)]
+    return [cbd_eta(rng) for _ in range(n)]
 
 
 def small(residual, radius):
@@ -103,8 +103,9 @@ def candidate_stage_counts(n, public_sample, eval_samples, secret):
 
         rejected = False
         for j, (a_diff, b_diff) in enumerate(linear_samples):
+            a_times_candidate = negacyclic_mul(a_diff, candidate)
             residual = [
-                (b_diff[i] + negacyclic_mul(a_diff, candidate)[i]) % Q
+                (b_diff[i] + a_times_candidate[i]) % Q
                 for i in range(n)
             ]
             if not small(residual, CANCEL_RADIUS):
