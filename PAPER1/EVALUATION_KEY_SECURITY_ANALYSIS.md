@@ -319,3 +319,31 @@ A specialist attack study should begin from the exact distribution in Part 1 and
 For the current paper, retain the implementation and correctness contributions, report the scalar proxy only with its limitations, and label the cryptographic security assessment unresolved. Before claiming a concrete security level or presenting this as a security-validated FHE scheme, require an independent reviewer to assess the exact joint transcript, ring structure, secret distribution, correlated errors, and any additional deployment interfaces. Any new evaluation-key publication under the same secret must trigger a fresh transcript-level analysis.
 
 This is the current defensible boundary between what has been derived, what has been experimentally checked, and what remains an open cryptanalytic question.
+
+
+---
+
+## 5. Computational search for short modular target-cancellation relations
+
+A SageMath 10.10 experiment was added as `scripts/search_evalkey_short_relations.sage.py` and executed in GitHub Actions run [#595](https://github.com/jbenavidesj/lattice-fhe-ppml/actions/runs/43362037142). It constructs the exact 14-dimensional integer kernel lattice
+\[
+\Lambda=\{w\in\mathbb Z^{14}:\sum_{j=0}^{13}w_jB^j=0\pmod Q\}
+\]
+and applies exact-integer LLL with \(\delta=0.99\). The basis determinant is checked to equal \(Q\), and every output row is verified against the modular relation.
+
+### Observed result
+
+The three shortest reported rows have \(\ell_1\)-norm 65,537 and are adjacent-level relations, equivalent up to sign and level position to \(( -B,1)\). The next LLL row has
+\[
+\|w\|_1=108,404,\qquad \|w\|_2^2=2,019,592,708,
+\qquad \|w\|_\infty=28,350.
+\]
+It therefore has a larger worst-case support bound \(2\|w\|_1=216,808\) than the adjacent relation's 131,074, but a smaller coefficient-variance proxy \(\|w\|_2^2\) than the adjacent relation's 4,294,967,297. This is a real trade-off between worst-case support and second moment; neither metric alone establishes a more useful attack sample.
+
+No LLL-reduced row in this run improves on the adjacent relation in \(\ell_1\)-norm. The experiment is a search within one reduced basis, not an exhaustive enumeration of all short lattice vectors and not a proof that no shorter vector exists. LLL output also depends on the chosen basis and reduction parameters.
+
+### Interpretation and limits
+
+The result gives no secret-recovery algorithm, no distinguisher, and no security estimate. The linear combinations are deterministic functions of one public transcript and are not independent samples. A lower \(\ell_2^2\) value may motivate a follow-up analysis of the exact weighted discrete error law, but it does not justify replacing that law by an iid Gaussian with the same variance. Any further attack experiment must model the coefficient weights, negacyclic ring operations, modular wraparound, and dependencies among multiple derived equations.
+
+The SageMath workflow run completed successfully, including the relation search and artifact upload. The full output is preserved in the `sage-lwe-proxy-diagnostic` workflow artifact for run #595.
