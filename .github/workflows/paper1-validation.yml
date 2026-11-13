@@ -98,7 +98,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sage-lwe-proxy-diagnostic
-          path: |\n            sage-lwe-proxy-output.txt\n            evalkey-short-relations.txt
+          path: |
+            sage-lwe-proxy-output.txt
+            evalkey-short-relations.txt
           if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
