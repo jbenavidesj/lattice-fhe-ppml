@@ -39,7 +39,7 @@ def negacyclic_mul(a, b):
 
 def cbd_eta2(rng):
     # Difference of two independent Binomial(2, 1/2) variables.
-    return rng.randrange(3) - rng.randrange(3)
+    return (rng.getrandbits(1) + rng.getrandbits(1)) - (rng.getrandbits(1) + rng.getrandbits(1))
 
 
 def sample_poly(rng, n):
