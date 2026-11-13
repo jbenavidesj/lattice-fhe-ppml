@@ -116,3 +116,21 @@ For B=65536, the individual coefficient variance is 4,294,967,297 and the standa
 ### Correct interpretation of the transformed samples
 
 The map from \((a_0,\ldots,a_{L-1})\) to \((a_1-Ba_0,\ldots,a_{L-1}-Ba_{L-2})\) is a surjective linear map over \(R_Q\): its matrix has a unit coefficient on each successive pivot. Therefore the transformed coefficient vector is jointly uniform. This does not make the errors independent, and the transformed transcript is a deterministic function of the original transcript. The transformation is a cryptanalytic viewpoint, not additional leakage beyond the published key.
+## Ternary-secret structure in the square
+
+Let \(s(X)=\sum_{i=0}^{N-1}s_iX^i\), with independent \(s_i\in\{-1,0,1\}\), and compute the negacyclic square in \(\mathbb Z[X]/(X^N+1)\). Reducing its coefficients modulo 2 removes signs and all cross-term pairs, because every off-diagonal product appears twice:
+\[s(X)^2\equiv\sum_{i=0}^{N-1}s_i^2X^{2i}\equiv\sum_{i=0}^{N-1}s_iX^{2i}\pmod 2.\]
+For even N, reducing exponents modulo \(X^N+1\) (which is \(X^N-1\) over \(\mathbb F_2\)) gives
+\[ [X^{2r+1}]s^2\equiv0\pmod2,\qquad [X^{2r}]s^2\equiv s_r\pmod2,\quad 0\le r<N/2,\]
+where coefficient indices are interpreted in the negacyclic ring and the displayed even-index identity uses \(s_r^2\equiv s_r\pmod2\).
+
+For N=8192 this means every odd-index coefficient of the integer negacyclic square is even, and the parity of its even-index coefficients reveals the parity (zero versus nonzero) of the first 4096 secret coefficients. This is a genuine algebraic property of the target polynomial, not yet a key-recovery attack: the public evaluation-key equations expose the target only mixed with the unknown term \(-a_js\) and modular noise. A practical attack would still need to extract these parities from the joint public transcript.
+
+### Attack relevance and caveats
+
+- The parity statement is over the integer coefficient representation of the ternary secret and its negacyclic square. It is not automatically observable from an RNS residue without a justified centered-lift reconstruction.
+- Since Q is odd, reducing a residue modulo Q and then reducing that residue modulo 2 is not a valid substitute for recovering the intended integer representative. Any proposed parity test must account for modular wraparound.
+- The even-index parity relation covers only the first N/2 secret coefficients in this chosen coefficient ordering; it does not directly reveal the remaining half.
+- This constraint can be used as a target in algebraic or hybrid cryptanalysis, but no complexity reduction or exploitable distinguisher is established here.
+
+A separate exact implementation test should verify this identity on many sampled ternary secrets and on the same CRT centered-lift convention used by the evaluation-key generator before this observation is used in any attack code.
