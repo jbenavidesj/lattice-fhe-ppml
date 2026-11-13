@@ -103,3 +103,16 @@ However, the errors are not independent across j: \(e'_j\) and \(e'_{j+1}\) both
 For eta=2 centered-binomial errors, each original coefficient lies in [-2,2]. Hence
 \[|e'_{j,k}|=|e_{j+1,k}-B e_{j,k}|\le 2+2B=131,074.\]
 This is a support bound on the unreduced integer expression. The actual public equation is modulo Q; centered modular representatives may wrap, so any lattice embedding or estimator must preserve the modular distribution rather than treating this support bound as a Gaussian standard deviation.
+### Exact eta=2 error law and dependence
+
+The implementation samples eta=2 as the difference of two independent Binomial(2, 1/2) variables. For one coefficient, the probability mass function on \(-2,-1,0,1,2\) is \((1,4,6,4,1)/16\), with mean zero and variance one.
+
+For the adjacent cancellation errors \(e'_j=e_{j+1}-Be_j\), independence of the original level errors gives, coefficientwise,
+\[\operatorname{Var}(e'_j)=1+B^2,\qquad \operatorname{Cov}(e'_j,e'_{j+1})=-B,\]
+and \(\operatorname{Cov}(e'_j,e'_k)=0\) for \(|j-k|>1\). The adjacent correlation is \(-B/(1+B^2)\). Thus the error vector has a banded dependence structure; it is not an iid error vector. Coefficients at distinct polynomial positions remain independent under the coefficientwise sampler.
+
+For B=65536, the individual coefficient variance is 4,294,967,297 and the standard deviation is approximately 65,536.000008. This standard deviation is descriptive, not a replacement for the exact discrete law or a proof that a Gaussian estimator is valid. The support bound remains 131,074.
+
+### Correct interpretation of the transformed samples
+
+The map from \((a_0,\ldots,a_{L-1})\) to \((a_1-Ba_0,\ldots,a_{L-1}-Ba_{L-2})\) is a surjective linear map over \(R_Q\): its matrix has a unit coefficient on each successive pivot. Therefore the transformed coefficient vector is jointly uniform. This does not make the errors independent, and the transformed transcript is a deterministic function of the original transcript. The transformation is a cryptanalytic viewpoint, not additional leakage beyond the published key.
