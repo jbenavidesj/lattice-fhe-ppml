@@ -174,3 +174,13 @@ The Python CI job reported the following 30-instance results (medians; counts ar
 | N=8 | 12.5 / 1 / 1 / 1 | 12.90 / 1.00 / 1.00 / 1.00 | 0 / 30 / 30 / 30 of 30 |
 
 In these toy instances the first evaluation-key level is already highly selective, and later levels remove the remaining ambiguity in some trials. This is a candidate-filtering observation under exhaustive ternary enumeration—not a practical attack: the attacker-side search still enumerates all (3^N) secrets, and the experiment uses (q=11), (B=3), only three levels, and (N\le8). The result does not quantify attack cost at the implementation parameters.
+
+## Adjacent-level linear prefilter experiment
+
+The exact cancellation identity gives, for adjacent levels (j,j+1),
+[
+(b_{j+1}-Bb_j)+(a_{j+1}-Ba_j)s=e_{j+1}-Be_jpmod Q.
+]
+For coefficient errors supported on ([-eta,eta]), the transformed error is supported on ([-eta(1+B),eta(1+B)]). Thus a candidate secret can be tested against this *linear* equation before computing its square. This is a safe necessary filter: every genuine secret passes, while the larger support radius deliberately avoids rejecting valid candidates.
+
+The new `scripts/audit_evalkey_linear_prefilter.py` exhaustively measures candidate counts after the public-key relation, after each of the two adjacent-level cancellations, and then after the original three quadratic evaluation-key equations. It uses (q=31), (B=3), eta=2, and (N\in\{4,6,8\}), with 30 deterministic instances per degree. The modulus is chosen so the transformed support radius 8 is strictly below (q/2), avoiding ambiguity in the centered-residue test. This is a toy diagnostic; numerical conclusions await CI and do not imply production attack feasibility.
