@@ -184,7 +184,7 @@ def main():
         def med(field, which=1):
             return statistics.median(row[which][field] for row in rows)
 
-        base_products = med("public_pass", 0) * (1 + LEVELS)
+        base_products = med("public_full_pass", 0) * (1 + LEVELS)
         filtered_products = (
             med("linear_ring_products") + med("square_computations")
             + med("eval_ring_products")
