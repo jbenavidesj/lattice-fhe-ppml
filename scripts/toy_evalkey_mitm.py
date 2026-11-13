@@ -269,6 +269,8 @@ def main():
             k: {"times": [], "stats": []}
             for k in SELECTED_COORDINATES if k <= n
         }
+        adaptive = choose_coordinates(n)
+        adaptive_result = {"times": [], "stats": []}
         for _ in range(TRIALS):
             secret, public_sample, eval_samples = generate_instance(n, rng)
 
@@ -279,8 +281,12 @@ def main():
             coordinate_order = list(results)
             shift = _ % len(coordinate_order)
             coordinate_order = coordinate_order[shift:] + coordinate_order[:shift]
+            coordinate_order.append(adaptive["k"])
             for k in coordinate_order:
-                result = results[k]
+                result = (
+                    adaptive_result if k == adaptive["k"] and
+                    coordinate_order.count(k) == 2 else results[k]
+                )
                 final_stats = None
                 for _repeat in range(TIMING_REPEATS):
                     start = time.perf_counter()
@@ -298,26 +304,6 @@ def main():
                 result["stats"].append(final_stats)
 
         exhaustive_median = statistics.median(exhaustive_times)
-        adaptive = choose_coordinates(n)
-        adaptive_result = {
-            "times": [],
-            "stats": [],
-        }
-        for trial_index in range(TRIALS):
-            secret, public_sample, eval_samples = generate_instance(
-                n, random.Random(0xBF2 + trial_index + 100000 * n)
-            )
-            exhaustive = exhaustive_candidates(n, public_sample, eval_samples)
-            for _repeat in range(TIMING_REPEATS):
-                start = time.perf_counter()
-                stats = {}
-                mitm = mitm_candidates(
-                    n, public_sample, eval_samples, adaptive["k"], stats
-                )
-                adaptive_result["times"].append(time.perf_counter() - start)
-                adaptive_result["stats"].append(stats)
-                assert exhaustive == mitm
-                assert tuple(secret) in mitm
         adaptive_median = statistics.median(adaptive_result["times"])
         adaptive_pairs = statistics.median(
             [item["joined_pairs"] for item in adaptive_result["stats"]]
