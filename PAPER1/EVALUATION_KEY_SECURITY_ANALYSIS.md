@@ -548,3 +548,18 @@ scripts/audit_evalkey_four_way_filtering.py compares four candidate sets on the 
 For each ternary candidate c, the script computes the original evaluation residual polynomials r_j(c). The transformed coordinates are r_0(c) and z_j(c)=r_{j+1}(c)-B r_j(c). The map from (r_0,...,r_13) to (r_0,z_0,...,z_12) is an invertible triangular integer transformation. The script anchors r_0 and reconstructs the original residual sequence through r_{j+1}=z_j+B r_j, checking every reconstructed r_j against the original eta=2 support. It therefore preserves the complete joint support and does not substitute independent coordinatewise bounds for correlated transformed errors.
 
 The exact transformed candidate set must equal the original evaluation-key candidate set, and the joint candidate set must equal the public-key-plus-exact-transformed set. This is a deterministic equivalence check, not evidence that transformed equations add independent information. The four-way survivor counts quantify the marginal and combined filtering effects under the explicitly synthetic transcript generator (independent uniform a-polynomials and independent CBD_eta2 errors). Tested dimensions are N=2,3,4,5 with exhaustive ternary enumeration; these toy counts are not an attack or a security estimate.
+
+
+### Controlled four-way experiment: preliminary small-ring output
+
+For q=23, B=16, fourteen evaluation levels, and eta=2, the independently reproduced small-ring results are:
+
+| N | Trials | Mean public-only survivors | Public-only unique | Mean evaluation-only survivors | Evaluation-only unique | Mean joint survivors |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 40 | 1.675 | 29/40 | 1.000 | 40/40 | 1.000 |
+| 3 | 30 | 1.133 | 26/30 | 1.000 | 30/30 | 1.000 |
+| 4 | 30 | 1.067 | 28/30 | 1.000 | 30/30 | 1.000 |
+| 5 | 20 | 1.100 | 18/20 | 1.000 | 20/20 | 1.000 |
+| 6 | 10 | 1.100 | 9/10 | 1.000 | 10/10 | 1.000 |
+
+In these particular toy trials, the evaluation-key equations alone left one ternary candidate in every instance, while the public-key equation alone left additional candidates in some instances. Adding the public key therefore did not further reduce the evaluation-only survivor set in this sample. This is an observed outcome of a very small modulus and a synthetic independent-sample generator, not evidence that the production evaluation keys alone determine the real secret. The exact transformed test must match the original evaluation-key candidate set trial by trial; its equality is an algebraic equivalence check.
