@@ -47,6 +47,8 @@ jobs:
         run: python scripts/audit_mitm_selector.py
       - name: Evaluate frozen adaptive MITM selector on held-out instances
         run: python scripts/audit_mitm_selector_holdout.py
+      - name: Evaluate frozen MITM selector across held-out q and eta
+        run: python scripts/audit_mitm_selector_robustness.py
 
   rust:
     name: Rust tests and benchmark compilation
