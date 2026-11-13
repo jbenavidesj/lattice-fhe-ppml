@@ -35,7 +35,9 @@ jobs:
             echo "memory=$(grep MemTotal /proc/meminfo)"
           } | tee benchmark-artifacts/environment.txt
       - name: Run Criterion in optimized release mode
-        run: cargo bench --bench arithmetic -- --noplot 2>&1 | tee benchmark-artifacts/criterion.log
+        run: |
+          set -o pipefail
+          cargo bench --bench arithmetic 2>&1 | tee benchmark-artifacts/criterion.log
       - name: Summarize Criterion estimates
         if: always()
         run: |
