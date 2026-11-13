@@ -31,6 +31,8 @@ jobs:
         run: python scripts/audit_rns_bfv_noise.py
       - name: Verify ternary negacyclic-square parity identity
         run: python scripts/verify_ternary_square_parity.py
+      - name: Exhaustively measure ternary square-map fibers
+        run: python scripts/audit_ternary_square_fibers.py
       - name: Run toy exhaustive evaluation-key candidate experiment
         run: python scripts/toy_evalkey_exhaustive_search.py
       - name: Measure staged public/evaluation-key candidate filtering
