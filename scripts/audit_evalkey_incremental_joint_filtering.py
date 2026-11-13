@@ -173,16 +173,26 @@ def run_case(label, n, q, B, levels, trials):
     print(f"[{label}] N={n}; q={q}; B={B}; eta={ETA}; levels={levels}; trials={trials}")
     print(f"ternary_secret_space={3**n}")
     print(f"mean_after_public_key={mean(pub_counts):.4f}; max_after_public_key={max(pub_counts)}")
+    print(f"trials_with_public_key_ambiguity={sum(v > 1 for v in pub_counts)}/{trials}")
+    print(f"trials_with_unique_public_key_candidate={sum(v == 1 for v in pub_counts)}/{trials}")
     print("stage,eval_original_mean,eval_exact_mean,eval_coarse_mean,eval_coarse_extra_mean,"
           "joint_original_mean,joint_exact_mean,joint_coarse_mean,joint_coarse_extra_mean")
     for j in range(levels):
         avg = {key: mean(r[1][key][j] for r in rows) for key in rows[0][1]}
         ex_eval = mean(r[2]["eval"][j] for r in rows)
         ex_joint = mean(r[2]["joint"][j] for r in rows)
+        eval_unique = sum(r[1]["eval_original"][j] == 1 for r in rows)
+        joint_unique = sum(r[1]["joint_original"][j] == 1 for r in rows)
+        eval_nonempty = sum(r[1]["eval_original"][j] > 0 for r in rows)
+        joint_nonempty = sum(r[1]["joint_original"][j] > 0 for r in rows)
         print(f"{j},{avg['eval_original']:.4f},{avg['eval_exact']:.4f},"
               f"{avg['eval_coarse']:.4f},{ex_eval:.4f},"
               f"{avg['joint_original']:.4f},{avg['joint_exact']:.4f},"
               f"{avg['joint_coarse']:.4f},{ex_joint:.4f}")
+        print(f"  stage_{j}_eval_unique={eval_unique}/{trials}; "
+              f"eval_nonempty={eval_nonempty}/{trials}; "
+              f"joint_unique={joint_unique}/{trials}; "
+              f"joint_nonempty={joint_nonempty}/{trials}")
     print(f"exact_eval_equals_original_at_every_stage="
           f"{all(r[1]['eval_original'] == r[1]['eval_exact'] for r in rows)}")
     print(f"exact_joint_equals_original_at_every_stage="
