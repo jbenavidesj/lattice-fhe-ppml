@@ -485,3 +485,22 @@ The split-secret negacyclic-square identity and its induced evaluation residual 
 ### Scope and conclusion
 
 These experiments establish that the existing toy MITM routine is an exact alternative to exhaustive search on the tested tiny instances and that its selector behaved consistently on a small held-out grid. They do not demonstrate scalable recovery of the ternary secret, and they do not estimate the security of the N=8192 ring construction or the structured evaluation-key transcript. The production-parameter security question remains open and requires ring-aware cryptanalysis of the complete public transcript, including all evaluation-key samples.
+
+
+## 11. MITM scalability and resource lower bounds
+
+The current toy MITM routine splits a ternary secret into two halves and explicitly materializes left- and right-half contribution tables. For even N, each side has exactly 3^(N/2) entries. This count is independent of the number k of selected coordinates used by the bounded-error join. The selected-coordinate parameter can reduce the expected number of joined pairs, but it does not remove the exponential table construction and storage.
+
+The new deterministic projection script, scripts/audit_mitm_scalability.py, reports:
+- exact half-table entry counts, represented as log2(3^(N/2));
+- a heuristic selected-coordinate count k* sufficient to drive the expected joined-pair count below one under a uniform independent-residue model;
+- corresponding probe-work and expected-join exponents;
+- a payload-only storage lower bound assuming both tables store N residues per entry, excluding all Python object, tuple, hash-table, allocator, and indexing overhead.
+
+For the Paper 1 modulus (218 bits) and eta=2, at N=8192 the model selects k*=31, with log2(half-table entries)=6492.1, log2(probe work)=6564.0, and log2(payload-only storage in bytes)=6518.1. These exponents are resource projections, not measured runtimes or practical attack costs. The payload estimate is already astronomically infeasible before Python overhead is included.
+
+The expected-join calculation uses 3^N * ((2 eta+1)/q)^k and assumes independent uniform residues in the selected coordinates. Negacyclic ring structure, shared secrets, error correlations, and the evaluation-key equations can violate this assumption. It is a transparent heuristic for understanding the join stage, not a rigorous candidate-count bound. The exact half-table count and its exponential scaling, however, follow directly from the algorithm's enumeration strategy.
+
+### Consequence
+
+The present MITM implementation is useful for exact toy-instance cross-checks and for validating candidate-filter logic. In its current form it is not a plausible production-scale secret-recovery algorithm at N=8192. A materially different approach would be required to avoid explicit 3^(N/2) half-table enumeration and storage, or to exploit additional algebraic structure before enumerating halves. No claim of security follows from this observation; it is a limitation of this particular MITM strategy.
