@@ -62,3 +62,8 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
 
 Until these gates are passed, describe the work as an experimental RNS-BFV prototype with a one-multiplication correctness argument—not as a production-secure or fully validated new FHE scheme.
+
+
+## Adjacent-level cancellation analysis
+
+The evaluation-key security note now derives the exact adjacent-level identity `y_(j+1)-B*y_j = e_(j+1)-B*e_j`, where `y_j=b_j+a_j*s`. The transformed coefficient vector is jointly uniform, but the transformed errors are correlated: coefficientwise variance `1+B^2`, adjacent covariance `-B`, and support `[-2(1+B), 2(1+B)]`. This is an algebraic reformulation of the existing public transcript, not additional leakage or a demonstrated attack. The error law is not iid, so a conventional independent-sample RLWE estimator cannot be applied without further justification.
