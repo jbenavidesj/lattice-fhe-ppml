@@ -191,7 +191,22 @@ The strict decoding margin for the centered plaintext representative is therefor
 \]
 Therefore the deterministic one-multiplication error bound is strictly below the BFV decoding margin by more than 40 decimal orders of magnitude for this specified parameter instance and bounded distributions.
 
-## 6. Assumptions and limits
+## 6. Internal line-by-line review record (not an external certification)
+
+The derivation was rechecked against the current implementations of `generate_public_key`, `encrypt_rns_bfv`, `bfv_tensor_multiply`, `bfv_scale_and_round`, `gadget_decompose_centered`, and `bfv_relinearize`. The following consistency checks hold for the stated parameter instance:
+
+1. **Encryption phase.** The code uses (b=-as+e), (c_0=bu+e_1+\Delta m), and (c_1=au+e_2), so the terms involving (a u s) cancel and the phase error is exactly (eu+e_1+e_2s). The implemented ternary samplers give \\(\|u\|_1,\|s\|_1\\le N\\), and the eta=2 sampler has coefficient support [-2,2], validating (E_0=4N+2).
+2. **Centered-lift quotient.** The centered component interval and the convolution inequality give the displayed bound on (k). Exact arithmetic gives (K_{\rm real}=4097.499984741444\ldots<4097.5), hence the integer bound (K=4097) is valid (and is close enough to the boundary that this strict inequality should remain explicit).
+3. **Tensor products and CRT.** The code reconstructs each of the four input component polynomials as centered integer lifts. It computes the two cross convolutions separately, adds them as `BigInt`, and applies coefficientwise (t/Q) rounding to each of the three tensor components. The auxiliary CRT bound is therefore needed for each individual convolution, not for their subsequent exact sum.
+4. **Scale-rounding residual.** The implementation rounds ties away from zero. In all cases the residual in (W_j=(t/Q)U_j+\rho_j) lies in [-1/2,1/2], so the bound (\tfrac12(1+N+N^2)) follows from (\|s\|_1\le N) and (\|s^2\|_1\le\|s\|_1^2\le N^2).
+5. **Gadget decomposition.** The code decomposes the absolute value of each centered coefficient into ordinary base-(B) digits and applies the original sign to every digit. Thus the digit identity is exact over the integers and each digit has coefficient magnitude at most (B-1). Combined with \\(\|e_j\|_1\le2N\\), this validates the stated deterministic key-switch contribution.
+6. **Decoding threshold.** The decoder computes coefficientwise `round(t*phase/Q)` and reduces modulo (t). For a centered plaintext coefficient (m_{12}), the exact distance-to-boundary condition is \\( |E| < Q/(2t)-r|m_{12}|/t \\), matching the margin used in the audit.
+
+Re-evaluating the exact-rational expressions gives a total upper bound of (9.17008915527531\times10^{19}), a minimum decoding margin of (3.21382704144681\times10^{60}), and a ratio of approximately (2.8533\times10^{-41}). The arithmetic audit therefore has a very large deterministic margin for this one-operation model.
+
+**Review disposition:** no algebraic or parameter-substitution discrepancy was found in this internal source-to-proof pass. This is not an independent mathematical review: the proof still relies on the correctness of the implemented ring/NTT multiplication, CRT basis constants, sampler behavior, and the stated centered-lift semantics. The existing unit tests and parameter audit provide implementation checks but do not replace a separately authored proof or an external reviewer. In particular, this bound does not address security of the structured evaluation-key transcript.
+
+## 7. Assumptions and limits
 
 - The bound applies to the current \(\eta=2\) bounded error samplers and ternary secret/ephemeral samplers.
 - It assumes the generated evaluation-key digits satisfy the documented phase relation; the implementation tests that relation coefficientwise.
