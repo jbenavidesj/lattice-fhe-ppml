@@ -37,6 +37,8 @@ jobs:
         run: python scripts/audit_split_secret_square.py
       - name: Run toy meet-in-the-middle cross-check
         run: python scripts/toy_evalkey_mitm.py
+      - name: Audit adaptive MITM selector across q and eta
+        run: python scripts/audit_mitm_selector.py
 
   rust:
     name: Rust tests and benchmark compilation
