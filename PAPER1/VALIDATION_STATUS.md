@@ -34,6 +34,12 @@ CI run 272 on code commit `47ee02f2e87a7dd7ab4fd7731ed5583e78d63ddb` completed s
 
 CI run 288 on code commit `92542f5ca42a761445512e59db4bacf26e851eaa` completed successfully with the new exact-rational RNS-BFV noise audit included. Both CI jobs passed: all 32 Rust unit tests, formatting, Clippy, benchmark-target compilation, and all Python arithmetic/noise audits.
 
+## Structured evaluation-key security model
+
+`PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md` now formulates the 14 evaluation-key equations as a joint related-secret observation of `(s, s^2)`. This is not a standard rank-two RLWE distribution because the public second coordinate is the known scalar `B^j`, and the secret coordinates are dependent. The note specifies the joint-transcript and algebraic-attack questions still requiring specialist analysis. It establishes no attack, reduction, or security level.
+
+CI run 319 on commit `c8547a9db15b2b40c44f4f81c8bd824fb3912dcc` completed successfully: Python arithmetic/noise audits passed; Rust tests, formatting, Clippy, and benchmark-target compilation passed.
+
 ## Not established
 
 - A concrete RLWE security estimate or 128-bit security claim. A pinned unstructured-LWE diagnostic script and protocol are prepared in `scripts/estimate_lwe_proxy.py` and `PAPER1/SECURITY_ESTIMATION_PROTOCOL.md`, but the estimator has not been executed because this runtime has no SageMath installation; no security number is reported.
