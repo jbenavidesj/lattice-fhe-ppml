@@ -158,12 +158,24 @@ The centered signed gadget digits obey \(\|d_j\|_\infty\le B-1\), and each \(\et
 \[
 \|e_j\|_1\le2N.
 \]
-Thus
+For clarity, let \(\widehat c_2\) be the centered integer lift of the third tensor component. The implementation's signed digit decomposition satisfies the exact coefficientwise integer identity
+\[
+\widehat c_2=\sum_{j=0}^{L-1}B^j d_j,
+\qquad \|d_j\|_\infty\le B-1.
+\]
+Multiplying each evaluation-key relation by \(d_j\) and summing gives the relinearized phase congruence
+\[
+W_0+W_1s+\sum_jd_j(b_j+a_js)
+\equiv W_0+W_1s+\widehat c_2s^2+\sum_jd_je_j\pmod Q.
+\]
+This is a congruence in \(R_Q\), not an equality of unreduced integer lifts. It identifies the additional integer error polynomial as \(e_{\rm ks}=\sum_jd_je_j\). Since every key-error coefficient lies in \([-2,2]\), \(\|e_j\|_1\le2N\), and the negacyclic convolution inequality gives
 \[
 \|e_{\rm ks}\|_\infty
+\le\sum_{j=0}^{L-1}\|d_j\|_\infty\|e_j\|_1
 \le L(B-1)2N
 =15\,032\,156\,160.
 \]
+The exact integer digit identity is what permits the gadget target terms to recombine to \(\widehat c_2s^2\) modulo \(Q\); the bound applies to the unreduced error polynomial. The final decoding-margin comparison is made with this chosen lift of the error, and its strict bound is far below \(Q/2\), so no ambiguity from choosing a different representative can affect the decoding conclusion.
 
 ## 5. Combined bound and decoding margin
 
