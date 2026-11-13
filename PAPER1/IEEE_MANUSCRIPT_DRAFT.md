@@ -49,11 +49,11 @@ The public-key relation is b_pk+a_pk s=e_pk (mod Q), with sign convention as imp
 | 3 | 18014398508400641 | 54 | 9354911369072846 |
 | 4 | 18014398507892737 | 54 | 12617745759101472 |
 
-Their product is
-[
-Q=421249165630599354127590185589164472945208468246547404789529362433
-]
-(218 bits), and (Delta=lfloor Q/65537floor). The parameter audit checks primality, pairwise coprimality, (q_i\equiv1\pmod{2N}), and exact order (2N=16384) of each (psi_i). The plaintext modulus is (t=65537); the gadget base and level count are (B=2^{16}) and (L=14). Secret coefficients are sampled independently and uniformly from ({-1,0,1}). Public-key and evaluation-key error coefficients use the implemented centered-binomial (eta=2) law: the difference of two independent (operatorname{Binomial}(2,1/2)) variables, with support ([-2,2]), variance one, and mass ((1,4,6,4,1)/16). The implementation revision and parameter-audit script are retained in the repository history and validation workflow. These are computational candidates, not a security parameter selection. Values must be checked against the source and parameter audit before submission.
+Their product is the 218-bit ciphertext modulus
+\[
+Q=421249165630599354127590185589164472945208468246547404789529362433,
+\]
+with \(\Delta=\lfloor Q/65537\rfloor\) and plaintext modulus \(t=65537\). The parameter audit checks primality, pairwise coprimality, \(q_i\equiv1\pmod{2N}\), and exact order \(2N=16384\) of each \(\psi_i\). The gadget base and level count are \(B=2^{16}\) and \(L=14\). Secret coefficients are sampled independently and uniformly from \(\{-1,0,1\}\). Public-key and evaluation-key error coefficients follow the implemented centered-binomial \(\eta=2\) law: the difference of two independent \(\operatorname{Binomial}(2,1/2)\) variables, with support \([-2,2]\), variance one, and probability masses \((1,4,6,4,1)/16\) on \((-2,-1,0,1,2)\). The implementation revision and parameter-audit script are retained in the repository history and validation workflow. These are computational candidates, not a security parameter selection. Values must be checked against the source and parameter audit before submission.
 
 ## 3. Implementation architecture
 
