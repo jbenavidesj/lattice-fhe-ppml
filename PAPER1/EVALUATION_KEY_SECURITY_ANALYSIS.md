@@ -404,3 +404,19 @@ The full one-coefficient joint characteristic function is available exactly in f
 where \((D^Tt)_0=-Bt_0\), \((D^Tt)_k=t_{k-1}-Bt_k\) for \(1\le k\le12\), and \((D^Tt)_{13}=t_{12}\). This is the exact discrete joint law in characteristic-function form, not a Gaussian approximation. Under independent coefficient sampling, the coefficient-position vectors are independent before any ring multiplication or other polynomial transformation is applied.
 
 The reproducible audit is `scripts/audit_evalkey_joint_error_covariance.py`. It checks the exact integer covariance entries, determinant recurrence, strict diagonal-dominance margin, and prints the characteristic-function factorization. This is a distributional characterization of the derived errors; it does not by itself give an attack, distinguisher, secret-recovery method, or security estimate.
+
+
+## 8. Exhaustive toy-ring candidate-filter comparison
+
+The script `scripts/audit_evalkey_toy_secret_filtering.py` exhaustively enumerates all ternary secrets in two deliberately small negacyclic rings. It generates synthetic public evaluation-key equations with the exact eta=2 coefficient sampler and checks candidate residuals against the original error support \([-2,2]\). It then applies the adjacent target-cancellation equations with the necessary worst-case difference support \([-2(B+1),2(B+1)]\), using \(B=4\).
+
+| Toy experiment | Trials | Original survivors (total) | Transformed survivors (total) | Trials with extra transformed candidates |
+|---|---:|---:|---:|---:|
+| \(N=2,q=257,L=2\) | 20 | 20 | 23 | 2 |
+| \(N=8,q=65537,L=14\) | 10 | 10 | 10 | 0 |
+
+In the first experiment, two trials admit additional candidates after transformation: one has two transformed survivors and one has three, while each original-equation filter has exactly one survivor. In the second experiment, all ten trials have exactly one survivor under both filters. In every trial, the planted secret survives both filters and the original candidate set is a subset of the transformed candidate set, as required by the algebraic implication.
+
+This is a useful negative control: eliminating the shared \(s^2\) target and replacing the original residual constraints with wider difference-error bounds can lose filtering information. The small-ring ambiguity is not evidence of a weakness in the real parameter set; the scaled toy experiment's uniqueness is not evidence of security either. These are exhaustive candidate counts only for the stated toy parameters, not a scalable recovery algorithm, attack-cost estimate, or security proof.
+
+The CI step is `Exhaustively compare toy-ring secret candidate filters`; its output is uploaded as `evalkey-toy-secret-filtering.txt`.
