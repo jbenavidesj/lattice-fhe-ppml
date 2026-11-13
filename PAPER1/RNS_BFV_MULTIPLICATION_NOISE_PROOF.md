@@ -174,7 +174,17 @@ The exact-rational audit in \`scripts/audit_rns_bfv_noise.py\` adds the quotient
 <9.18\times10^{19}.}
 \]
 
-The strict decoding margin for the centered plaintext representative is
+For a centered output coefficient \(m_{12}\), decryption applies \(\operatorname{round}(t(\Delta m_{12}+E)/Q)\) and then reduces modulo \(t\). Since \(Q=t\Delta+r\),
+\[
+\frac{t\Delta}{Q}m_{12}
+=m_{12}-\frac{r m_{12}}{Q}.
+\]
+Thus the distance, in phase units, to the nearest rounding boundary is bounded below by
+\[
+\frac{Q}{2t}-\frac{r|m_{12}|}{t}
+\ge\frac{Q}{2t}-\frac{r\lfloor t/2\rfloor}{t}.
+\]
+The strict decoding margin for the centered plaintext representative is therefore
 \[
 \frac{Q}{2t}-\frac{r\lfloor t/2\rfloor}{t}
 \approx3.2138270414\times10^{60}.
