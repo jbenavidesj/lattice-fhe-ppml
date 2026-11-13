@@ -134,3 +134,14 @@ For N=8192 this means every odd-index coefficient of the integer negacyclic squa
 - This constraint can be used as a target in algebraic or hybrid cryptanalysis, but no complexity reduction or exploitable distinguisher is established here.
 
 A separate exact implementation test should verify this identity on many sampled ternary secrets and on the same CRT centered-lift convention used by the evaluation-key generator before this observation is used in any attack code.
+## Why the mod-2 identity is not directly visible in the public transcript
+
+The parity identity for the integer polynomial \(s^2\) is not itself a parity leak from an RNS ciphertext or evaluation-key component. Since Q is odd, there is no well-defined ring homomorphism \(\mathbb Z/Q\mathbb Z\to\mathbb F_2\): the relation \(Q\cdot1=0\) in the source would map to \(Q\cdot1=1\) in \(\mathbb F_2\), a contradiction. Therefore taking a canonical residue modulo Q and then reducing it modulo 2 does not preserve the intended integer parity.
+
+Even if an attacker could recover a suitable centered integer lift of \(b_j+a_js\), the lift still contains the unknown product \(a_js\) and the error term. The algebraic parity constraint applies to the hidden target \(s^2\), not directly to the published component \(b_j\).
+
+### Current attack conclusion
+
+The ternary-square parity identity is a valid structural constraint and is now covered by a deterministic CI audit. However, the present public transcript gives no direct route to read those parities: (i) modular reduction by odd Q does not preserve parity, (ii) the target is masked by the unknown secret-dependent product \(a_js\), and (iii) the adjacent-level cancellation removes the target rather than exposing it. No parity-based distinguisher or key-recovery algorithm has been demonstrated.
+
+A meaningful next experiment would require an explicit attack model that jointly handles the public-key sample, all evaluation-key samples, modular centered lifts, and the ternary constraint. Until such a model exists, this parity observation should be reported as an algebraic property—not as a vulnerability or a security improvement.
