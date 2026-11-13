@@ -10,7 +10,7 @@ from itertools import product
 import random
 import statistics
 
-Q = 31
+Q = 29
 BASE = 3
 LEVELS = 3
 ETA = 3
