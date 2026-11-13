@@ -40,7 +40,20 @@ Let R_Q=Z_Q[X]/(X^N+1), with N=8192 for the implementation target. The prototype
 
 The public-key relation is b_pk+a_pk s=e_pk (mod Q), with sign convention as implemented. The evaluation-key relations are b_j+a_j s=B^j s^2+e_j (mod Q). Each a_j is sampled uniformly in the RNS representation and each error coefficient follows the specified eta=2 bounded distribution.
 
-**Parameter table to complete:** list every RNS prime, their product Q, NTT roots, plaintext modulus, gadget base and level count, sampler distributions, and exact implementation revision. Values must be checked against the source and parameter audit before submission.
+**Concrete parameter instance.** The four coefficient moduli and primitive negacyclic roots are:
+
+| Lane | (q_i) | (w_i) | (psi_i), order (2N) |
+|---:|---:|---:|---:|
+| 1 | 36028797002170369 | 55 | 22505317672356688 |
+| 2 | 36028796951838721 | 55 | 29410112198941026 |
+| 3 | 18014398508400641 | 54 | 9354911369072846 |
+| 4 | 18014398507892737 | 54 | 12617745759101472 |
+
+Their product is
+[
+Q=421249165630599354127590185589164472945208468246547404789529362433
+]
+(218 bits), and (Delta=lfloor Q/65537floor). The parameter audit checks primality, pairwise coprimality, (q_i\equiv1\pmod{2N}), and exact order (2N=16384) of each (psi_i). The plaintext modulus is (t=65537); the gadget base and level count are (B=2^{16}) and (L=14). Secret coefficients are sampled independently and uniformly from ({-1,0,1}). Public-key and evaluation-key error coefficients use the implemented centered-binomial (eta=2) law: the difference of two independent (operatorname{Binomial}(2,1/2)) variables, with support ([-2,2]), variance one, and mass ((1,4,6,4,1)/16). The implementation revision and parameter-audit script are retained in the repository history and validation workflow. These are computational candidates, not a security parameter selection.Values must be checked against the source and parameter audit before submission.
 
 ## 3. Implementation architecture
 
