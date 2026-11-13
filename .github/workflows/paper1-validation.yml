@@ -33,6 +33,8 @@ jobs:
         run: python scripts/verify_ternary_square_parity.py
       - name: Run toy exhaustive evaluation-key candidate experiment
         run: python scripts/toy_evalkey_exhaustive_search.py
+      - name: Run toy meet-in-the-middle cross-check
+        run: python scripts/toy_evalkey_mitm.py
 
   rust:
     name: Rust tests and benchmark compilation
