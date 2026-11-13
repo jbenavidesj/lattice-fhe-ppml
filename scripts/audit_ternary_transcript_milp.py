@@ -205,24 +205,27 @@ def milp_survivors(n, q, base, levels, masks, bodies, parity_constraints):
             raise AssertionError("MILP returned a duplicate secret")
         survivors.add(candidate)
 
-        # Exclude precisely this ternary assignment, not its auxiliary lifts.
+        # No-good cut: at least one coefficient must differ from this
+        # ternary assignment. For a nonzero value, a mismatch is 1-u;
+        # for zero, a mismatch is u+ + u-.
         block = {}
-        constant = 0
+        nonzero = 0
         for i, value in enumerate(candidate):
             if value == 1:
-                block[up[i]] = 1
+                nonzero += 1
+                block[up[i]] = -1
             elif value == -1:
-                block[um[i]] = 1
+                nonzero += 1
+                block[um[i]] = -1
             else:
-                constant += 1
-                block[up[i]] = block.get(up[i], 0) - 1
-                block[um[i]] = block.get(um[i], 0) - 1
+                block[up[i]] = 1
+                block[um[i]] = 1
         cut = lil_matrix((1, len(model.names)), dtype=float)
         for col, value in block.items():
             cut[0, col] = value
         matrix = vstack([matrix, cut.tocsr()], format="csr")
-        highs = np.append(highs, n - 1 - constant)
-        lows = np.append(lows, -np.inf)
+        lows = np.append(lows, 1 - nonzero)
+        highs = np.append(highs, np.inf)
         base_constraint = LinearConstraint(matrix, lows, highs)
     raise RuntimeError("solution enumeration exceeded the full ternary space")
 
