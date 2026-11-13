@@ -20,12 +20,12 @@ def normalize_plaintext_powers(line):
     for i in range(0, len(parts), 2):
         parts[i] = re.sub(
             r"(?<![\w\\\\])([A-Za-z][A-Za-z0-9]*)\^([A-Za-z0-9]+)",
-            lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
+            lambda m: r"\(" + m.group(1) + "^{" + m.group(2) + r"}\)",
             parts[i],
         )
         parts[i] = re.sub(
             r"([A-Za-z])\^\(([^)]+)\)",
-            lambda m: r"\\(" + m.group(1) + "^{" + m.group(2) + r"}\\)",
+            lambda m: r"\(" + m.group(1) + "^{" + m.group(2) + r"}\)",
             parts[i],
         )
     return "".join(parts)
