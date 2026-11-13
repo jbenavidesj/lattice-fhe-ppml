@@ -52,3 +52,18 @@ python scripts/toy_evalkey_mitm.py
 ```
 
 The script uses only the Python standard library.
+## Coefficientwise short-circuit experiment
+
+A follow-up variant evaluates each coefficient of the public and evaluation-key residual directly and stops at the first coefficient outside the centered interval [-2,2]. This is algebraically exact: it changes only the order and amount of computation, not the acceptance condition. The implementation records the number of coefficient checks.
+
+CI run #397's Python audit completed successfully, with exact candidate-set agreement in all 90 trials. The single-run timing observations were:
+
+| N | Exhaustive median | Coefficientwise MITM median | Observed ratio |
+|---:|---:|---:|---:|
+| 4 | 0.000383 s | 0.000368 s | 1.04x |
+| 6 | 0.004830 s | 0.001780 s | 2.71x |
+| 8 | 0.063299 s | 0.011699 s | 5.41x |
+
+The median coefficient checks for the evaluation-key equations, by level, were [9, 4, 4] at N=4, [16, 6, 6] at N=6, and [26, 8, 8] at N=8. Median public-residual coefficient checks were 56.5, 564, and 5173, respectively. These are diagnostic counts, not operation-normalized benchmarks.
+
+The coefficientwise version retained exactness but did **not** improve the observed MITM timing ratios relative to the previous staged implementation (1.32x, 4.17x, and 10.70x in CI #391). The current implementation therefore remains an experiment, not an established optimization. The measurements are noisy single-run CI timings and do not isolate interpreter overhead; a dedicated repeated microbenchmark is needed before deciding whether to retain this strategy in the main path. The Rust CI job for run #397 was still compiling benchmarks when these Python results were recorded.
