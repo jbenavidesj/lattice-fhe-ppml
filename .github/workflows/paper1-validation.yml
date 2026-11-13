@@ -49,6 +49,8 @@ jobs:
         run: python scripts/audit_mitm_selector_holdout.py
       - name: Evaluate frozen MITM selector across held-out q and eta
         run: python scripts/audit_mitm_selector_robustness.py
+      - name: Project MITM asymptotic resource requirements
+        run: python scripts/audit_mitm_scalability.py
 
 
   sage-estimator:
