@@ -42,9 +42,9 @@ The tensor multiplication path is a correctness reference. It lifts each ciphert
 
 ## 4. Correctness argument for one multiplication and relinearization
 
-The public-key encryption phase error is bounded coefficientwise by E0=4N+2=32770 under the specified ternary and eta=2 samplers. The multiplication analysis bounds the integer tensor coefficients, the quotient/carry contribution, scale bias, cross terms, input-error product, and scale-rounding residuals. The relinearization error is bounded using the centered gadget-digit magnitude and the l1 norm of each bounded error polynomial.
+For an input ciphertext, write its centered-lift decryption phase as \(x_i=\Delta M_i+E_i\), where \(M_i=m_i+tk_i\), \(Q=t\Delta+r\), and the centered-lift quotient satisfies \(\|k_i\|_\infty\le4097\). The resulting bounds are \(\|M_i\|_\infty\le268,570,625\) and \(\|E_i\|_\infty\le10,435,053\). The unrounded tensor phase is \((t/Q)x_1x_2\); expanding it separates the plaintext quotient/carry term, scale bias, mixed plaintext-error terms, and error-product term. The three coefficientwise scale-rounding residuals are bounded using \(\|s\|_1\le N\) and \(\|s^2\|_1\le N^2\). Gadget relinearization contributes at most \(L(B-1)2N=15,032,156,160\) to the coefficientwise phase error.
 
-The executable exact-rational audit reports a total error upper bound of 91,700,891,552,753,113,897 and a decoding margin of approximately 3.2138270414e60 for the stated parameter instance. The auxiliary CRT product is 468 bits and is checked against twice the worst-case tensor coefficient bound.
+The executable exact-rational audit reports a total error upper bound of 91,700,891,552,753,113,897 and a centered-decoding margin of approximately \(3.2138270414\times10^{60}\) for this parameter instance. The margin accounts for the offset \(r m_{12}/Q\) induced by \(\Delta=\lfloor Q/t\rfloor\). The auxiliary CRT product is 468 bits; each individual product is reconstructed separately before the two cross products are added. The full derivation and assumptions are given in `PAPER1/RNS_BFV_MULTIPLICATION_NOISE_PROOF.md`.
 
 This argument covers one multiplication followed by one relinearization only. It does not establish arbitrary multiplicative depth. The proof and its centered-lift quotient handling require independent mathematical review before publication.
 
