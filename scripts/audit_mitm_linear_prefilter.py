@@ -194,7 +194,7 @@ def main():
             f"median joined pairs={med('joined_pairs', 0):g}; "
             f"public-pass={med('public_full_pass', 0):g}; "
             f"linear rejects={med('linear_rejects'):g}; "
-            f"squares baseline/filtered={med('public_pass', 0):g}/"
+            f"squares baseline/filtered={med('public_full_pass', 0):g}/"
             f"{med('square_computations'):g}; "
             f"ring-product proxy baseline/filtered="
             f"{base_products:g}/{filtered_products:g}; "
