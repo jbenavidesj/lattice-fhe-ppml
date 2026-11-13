@@ -67,3 +67,8 @@ Until these gates are passed, describe the work as an experimental RNS-BFV proto
 ## Adjacent-level cancellation analysis
 
 The evaluation-key security note now derives the exact adjacent-level identity `y_(j+1)-B*y_j = e_(j+1)-B*e_j`, where `y_j=b_j+a_j*s`. The transformed coefficient vector is jointly uniform, but the transformed errors are correlated: coefficientwise variance `1+B^2`, adjacent covariance `-B`, and support `[-2(1+B), 2(1+B)]`. This is an algebraic reformulation of the existing public transcript, not additional leakage or a demonstrated attack. The error law is not iid, so a conventional independent-sample RLWE estimator cannot be applied without further justification.
+
+
+## Ternary-square parity audit and interpretation
+
+`scripts/verify_ternary_square_parity.py` checks the exact negacyclic-square identity modulo 2 for deterministic random ternary inputs at several even toy degrees. The CI run on commit `e5709b1123ebec73d457b2f7d5943dc9cbfcbe37` (run #339) completed successfully: both Python arithmetic audits and Rust tests/formatting/Clippy/benchmark compilation passed. The analysis note now explicitly explains why this identity is not directly observable from public residues modulo odd Q and why the unknown `a_j*s` term prevents treating it as a direct parity leak. No parity distinguisher or key-recovery algorithm has been demonstrated.
