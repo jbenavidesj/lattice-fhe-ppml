@@ -117,6 +117,28 @@ def mitm_with_linear_prefilter(n, public_sample, eval_samples, k, stats):
     return survivors
 
 
+def generate_stress_instance(n, rng):
+    """Generate a true eta=3 instance (the legacy MITM helper is eta=2)."""
+    secret = [rng.choice((-1, 0, 1)) for _ in range(n)]
+    a_pk = [rng.randrange(Q) for _ in range(n)]
+    error = [sum(rng.getrandbits(1) for _ in range(ETA))
+             - sum(rng.getrandbits(1) for _ in range(ETA)) for _ in range(n)]
+    a_secret = mitm.negacyclic_mul(a_pk, secret)
+    b_pk = [(error[i] - a_secret[i]) % Q for i in range(n)]
+    square = mitm.negacyclic_mul(secret, secret)
+    eval_samples = []
+    for level in range(LEVELS):
+        a_j = [rng.randrange(Q) for _ in range(n)]
+        e_j = [sum(rng.getrandbits(1) for _ in range(ETA))
+               - sum(rng.getrandbits(1) for _ in range(ETA)) for _ in range(n)]
+        a_s = mitm.negacyclic_mul(a_j, secret)
+        factor = pow(BASE, level, Q)
+        b_j = [(factor * square[i] + e_j[i] - a_s[i]) % Q
+               for i in range(n)]
+        eval_samples.append((a_j, b_j))
+    return secret, (a_pk, b_pk), eval_samples
+
+
 def main():
     # The imported prototype uses module globals; override them explicitly so
     # all baseline and exhaustive routines share the declared stress instance.
@@ -136,7 +158,7 @@ def main():
         baseline_times = []
         filtered_times = []
         for _ in range(TRIALS):
-            secret, public_sample, eval_samples = mitm.generate_instance(n, rng)
+            secret, public_sample, eval_samples = generate_stress_instance(n, rng)
             expected = mitm.exhaustive_candidates(n, public_sample, eval_samples)
             baseline_stats = {}
             start = time.perf_counter()
