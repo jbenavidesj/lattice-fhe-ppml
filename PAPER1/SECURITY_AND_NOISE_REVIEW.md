@@ -91,11 +91,13 @@ The tiny-ring model's proof in `PAPER1/BFV_TOY_SPEC.md` remains specific to N=8,
 - [x] Explicit ternary secret and eta=2 error distributions.
 - [x] Evaluation-key phase relation tested; exhaustive coefficient test included.
 - [x] Secret buffer zeroization on wrapper drop, with direct buffer test.
-- [ ] Execute the pinned unstructured-LWE diagnostic and obtain ring-aware independent cryptographic review; explicitly analyze the structured evaluation-key samples.
+- [ ] Execute the pinned unstructured-LWE diagnostic and obtain ring-aware independent cryptographic review.
+- [x] Document the evaluation-key sample relation and its conditional key-switch noise bound.
+- [ ] Analyze the security impact of the structured, related evaluation-key samples (multi-target RLWE, chosen-message/auxiliary-input exposure, and applicable ring-specific attacks); the current LWE proxy deliberately does not include these samples.
 - [ ] Constant-time and side-channel audit.
 - [x] Integrated RNS encryption/decryption with centered input lifts and exact integer tensor products.
 - [x] One-multiplication RNS noise derivation and exact-rational audit script added.
-- [ ] Successful CI execution of the new RNS noise audit on the current branch head.
+- [x] Exact-rational RNS noise audit passed CI run 288 on the proof commit; the later CI run 311 also completed successfully on the updated branch head.
 - [ ] Independent cryptographic review and reproducibility of the security/correctness analysis.
 
 Until every relevant gate is passed, describe the work as an experimental RNS arithmetic/key-generation prototype, not as a secure or publication-validated FHE scheme.
