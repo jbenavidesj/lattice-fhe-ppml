@@ -64,7 +64,7 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 
 1. Obtain an independent review of the one-multiplication derivation, especially centered-lift quotient handling and the decoding-margin argument.
 2. Obtain independent review of `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md`, especially joint public-key/evaluation-key attacks and algebraic exploitation of s^2; the existing unstructured-LWE proxy omits these samples.
-3. Execute the pinned lattice-estimator diagnostic in a SageMath environment; assess ring-LWE assumptions and structural attacks.
+3. The pinned scalar unstructured-LWE proxy has been executed and documented. What remains is specialist assessment of its relevance and, separately, a joint ring-specific analysis of the public/evaluation-key transcript; the proxy must not be presented as that analysis.
 4. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
 5. Repeat release benchmarks in independent sessions and preferably on bare-metal hardware; add missing primitive-level and equivalent external BFV baselines before any performance claim.
 6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
