@@ -197,10 +197,61 @@ def milp_survivors(n, q, base, levels, masks, bodies, parity_constraints):
                 f"HiGHS did not prove optimality/completion: "
                 f"status={result.status}, message={result.message}"
             )
+        # Independently audit the raw HiGHS solution before rounding or
+        # adding a no-good cut. This catches numerical/integrality issues
+        # and any mismatch between the MILP encoding and ring arithmetic.
+        raw = result.x
+        max_integrality_error = float(np.max(np.abs(raw - np.round(raw))))
+        lhs = matrix @ raw
+        row_violation = max(
+            float(np.max(np.maximum(lows - lhs, 0))),
+            float(np.max(np.maximum(lhs - highs, 0))),
+        )
+        if max_integrality_error > 1e-7 or row_violation > 1e-7:
+            raise RuntimeError(
+                "HiGHS raw solution failed independent feasibility audit: "
+                f"integrality_error={max_integrality_error}, "
+                f"row_violation={row_violation}"
+            )
+
         candidate = tuple(
-            int(round(result.x[up[i]])) - int(round(result.x[um[i]]))
+            int(round(raw[up[i]])) - int(round(raw[um[i]]))
             for i in range(n)
         )
+        # Verify every bilinear auxiliary variable against its defining
+        # binary product, then check every transcript equation directly.
+        product_mismatches = []
+        for (i, j, si, sj), pidx in products.items():
+            ui = up[i] if si == 1 else um[i]
+            uj = up[j] if sj == 1 else um[j]
+            expected = int(round(raw[ui])) * int(round(raw[uj]))
+            actual = int(round(raw[pidx]))
+            if actual != expected:
+                product_mismatches.append(((i, j, si, sj), actual, expected))
+        name_to_idx = {name: idx for idx, name in enumerate(model.names)}
+        equation_mismatches = []
+        for level in range(levels + 1):
+            for k in range(n):
+                a_secret = negacyclic_mul(masks[level], candidate, q)
+                square = negacyclic_mul(candidate, candidate, q)
+                target = [0] * n if level == 0 else [
+                    pow(base, level - 1, q) * x % q for x in square
+                ]
+                direct_error = centered(
+                    bodies[level][k] + a_secret[k] - target[k], q
+                )
+                model_error = int(round(raw[name_to_idx[("e", level, k)]]))
+                model_quotient = int(round(raw[name_to_idx[("t", level, k)]]))
+                if direct_error != model_error:
+                    equation_mismatches.append(
+                        (level, k, direct_error, model_error, model_quotient)
+                    )
+        if product_mismatches or equation_mismatches:
+            print("DEBUG raw_integrality_error=", max_integrality_error)
+            print("DEBUG raw_row_violation=", row_violation)
+            print("DEBUG product_mismatches=", product_mismatches[:20])
+            print("DEBUG equation_mismatches=", equation_mismatches[:20])
+            raise AssertionError("raw MILP solution disagrees with direct ring audit")
         if candidate in survivors:
             raise AssertionError("MILP returned a duplicate secret")
         survivors.add(candidate)
