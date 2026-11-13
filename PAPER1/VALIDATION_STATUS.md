@@ -174,3 +174,11 @@ Added `scripts/audit_evalkey_filtering.py` and wired it into `.github/workflows/
 CI runs #468 and #469 were triggered on commit `70ab05e5b52038b59eb5edfd98c5aeba3a89943d`; at the time of this note both jobs were still running. The subsequent documentation commits are also awaiting CI. Do not quote audit results or mark the latest head validated until the exact current-head workflow runs complete successfully.
 
 The staged-filtering Python audit completed successfully in CI run #472 on commit `9e85f82d127645021d5898ee75f558b3188c0d94`. Its 30-instance medians and unique-candidate counts are recorded in `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md`; the planted secret survived all stages. The run's Python audit job passed. Rust validation and CI for the subsequent result-documentation commits must still be checked on the exact latest branch head.
+
+## Adjacent-level linear prefilter result (2026-11-13)
+
+The new exhaustive toy audit uses (q=29), (B=3), eta=3, and (N=4,6,8), with 30 instances per degree. The transformed error support radius is 12, strictly below (q/2), so the centered-residue bound is exact. The Python audit passed in CI run #496 on the q=29 script revision.
+
+The public equation already had median one candidate at every degree. The two linear cancellation filters modestly increased the number of unique-candidate instances: N=4, 23/30 to 27/30; N=6, 27/30 to 29/30; N=8 remained 30/30. Mean survivor counts fell from 1.300 to 1.100 at N=4 and from 1.267 to 1.033 at N=6. The subsequent three quadratic evaluation-key levels yielded one candidate in every tested instance. These data do not establish a practical attack or a production-scale speedup.
+
+CI for the latest documentation commits is still pending full Rust validation; record success only against the exact current branch head.
