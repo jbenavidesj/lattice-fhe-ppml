@@ -46,3 +46,21 @@ python scripts/toy_evalkey_exhaustive_search.py
 ```
 
 The script uses only the Python standard library and a fixed random seed.
+## Search complexity and scaling limits
+
+The exhaustive routine enumerates all \(3^N\) ternary secrets. For each candidate it evaluates one public-key residual and, if that passes, up to three evaluation-key residuals. With the straightforward negacyclic multiplication in the script, the worst-case arithmetic cost is \(O(3^N L N^2)\) modular coefficient operations (plus the public-key check); replacing polynomial multiplication with an NTT-style method can reduce the polynomial factor but cannot remove the exponential \(3^N\) candidate count.
+
+| N | Ternary candidates \(3^N\) |
+|---:|---:|
+| 8 | 6,561 |
+| 16 | 43,046,721 |
+| 32 | 1,853,020,188,851,841 |
+| 64 | approximately 3.43 × 10^30 |
+| 256 | approximately 1.04 × 10^122 |
+| 8192 | approximately 10^3908.58 |
+
+Thus the fact that the toy experiment leaves one candidate does **not** make exhaustive recovery scalable. The experiment tests information content in tiny instances, not an efficient attack. Any meaningful attack at production dimension would need a non-exhaustive method that exploits lattice structure, algebraic constraints, or another demonstrable shortcut.
+
+### Local runtime sanity check
+
+A separate local timing sanity check using the same straightforward implementation and deterministic instances completed 30 trials at N=4, 6, and 8 in approximately 0.009 s, 0.112 s, and 1.556 s respectively; 10 trials at N=10 took approximately 6.436 s, and 3 trials at N=12 took approximately 25.082 s. These are single-machine exploratory timings, not benchmark claims, and the seeds for this timing run differ from the fixed-seed candidate-count table above. They illustrate the rapid growth of exhaustive enumeration and must not be used to extrapolate precise runtimes to large N.
