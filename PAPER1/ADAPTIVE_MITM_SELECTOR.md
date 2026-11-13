@@ -41,3 +41,9 @@ A meaningful generalization claim requires empirical measurements, not only a pa
 6. Cross-check each candidate set against exhaustive search for toy degrees.
 
 No out-of-sample performance claim is made in this note. The current selector remains a parameterized heuristic. The production cryptographic degree and modulus are far outside the validated exhaustive toy range.
+
+## Frozen held-out evaluation
+
+scripts/audit_mitm_selector_holdout.py evaluates the already frozen lambda=4 model on disjoint deterministic instances (seed 0xC0FFEE), at q=11, eta=2, N=4,6,8. It measures all fixed k in {1,2,3,4} on common instances, verifies exact candidate-set equality against exhaustive enumeration, and reports the median timing regret of the selector relative to the fastest fixed k.
+
+The held-out seed is separate from the development experiment seed. No parameter is tuned using held-out results. This is a small-sample toy-scale test of selector behavior only; it does not establish generalization to unseen q/eta values or production dimensions. Quote numerical results only after the corresponding CI job passes, and report the small sample size and timing variability.
