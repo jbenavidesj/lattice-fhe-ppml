@@ -227,8 +227,7 @@ def milp_survivors(n, q, base, levels, masks, bodies, parity_constraints):
     raise RuntimeError("solution enumeration exceeded the full ternary space")
 
 
-def run_case(n, seed):
-    q, base, levels = 257, 4, 2
+def run_case(n, seed, q=257, base=4, levels=2):
     planted, masks, bodies = make_transcript(n, q, base, levels, seed)
     exhaustive = exhaustive_survivors(n, q, base, levels, masks, bodies)
     without_parity = milp_survivors(
@@ -241,7 +240,8 @@ def run_case(n, seed):
     assert without_parity == exhaustive, (n, seed, "MILP/exhaustive mismatch")
     assert with_parity == exhaustive, (n, seed, "parity model changed survivors")
     print(
-        f"N={n}; seed={seed}; exhaustive={len(exhaustive)}; "
+        f"N={n}; q={q}; B={base}; levels={levels}; seed={seed}; "
+        f"exhaustive={len(exhaustive)}; "
         f"MILP_no_parity={len(without_parity)}; "
         f"MILP_with_parity={len(with_parity)}; exact_sets_equal=PASS"
     )
@@ -253,6 +253,9 @@ def main():
     for n in (2, 4):
         for seed in range(4):
             run_case(n, seed)
+    print("Ambiguity-stress cases: smaller odd q, non-unique survivor sets expected")
+    run_case(2, seed=0, q=7, base=4, levels=0)
+    run_case(4, seed=0, q=7, base=4, levels=1)
     print("All toy MILP/exhaustive and redundant-parity checks: PASS")
     print("Toy feasibility only; no production attack or security estimate.")
 
