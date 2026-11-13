@@ -29,6 +29,8 @@ jobs:
         run: python scripts/audit_toy_bfv_noise.py
       - name: Audit N=8192 RNS-BFV multiplication noise bound
         run: python scripts/audit_rns_bfv_noise.py
+      - name: Verify ternary negacyclic-square parity identity
+        run: python scripts/verify_ternary_square_parity.py
 
   rust:
     name: Rust tests and benchmark compilation
