@@ -113,7 +113,7 @@ def exhaustive_candidates(n, public_sample, eval_samples):
     return survivors
 
 
-def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2):
+def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stats=None):
     """Join two 3^(N/2) lists using a bounded-error hash on selected coordinates.
 
     For each left half, enumerate all 5^k centered error patterns on k selected
@@ -141,6 +141,15 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2):
         right_buckets.setdefault(key, []).append((tuple(right_half), contribution))
 
     survivors = set()
+    if stats is not None:
+        stats.clear()
+        stats.update({
+            "joined_pairs": 0,
+            "public_full_pass": 0,
+            "eval_level_checks": [0] * len(eval_samples),
+            "eval_level_rejects": [0] * len(eval_samples),
+            "survivors": 0,
+        })
     error_patterns = product(range(-ETA, ETA + 1), repeat=selected_coordinates)
     error_patterns = tuple(error_patterns)
 
@@ -155,15 +164,41 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2):
                 for i in range(selected_coordinates)
             )
             for right_half, right_contribution in right_buckets.get(key, ()):
+                if stats is not None:
+                    stats["joined_pairs"] += 1
                 candidate = left_half + right_half
                 full_residual = [
                     (b_pk[i] + left_contribution[i] + right_contribution[i]) % Q
                     for i in range(n)
                 ]
-                if residual_is_small(full_residual) and candidate_matches(
-                    candidate, public_sample, eval_samples
-                ):
+                if not residual_is_small(full_residual):
+                    continue
+                if stats is not None:
+                    stats["public_full_pass"] += 1
+
+                # Apply evaluation-key constraints in sequence. The first
+                # failing level rejects the pair before later ring products.
+                candidate_square = negacyclic_mul(candidate, candidate)
+                accepted = True
+                for level, (a_j, b_j) in enumerate(eval_samples):
+                    if stats is not None:
+                        stats["eval_level_checks"][level] += 1
+                    a_times_candidate = negacyclic_mul(a_j, candidate)
+                    factor = pow(BASE, level, Q)
+                    residual = [
+                        (b_j[i] + a_times_candidate[i]
+                         - factor * candidate_square[i]) % Q
+                        for i in range(n)
+                    ]
+                    if not residual_is_small(residual):
+                        if stats is not None:
+                            stats["eval_level_rejects"][level] += 1
+                        accepted = False
+                        break
+                if accepted:
                     survivors.add(candidate)
+                    if stats is not None:
+                        stats["survivors"] += 1
     return survivors
 
 
@@ -176,6 +211,7 @@ def main():
     for n in DEGREES:
         exhaustive_times = []
         mitm_times = []
+        trial_stats = []
         for _ in range(TRIALS):
             secret, public_sample, eval_samples = generate_instance(n, rng)
 
@@ -184,9 +220,11 @@ def main():
             exhaustive_times.append(time.perf_counter() - start)
 
             start = time.perf_counter()
+            stats = {}
             mitm = mitm_candidates(
-                n, public_sample, eval_samples, SELECTED_COORDINATES
+                n, public_sample, eval_samples, SELECTED_COORDINATES, stats
             )
+            trial_stats.append(stats)
             mitm_times.append(time.perf_counter() - start)
 
             assert exhaustive == mitm, (
@@ -197,11 +235,33 @@ def main():
         exhaustive_median = statistics.median(exhaustive_times)
         mitm_median = statistics.median(mitm_times)
         speedup = exhaustive_median / mitm_median if mitm_median else float("inf")
+        median = lambda key: statistics.median(
+            [item[key] for item in trial_stats]
+        )
+        median_level_checks = [
+            statistics.median([item["eval_level_checks"][level]
+                               for item in trial_stats])
+            for level in range(LEVELS)
+        ]
+        median_level_rejects = [
+            statistics.median([item["eval_level_rejects"][level]
+                               for item in trial_stats])
+            for level in range(LEVELS)
+        ]
         print(
             f"N={n}: exact-set agreement={TRIALS}/{TRIALS}; "
             f"median exhaustive={exhaustive_median:.6f}s; "
-            f"median MITM={mitm_median:.6f}s; "
+            f"median staged MITM={mitm_median:.6f}s; "
             f"observed speed ratio={speedup:.2f}x"
+        )
+        print(
+            f"  median pairs: joined={median('joined_pairs'):g}, "
+            f"public-pass={median('public_full_pass'):g}, "
+            f"survivors={median('survivors'):g}"
+        )
+        print(
+            f"  median eval checks by level={median_level_checks}; "
+            f"rejections by level={median_level_rejects}"
         )
 
 
