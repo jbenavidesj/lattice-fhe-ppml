@@ -12,7 +12,7 @@ Q = 11
 BASE = 3
 LEVELS = 3
 ETA = 2
-SELECTED_COORDINATES = 2
+SELECTED_COORDINATES = (1, 2, 3, 4)
 TRIALS = 30
 DEGREES = (4, 6, 8)
 
@@ -231,13 +231,15 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
 def main():
     rng = random.Random(0xBF2)
     print(
-        f"Toy MITM: q={Q}, B={BASE}, levels={LEVELS}, eta=2, "
-        f"selected_coordinates={SELECTED_COORDINATES}, trials={TRIALS}"
+        f"Toy MITM coordinate sweep: q={Q}, B={BASE}, levels={LEVELS}, "
+        f"eta={ETA}, coordinates={SELECTED_COORDINATES}, trials={TRIALS}"
     )
     for n in DEGREES:
         exhaustive_times = []
-        mitm_times = []
-        trial_stats = []
+        results = {
+            k: {"times": [], "stats": []}
+            for k in SELECTED_COORDINATES if k <= n
+        }
         for _ in range(TRIALS):
             secret, public_sample, eval_samples = generate_instance(n, rng)
 
@@ -245,60 +247,64 @@ def main():
             exhaustive = exhaustive_candidates(n, public_sample, eval_samples)
             exhaustive_times.append(time.perf_counter() - start)
 
-            start = time.perf_counter()
-            stats = {}
-            mitm = mitm_candidates(
-                n, public_sample, eval_samples, SELECTED_COORDINATES, stats
-            )
-            trial_stats.append(stats)
-            mitm_times.append(time.perf_counter() - start)
-
-            assert exhaustive == mitm, (
-                n, exhaustive, mitm, exhaustive - mitm, mitm - exhaustive
-            )
-            assert tuple(secret) in mitm
+            for k, result in results.items():
+                start = time.perf_counter()
+                stats = {}
+                mitm = mitm_candidates(n, public_sample, eval_samples, k, stats)
+                result["times"].append(time.perf_counter() - start)
+                result["stats"].append(stats)
+                assert exhaustive == mitm, (
+                    n, k, exhaustive, mitm,
+                    exhaustive - mitm, mitm - exhaustive
+                )
+                assert tuple(secret) in mitm
 
         exhaustive_median = statistics.median(exhaustive_times)
-        mitm_median = statistics.median(mitm_times)
-        speedup = exhaustive_median / mitm_median if mitm_median else float("inf")
-        median = lambda key: statistics.median(
-            [item[key] for item in trial_stats]
-        )
-        median_level_checks = [
-            statistics.median([item["eval_level_checks"][level]
-                               for item in trial_stats])
-            for level in range(LEVELS)
-        ]
-        median_level_rejects = [
-            statistics.median([item["eval_level_rejects"][level]
-                               for item in trial_stats])
-            for level in range(LEVELS)
-        ]
         print(
-            f"N={n}: exact-set agreement={TRIALS}/{TRIALS}; "
-            f"median exhaustive={exhaustive_median:.6f}s; "
-            f"median staged MITM={mitm_median:.6f}s; "
-            f"observed speed ratio={speedup:.2f}x"
+            f"N={n}: exhaustive median={exhaustive_median:.6f}s; "
+            f"exact-set agreement={TRIALS}/{TRIALS} for every k"
         )
-        print(
-            f"  median pairs: joined={median('joined_pairs'):g}, "
-            f"public-pass={median('public_full_pass'):g}, "
-            f"survivors={median('survivors'):g}"
-        )
-        median_eval_coeff_checks = [
-            statistics.median([item["eval_coeff_checks"][level]
-                               for item in trial_stats])
-            for level in range(LEVELS)
-        ]
-        print(
-            f"  median eval checks by level={median_level_checks}; "
-            f"rejections by level={median_level_rejects}; "
-            f"coefficient checks by level={median_eval_coeff_checks}"
-        )
-        print(
-            f"  median public coefficient checks="
-            f"{median('public_coeff_checks'):g}"
-        )
+        for k, result in results.items():
+            mitm_median = statistics.median(result["times"])
+            speedup = (
+                exhaustive_median / mitm_median
+                if mitm_median else float("inf")
+            )
+            trial_stats = result["stats"]
+
+            def median(key):
+                return statistics.median([item[key] for item in trial_stats])
+
+            median_level_checks = [
+                statistics.median(
+                    [item["eval_level_checks"][level] for item in trial_stats]
+                )
+                for level in range(LEVELS)
+            ]
+            median_level_rejects = [
+                statistics.median(
+                    [item["eval_level_rejects"][level] for item in trial_stats]
+                )
+                for level in range(LEVELS)
+            ]
+            median_eval_coeff_checks = [
+                statistics.median(
+                    [item["eval_coeff_checks"][level] for item in trial_stats]
+                )
+                for level in range(LEVELS)
+            ]
+            print(
+                f"  k={k}: probes/left={5**k}; MITM median={mitm_median:.6f}s; "
+                f"ratio={speedup:.2f}x; joined={median('joined_pairs'):g}; "
+                f"public-pass={median('public_full_pass'):g}; "
+                f"survivors={median('survivors'):g}"
+            )
+            print(
+                f"    eval checks={median_level_checks}; "
+                f"eval rejects={median_level_rejects}; "
+                f"eval coefficient checks={median_eval_coeff_checks}; "
+                f"public coefficient checks={median('public_coeff_checks'):g}"
+            )
 
 
 if __name__ == "__main__":
