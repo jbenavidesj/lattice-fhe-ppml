@@ -124,16 +124,29 @@ and consequently
 =9\,016\,135\,001\,309\,185=:H_0.
 \]
 
-Expanding \(x_i=\Delta M_i+E_i\), and using \(Q=t\Delta+r\), the difference between the main scaled plaintext term and \(\Delta m_{12}\), modulo \(Q\), is bounded by
+Expanding \(x_i=\Delta M_i+E_i\), the unrounded phase is
+\[
+\frac{t}{Q}x_1x_2
+=\frac{t\Delta^2}{Q}M_1M_2
++\frac{t\Delta}{Q}(M_1E_2+M_2E_1)
++\frac{t}{Q}E_1E_2.
+\]
+Since \(t\Delta=Q-r\) and \(M_1M_2=m_{12}+tH\), the first term differs from \(\Delta m_{12}\) by
+\[
+\frac{t\Delta^2}{Q}(m_{12}+tH)-\Delta m_{12}
+=\Delta tH-\frac{\Delta r}{Q}M_1M_2
+\equiv-rH-\frac{\Delta r}{Q}M_1M_2\pmod Q.
+\]
+Here \(\Delta tH=(Q-r)H\equiv-rH\pmod Q\). Applying the coefficientwise negacyclic-product bound and \(t\Delta/Q<1\), the absolute error contribution is at most
 \[
 rH_0+\frac{\Delta r}{Q}P_0
 +2NM_0E_1+\frac{t}{Q}NE_1^2.
 \]
 The three scale-rounding residuals contribute at most
-\\[
-\\tfrac12(1+\\|s\\|_1+\\|s^2\\|_1)
-\\le\\tfrac12(1+N+N^2)=33\\,558\\,528.5.
-\\]
+\[
+\frac12(1+\|s\|_1+\|s^2\|_1)
+\le\frac12(1+N+N^2)=33\,558\,528.5.
+\]
 
 ## 4. Relinearization error
 
