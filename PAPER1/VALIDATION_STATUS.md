@@ -84,3 +84,8 @@ Added `scripts/toy_evalkey_exhaustive_search.py` and `PAPER1/TOY_EVALUATION_KEY_
 The toy experiment's exhaustive candidate search costs `3^N` ternary candidates and, with the current direct negacyclic multiplication, worst-case arithmetic work `O(3^N * L * N^2)`. The report now tabulates candidate-space growth through N=8192 and includes exploratory local timings through N=12. These timings are not formal benchmarks. The central conclusion is that candidate-set reduction in tiny instances does not imply an efficient attack; no extrapolation to production parameters is justified.
 
 CI run #360 on commit `e354af6fe7a06956c4b466a06079ae60e4149d77` completed successfully, including the toy exhaustive-search script in the Python audit job.
+
+
+## Meet-in-the-middle feasibility assessment
+
+The toy experiment report now explains the noisy modular join required by a split-secret meet-in-the-middle method. The two lists each have size `3^(N/2)`, but a valid join must accommodate a centered error box of up to `5^N` vectors for eta=2; naive error enumeration erases the apparent gain. The report also gives a clearly labeled random-residual heuristic for expected false candidates under q=11: approximately 3.46, 6.43, and 11.96 at N=4,6,8 for one public sample. This is a sanity-check heuristic only; independence is not proven. No MITM attack is implemented or claimed.
