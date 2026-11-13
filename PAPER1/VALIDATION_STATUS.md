@@ -156,3 +156,13 @@ The current proof and IEEE manuscript draft were cross-checked against `src/rns.
 The documentation commits are present on `paper1-validation-corrections`. CI runs #456 and #457 for commit `f04e5909f551904aa8ba12324bf9002864d58cb5` were observed in progress at the time of this update; they must complete successfully before claiming validation of this exact head. The latest completed full CI before these refinements was run #449 on commit `4800c0dc279c17bbfb0f7aca8a1f6e820645b1d4`, which passed both the Rust and Python audit jobs.
 
 This cross-check is an internal consistency review, not independent mathematical peer review. The one-multiplication scope and all security limitations above remain unchanged.
+
+## Evaluation-key transcript review refinement (2026-11-13)
+
+The manuscript now states the exact adjacent-level transformed equations and distinguishes three separate facts: (i) the thirteen transformed coefficient polynomials are jointly uniform; (ii) their transformed errors have a banded, non-iid joint distribution; and (iii) the transformation is deterministic post-processing of the published evaluation key, not additional information-theoretic leakage.
+
+The security note now gives the full (13\times13) tridiagonal covariance matrix for the transformed errors at each coefficient position, with diagonal (1+B^2) and adjacent off-diagonal entries (-B). It also records independence between the transformed coefficient vector and transformed error vector under the implemented independent samplers. These distributional facts do not constitute an attack, a reduction, or a concrete security estimate.
+
+The implementation was checked against `src/keygen.rs`: each evaluation-key (a_j) is sampled independently and uniformly per RNS lane; each eta=2 error is generated as the difference of two independent two-bit population counts; and the public-key sample uses the same secret with an independent uniform (a_{pk}) and eta=2 error. The public and evaluation keys must therefore be treated as one joint transcript.
+
+CI runs #458 and #459 completed successfully on commit `1ab591b64fb9542831a1ffe7cc1be94b9aabbc1e`, including both Python audit and Rust validation jobs. CI for the subsequent manuscript/security-note commits must still be checked against the exact latest head. Independent specialist cryptanalysis remains outstanding.
