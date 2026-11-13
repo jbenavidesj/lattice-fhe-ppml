@@ -89,3 +89,26 @@ r_j(u,v)=
 \]
 
 The last term is the obstruction to an independent right-list hash: its value changes with the left half \(u\). Precomputing \(v^2\) and \(X^ma_jv\) for each right entry does not remove this \(u\)-dependent cross term. A correct alternative join would need to represent or otherwise account for \(uv\) exactly; simply hashing the two independent half contributions would be unsound. Computing the cross term separately for every \((u,v)\) pair risks restoring the original \(3^N\) pairwise work. This is an algebraic limitation of the naive split, not a proof that every more sophisticated join is impossible.
+
+## Selected-coordinate sweep for the public-key hash
+
+The MITM prototype was extended to test (k=1,2,3,4) selected public-key coordinates. For each left-half entry, the join enumerates (5^k) bounded-error patterns. All configurations were cross-checked against exhaustive search on the same 30 generated instances at each degree; every configuration achieved exact-set agreement in all 30 trials and retained the planted secret.
+
+| N | k | Error probes per left entry | Median joined pairs | Median MITM time | Exhaustive/MITM ratio |
+|---:|---:|---:|---:|---:|---:|
+| 4 | 1 | 5 | 37 | 0.000218 s | 1.39x |
+| 4 | 2 | 25 | 16 | 0.000259 s | 1.17x |
+| 4 | 3 | 125 | 8 | 0.000742 s | 0.41x |
+| 4 | 4 | 625 | 3.5 | 0.003461 s | 0.09x |
+| 6 | 1 | 5 | 331.5 | 0.001488 s | 2.67x |
+| 6 | 2 | 25 | 150 | 0.001318 s | 3.01x |
+| 6 | 3 | 125 | 68 | 0.002510 s | 1.58x |
+| 6 | 4 | 625 | 31.5 | 0.010402 s | 0.38x |
+| 8 | 1 | 5 | 2982 | 0.012108 s | 4.31x |
+| 8 | 2 | 25 | 1356 | 0.008722 s | 5.99x |
+| 8 | 3 | 125 | 615 | 0.010296 s | 5.07x |
+| 8 | 4 | 625 | 276 | 0.032440 s | 1.61x |
+
+The median number of candidates passing the full public residual and the final evaluation-key survivor count were independent of (k) for a fixed instance set: 3.5 and 1 (N=4), 7.5 and 1 (N=6), 11 and 1 (N=8). Increasing (k) reduces join collisions, but the (5^k) probe growth eventually dominates. In this single CI run, (k=1) was fastest for N=4, while (k=2) was fastest for N=6 and N=8. This supports a degree- and cost-dependent choice of (k), not a universal optimum.
+
+These timings are exploratory CI medians, not repeated controlled benchmarks. The tests use q=11 and N<=8 and do not establish performance at cryptographic parameters. The sweep is exact only because all candidate pairs retrieved through the selected-coordinate error patterns are subsequently checked against every coefficient of the full public residual and all evaluation-key equations.
