@@ -111,3 +111,12 @@ A direct split of the evaluation-key equation is not separable. For (s=u+X^{N/2}
 `u^2 + 2X^{N/2}uv + X^Nv^2` modulo (X^N+1), with the final term reducing to `-v^2`. The cross term couples both halves. Consequently, simply adding independent per-half evaluation-key hashes would be mathematically incorrect unless the cross term is explicitly represented. The current prototype correctly applies evaluation-key equations only after candidate joins; it does not yet gain list-pruning from those equations.
 
 Next algorithmic work must either (a) derive an exact join key that accounts for the cross term and bounded errors, or (b) retain the public-key MITM filter and quantify whether additional safe partial constraints can be applied after a pair is joined. No improved attack or production-scale speedup is claimed.
+
+
+## Staged MITM diagnostics and CI #391
+
+Commit `417d8c33af9fb2336a2dfb53f91fbcbee73cbc48` adds per-stage instrumentation to `scripts/toy_evalkey_mitm.py`. CI run #391 (`43342603988`) completed successfully: Python arithmetic audits passed, and the Rust job passed unit tests, formatting, Clippy, and benchmark-target compilation.
+
+Across 30 deterministic trials per degree, the MITM candidate set matched exhaustive enumeration in all 90 trials. The median exhaustive/MITM times were 0.000219/0.000166 s (N=4), 0.002845/0.000683 s (N=6), and 0.036167/0.003381 s (N=8). Median joined-pair counts were 16/150/1356; median candidates passing the complete public-key residual were 3.5/7.5/11; and final survivors were 1 at each degree. Sequential evaluation-key checks rejected a median 2.5/6.5/10 candidates at the first level, so later levels required only one check per trial median.
+
+This demonstrates early rejection of downstream verification work in these toy samples, not reduction of the MITM join output or list size. The observed timing ratios (1.32x/4.17x/10.70x) are exploratory CI measurements, not formal benchmarks and not evidence of scalability or a production-parameter attack. The detailed table and interpretation are in `PAPER1/TOY_MITM_PROTOTYPE.md`.
