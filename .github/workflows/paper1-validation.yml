@@ -77,8 +77,13 @@ jobs:
           sage -pip install -e .
       - name: Run unstructured-LWE proxy diagnostic
         run: |
-          set -o pipefail
-          sage -python scripts/estimate_lwe_proxy.py 2>&1 | tee sage-lwe-proxy-output.txt
+          if sage -python scripts/estimate_lwe_proxy.py > sage-lwe-proxy-output.txt 2>&1; then
+            status=0
+          else
+            status=$?
+          fi
+          cat sage-lwe-proxy-output.txt
+          exit "$status"
       - name: Upload diagnostic output
         if: always()
         uses: actions/upload-artifact@v4
