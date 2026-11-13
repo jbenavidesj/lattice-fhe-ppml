@@ -48,3 +48,6 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Compile benchmark target
         run: cargo bench --no-run
+
+      - name: Run toy exhaustive evaluation-key candidate experiment
+        run: python scripts/toy_evalkey_exhaustive_search.py
