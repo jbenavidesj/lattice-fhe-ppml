@@ -132,6 +132,14 @@ jobs:
           set -e
           cat evalkey-incremental-joint-filtering.txt
           exit "$status"
+      - name: Compare exact ternary transcript MILP with exhaustive enumeration
+        run: |
+          set +e
+          sage -python scripts/audit_ternary_transcript_milp.py > ternary-transcript-milp.txt 2>&1
+          status=$?
+          set -e
+          cat ternary-transcript-milp.txt
+          exit "$status"
       - name: Search short modular target-cancellation relations
         run: |
           if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
@@ -154,6 +162,7 @@ jobs:
             evalkey-toy-secret-filtering.txt
             evalkey-joint-candidate-filter.txt
             evalkey-incremental-joint-filtering.txt
+            ternary-transcript-milp.txt
           if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
