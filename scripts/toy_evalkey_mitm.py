@@ -259,40 +259,47 @@ def choose_coordinates(n):
 def main():
     rng = random.Random(0xBF2)
     print(
-        f"Toy MITM coordinate sweep: q={Q}, B={BASE}, levels={LEVELS}, "
-        f"eta={ETA}, coordinates={SELECTED_COORDINATES}, trials={TRIALS}, "
-        f"timing_repeats={TIMING_REPEATS}"
+        f"Toy MITM adaptive coordinate sweep: q={Q}, B={BASE}, "
+        f"levels={LEVELS}, eta={ETA}, coordinates={SELECTED_COORDINATES}, "
+        f"trials={TRIALS}, timing_repeats={TIMING_REPEATS}"
     )
     for n in DEGREES:
-        exhaustive_times = []
-        results = {
+        fixed_results = {
             k: {"times": [], "stats": []}
             for k in SELECTED_COORDINATES if k <= n
         }
         adaptive = choose_coordinates(n)
         adaptive_result = {"times": [], "stats": []}
-        for _ in range(TRIALS):
-            secret, public_sample, eval_samples = generate_instance(n, rng)
+        exhaustive_times = []
+        instances = []
 
+        # Generate one common set of instances and exhaustive ground truths.
+        for _trial in range(TRIALS):
+            secret, public_sample, eval_samples = generate_instance(n, rng)
             start = time.perf_counter()
             exhaustive = exhaustive_candidates(n, public_sample, eval_samples)
             exhaustive_times.append(time.perf_counter() - start)
+            instances.append(
+                (secret, public_sample, eval_samples, exhaustive)
+            )
 
-            coordinate_order = list(results)
-            shift = _ % len(coordinate_order)
-            coordinate_order = coordinate_order[shift:] + coordinate_order[:shift]
-            work_items = [(k, False) for k in coordinate_order]
+        # Every fixed k and the adaptive k use precisely those same instances.
+        for trial_index, (secret, public_sample, eval_samples, exhaustive) in enumerate(instances):
+            work_items = [(k, False) for k in fixed_results]
             work_items.append((adaptive["k"], True))
+            shift = trial_index % len(work_items)
+            work_items = work_items[shift:] + work_items[:shift]
             for k, is_adaptive in work_items:
-                result = adaptive_result if is_adaptive else results[k]
+                result = adaptive_result if is_adaptive else fixed_results[k]
                 final_stats = None
                 for _repeat in range(TIMING_REPEATS):
-                    start = time.perf_counter()
                     stats = {}
+                    start = time.perf_counter()
                     mitm = mitm_candidates(
                         n, public_sample, eval_samples, k, stats
                     )
-                    result["times"].append(time.perf_counter() - start)
+                    elapsed = time.perf_counter() - start
+                    result["times"].append(elapsed)
                     final_stats = stats
                     assert exhaustive == mitm, (
                         n, k, exhaustive, mitm,
@@ -308,19 +315,19 @@ def main():
         )
         print(
             f"N={n}: exhaustive median={exhaustive_median:.6f}s; "
-            f"exact-set agreement={TRIALS}/{TRIALS} for every fixed k; "
+            f"exact-set agreement={TRIALS}/{TRIALS} for every k; "
             f"adaptive k={adaptive['k']} (proxy={adaptive['score']:.1f}, "
             f"estimated hits={adaptive['estimated_joined_pairs']:.1f}); "
             f"adaptive MITM median={adaptive_median:.6f}s, "
             f"joined={adaptive_pairs:g}, "
             f"ratio={exhaustive_median / adaptive_median:.2f}x"
         )
-        for k, result in results.items():
-            mitm_median = statistics.median(result["times"])
-            speedup = (
-                exhaustive_median / mitm_median
-                if mitm_median else float("inf")
+        for k, result in fixed_results.items():
+            assert len(result["times"]) == TRIALS * TIMING_REPEATS, (
+                n, k, len(result["times"])
             )
+            mitm_median = statistics.median(result["times"])
+            speedup = exhaustive_median / mitm_median
             trial_stats = result["stats"]
 
             def median(key):
@@ -357,6 +364,7 @@ def main():
                 f"eval coefficient checks={median_eval_coeff_checks}; "
                 f"public coefficient checks={median('public_coeff_checks'):g}"
             )
+        assert len(adaptive_result["times"]) == TRIALS * TIMING_REPEATS
 
 
 if __name__ == "__main__":
