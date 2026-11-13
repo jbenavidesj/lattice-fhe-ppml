@@ -17,11 +17,11 @@ from random import Random
 from statistics import mean, median
 
 ETA = 2
-Q = 65537
+Q = 23
 B = 16
 LEVELS = 14
-DIMENSIONS = (2, 3, 4, 5)
-TRIALS = {2: 40, 3: 30, 4: 30, 5: 20}
+DIMENSIONS = (2, 3, 4, 5, 6)
+TRIALS = {2: 40, 3: 30, 4: 30, 5: 20, 6: 10}
 
 
 def negacyclic_mul(a, b, q):
@@ -140,7 +140,7 @@ def filter_one(seed, n):
 def main():
     print("Controlled four-way ternary candidate filtering")
     print(f"q={Q}; B={B}; eta={ETA}; levels={LEVELS}; error law=CBD_eta2")
-    print("All four scenarios use the same generated transcript per trial.")
+    print("All four scenarios use the same generated transcript per trial. q=23 is a deliberately tiny stress-test modulus, not the Paper 1 modulus.")
     print("Transformed test anchors r_0 and uses exact z_j=r_(j+1)-B*r_j recurrence.")
     print("Exact transformed test is an invertible reparameterization, not extra information.")
     for n in DIMENSIONS:
