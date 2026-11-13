@@ -47,7 +47,7 @@ CI run 319 on commit `c8547a9db15b2b40c44f4f81c8bd824fb3912dcc` completed succes
 - Constant-time behavior, side-channel resistance, or comprehensive memory-remanence protection.
 - Arbitrary multiplicative depth, modulus switching, or bootstrapping.
 - A production-optimized RNS tensor multiplication and scale-and-round implementation; the current exact auxiliary NTT/CRT and BigInt path is a correctness reference.
-- Release benchmark measurements, raw timing datasets, confidence intervals, documented hardware/compiler metadata, or any speedup claim. Criterion targets now include four-lane N=8192 RNS NTT multiplication and exact-reference BFV tensor multiplication; see `PAPER1/BENCHMARK_PROTOCOL.md`.
+- A multi-session comparative performance evaluation or production-performance claim. One release-mode Criterion CI baseline with raw artifacts, within-run confidence intervals, and environment metadata is now documented in `PAPER1/BENCHMARK_PROTOCOL.md`; AsymRed was slower than the u128 remainder baseline in that run.
 - IEEE submission readiness.
 
 AsymRed is exact modular reduction; it does not intrinsically reduce cryptographic noise. The tiny-ring BFV module uses deterministic test-only sampling and must never protect real data.
@@ -58,7 +58,7 @@ AsymRed is exact modular reduction; it does not intrinsically reduce cryptograph
 2. Obtain independent review of `PAPER1/EVALUATION_KEY_SECURITY_ANALYSIS.md`, especially joint public-key/evaluation-key attacks and algebraic exploitation of s^2; the existing unstructured-LWE proxy omits these samples.
 3. Execute the pinned lattice-estimator diagnostic in a SageMath environment; assess ring-LWE assumptions and structural attacks.
 4. Replace the correctness-reference multiplication with an optimized, proven RNS implementation only after differential validation against the exact reference.
-5. Run release benchmarks with repeated samples, raw output, and complete hardware/compiler metadata.
+5. Repeat release benchmarks in independent sessions and preferably on bare-metal hardware; add missing primitive-level and equivalent external BFV baselines before any performance claim.
 6. Review secret-dependent control flow, memory access, temporary copies, and side-channel exposure.
 
 Until these gates are passed, describe the work as an experimental RNS-BFV prototype with a one-multiplication correctness argument—not as a production-secure or fully validated new FHE scheme.
@@ -237,3 +237,24 @@ correctness-path costs, not optimized BFV performance.
   the caveat that the unstructured-LWE proxy does not certify Ring-LWE or the
   structured evaluation-key transcript.
 - Complete related-work and bibliographic verification.
+
+
+## Related-work and claim-positioning update
+
+The manuscript now includes a verified core bibliography: the original FV/BFV
+construction (Fan–Vercauteren, IACR ePrint 2012/144), the full-RNS FV-like
+construction of Bajard, Eynard, Hasan, and Zucca (SAC 2016; LNCS 10059,
+pp. 423–442; DOI 10.1007/978-3-319-69453-5_23), the concrete-LWE hardness
+survey by Albrecht, Player, and Scott (J. Math. Cryptology 9(3), 169–203,
+2015; DOI 10.1515/jmc-2015-0016), and the 2018 Homomorphic Encryption
+Security Standard.
+
+This comparison imposes an important novelty constraint: full-RNS FV-like
+schemes and optimized scale/rounding techniques predate this prototype.
+The manuscript therefore does not claim novelty for RNS-BFV itself or for
+the general goal of avoiding multiprecision arithmetic. The exact integer-lift
+NTT/CRT plus BigInt path is described as a correctness reference. A fuller
+line-by-line comparison against the prior full-RNS FV construction and
+additional primary NTT/relinearization references is still required.
+
+The current source head must be revalidated after these documentation edits.
