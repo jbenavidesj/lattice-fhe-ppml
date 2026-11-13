@@ -82,6 +82,16 @@ The evaluation-key residual under the split contains the cross term 2 X^(N/2) u 
 
 The adaptive coordinate selector uses a heuristic cost proxy. A frozen lambda=4 selector was tested on ten held-out toy instances per degree at q=11 and eta=2, using seed 0xC0FFEE. It selected k=(1,2,2) for N=(4,6,8), matching the fastest fixed-k median in this sample; median regret was 1.000 at each degree. This is a small-sample toy result, not evidence of generalization across q, eta, or production dimensions.
 
+A separate cross-parameter robustness audit retained lambda=4 without refitting and
+tested q in {17,31}, eta in {1,2}, and N in {4,6,8}, with eight fresh instances
+per cell and two timing repeats per fixed k. In all twelve cells, the selected k
+matched the lowest observed fixed-k median; median regret was 1.000 in every cell.
+Each cell made 64 exact candidate-set comparisons against exhaustive enumeration.
+The selected k values were (1,2,2) for q=17 at both eta values, (1,2,2) for
+q=31, eta=1, and (1,1,2) for q=31, eta=2, in increasing N order. This is
+limited evidence of robustness over these small toy settings only; it does not
+establish predictive performance at larger dimensions or production parameters.
+
 ## 8. Performance evaluation
 
 A first Criterion release-mode baseline was collected in a dedicated GitHub Actions
