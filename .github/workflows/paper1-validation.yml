@@ -86,20 +86,36 @@ jobs:
           exit "$status"
       - name: Audit exact weighted evaluation-key error distributions
         run: |
-          set -euo pipefail
-          sage -python scripts/audit_evalkey_weighted_error_distribution.py | tee evalkey-weighted-error-distribution.txt
+          set +e
+          sage -python scripts/audit_evalkey_weighted_error_distribution.py > evalkey-weighted-error-distribution.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-weighted-error-distribution.txt
+          exit "$status"
       - name: Audit exact joint evaluation-key error covariance
         run: |
-          set -euo pipefail
-          sage -python scripts/audit_evalkey_joint_error_covariance.py | tee evalkey-joint-error-covariance.txt
+          set +e
+          sage -python scripts/audit_evalkey_joint_error_covariance.py > evalkey-joint-error-covariance.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-joint-error-covariance.txt
+          exit "$status"
       - name: Exhaustively compare toy-ring secret candidate filters
         run: |
-          set -euo pipefail
-          sage -python scripts/audit_evalkey_toy_secret_filtering.py | tee evalkey-toy-secret-filtering.txt
+          set +e
+          sage -python scripts/audit_evalkey_toy_secret_filtering.py > evalkey-toy-secret-filtering.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-toy-secret-filtering.txt
+          exit "$status"
       - name: Compare exact joint original/transformed candidate constraints
         run: |
-          set -euo pipefail
-          sage -python scripts/audit_evalkey_joint_candidate_filter.py | tee evalkey-joint-candidate-filter.txt
+          set +e
+          sage -python scripts/audit_evalkey_joint_candidate_filter.py > evalkey-joint-candidate-filter.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-joint-candidate-filter.txt
+          exit "$status"
       - name: Search short modular target-cancellation relations
         run: |
           if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
