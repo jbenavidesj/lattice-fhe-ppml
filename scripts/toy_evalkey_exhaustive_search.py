@@ -8,8 +8,8 @@ from itertools import product
 import random
 import statistics
 
-Q = 257
-BASE = 16
+Q = 11
+BASE = 3
 LEVELS = 3
 ETA = 2
 
