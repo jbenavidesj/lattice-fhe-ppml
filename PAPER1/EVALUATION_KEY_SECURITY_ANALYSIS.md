@@ -183,7 +183,7 @@ The exact cancellation identity gives, for adjacent levels (j,j+1),
 ]
 For coefficient errors supported on ([-eta,eta]), the transformed error is supported on ([-eta(1+B),eta(1+B)]). Thus a candidate secret can be tested against this *linear* equation before computing its square. This is a safe necessary filter: every genuine secret passes, while the larger support radius deliberately avoids rejecting valid candidates.
 
-The new `scripts/audit_evalkey_linear_prefilter.py` exhaustively measures candidate counts after the public-key relation, after each of the two adjacent-level cancellations, and then after the original three quadratic evaluation-key equations. It uses (q=31), (B=3), eta=2, and (N\in\{4,6,8\}), with 30 deterministic instances per degree. The modulus is chosen so the transformed support radius 8 is strictly below (q/2), avoiding ambiguity in the centered-residue test. The Python audit passed in CI run #496. For 30 instances per degree, the stage counts (public, first cancellation, second cancellation, then quadratic levels 0–2) were:
+The new `scripts/audit_evalkey_linear_prefilter.py` exhaustively measures candidate counts after the public-key relation, after each of the two adjacent-level cancellations, and then after the original three quadratic evaluation-key equations. The final measured configuration is q=29, B=3, eta=3, and N in {4,6,8}, with 30 deterministic instances per degree. The transformed support radius is 12, strictly below q/2, avoiding ambiguity in the centered-residue test. Eta=3 is deliberately a toy stress setting to retain some false candidates after the public filter; it differs from the implementation's eta=2 sampler and is not a model of the production error distribution. The Python audit passed in CI run #496.
  
 | Degree | Mean survivors by stage | Unique-candidate instances by stage |
 |---|---|---|
@@ -193,4 +193,4 @@ The new `scripts/audit_evalkey_linear_prefilter.py` exhaustively measures candid
 
 The median candidate count was already one at the public-key stage for all three degrees. The linear filters improved uniqueness in a small number of ambiguous instances (four additional unique cases at N=4 and two at N=6 after both cancellations), but their median candidate count did not change. The three quadratic evaluation equations then produced a unique candidate in all 30 instances at every degree. This is measurable but modest incremental filtering, not evidence of a practical attack. It is also a very small toy sample and not an estimate for the production ring.
 
-This is a toy diagnostic; numerical conclusions await CI and do not imply production attack feasibility.
+This is a toy diagnostic and does not imply production attack feasibility.
