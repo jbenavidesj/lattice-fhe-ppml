@@ -229,23 +229,30 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
     return survivors
 
 
-def choose_coordinates(n):
-    """Choose k using a transparent, approximate toy join-cost proxy.
+def choose_coordinates(n, q=Q, eta=ETA, candidate_ks=None, pair_weight=4.0):
+    """Choose k using a transparent, parameterized toy join-cost proxy.
 
-    Expected hash hits assume independent uniform selected coordinates:
-      probes = 3^(N/2) * 5^k
-      expected hits = 3^N * (5/Q)^k
-    The factor 4 weights one retrieved pair against four hash probes. It is
-    an empirical toy-scale calibration, not a cryptographic complexity bound.
+    Under an independence/uniform-residue heuristic:
+      probes = 3^(N/2) * (2*eta+1)^k
+      expected hits = 3^N * ((2*eta+1)/q)^k
+    pair_weight expresses the assumed relative cost of a retrieved pair.
+    It is a heuristic calibration parameter, not a theorem or security bound.
     """
     if n % 2:
         raise ValueError("The toy MITM split requires an even degree.")
-    candidates = [k for k in SELECTED_COORDINATES if k <= n]
+    if q <= 2 * eta or eta < 0 or pair_weight < 0:
+        raise ValueError("Require q > 2*eta, eta >= 0, and pair_weight >= 0.")
+    if candidate_ks is None:
+        candidate_ks = SELECTED_COORDINATES
+    candidates = sorted(set(candidate_ks))
+    if not candidates or any(k < 1 or k > n for k in candidates):
+        raise ValueError("candidate_ks must contain values in [1, n].")
+    width = 2 * eta + 1
     scored = []
     for k in candidates:
-        probes = (3 ** (n // 2)) * (5 ** k)
-        expected_hits = (3 ** n) * ((5 / Q) ** k)
-        score = probes + 4 * expected_hits
+        probes = (3 ** (n // 2)) * (width ** k)
+        expected_hits = (3 ** n) * ((width / q) ** k)
+        score = probes + pair_weight * expected_hits
         scored.append((score, k, probes, expected_hits))
     score, k, probes, expected_hits = min(scored)
     return {
@@ -253,6 +260,9 @@ def choose_coordinates(n):
         "score": score,
         "estimated_probes": probes,
         "estimated_joined_pairs": expected_hits,
+        "q": q,
+        "eta": eta,
+        "pair_weight": pair_weight,
     }
 
 
