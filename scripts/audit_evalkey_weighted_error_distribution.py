@@ -53,7 +53,7 @@ def exact_counts(weights):
     mean_num = sum(ZZ(i - radius) * count for i, count in enumerate(counts))
     second_num = sum(ZZ(i - radius) ** 2 * count for i, count in enumerate(counts))
     assert mean_num == 0
-    expected_variance = 2 * sum(ZZ(w) ** 2 for w in weights)
+    expected_variance = sum(ZZ(w) ** 2 for w in weights)
     assert second_num == total * expected_variance
     assert counts == list(reversed(counts)), "PMF must be symmetric"
     return counts, int(radius), total
