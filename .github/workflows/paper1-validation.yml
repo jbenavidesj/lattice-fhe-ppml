@@ -86,13 +86,20 @@ jobs:
           exit "$status"
       - name: Audit exact weighted evaluation-key error distributions
         run: |
-          python scripts/audit_evalkey_weighted_error_distribution.py | tee evalkey-weighted-error-distribution.txt
+          set -euo pipefail
+          sage -python scripts/audit_evalkey_weighted_error_distribution.py | tee evalkey-weighted-error-distribution.txt
       - name: Audit exact joint evaluation-key error covariance
         run: |
-          python scripts/audit_evalkey_joint_error_covariance.py | tee evalkey-joint-error-covariance.txt
+          set -euo pipefail
+          sage -python scripts/audit_evalkey_joint_error_covariance.py | tee evalkey-joint-error-covariance.txt
       - name: Exhaustively compare toy-ring secret candidate filters
         run: |
-          python scripts/audit_evalkey_toy_secret_filtering.py | tee evalkey-toy-secret-filtering.txt
+          set -euo pipefail
+          sage -python scripts/audit_evalkey_toy_secret_filtering.py | tee evalkey-toy-secret-filtering.txt
+      - name: Compare exact joint original/transformed candidate constraints
+        run: |
+          set -euo pipefail
+          sage -python scripts/audit_evalkey_joint_candidate_filter.py | tee evalkey-joint-candidate-filter.txt
       - name: Search short modular target-cancellation relations
         run: |
           if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
@@ -113,6 +120,7 @@ jobs:
             evalkey-weighted-error-distribution.txt
             evalkey-joint-error-covariance.txt
             evalkey-toy-secret-filtering.txt
+            evalkey-joint-candidate-filter.txt
           if-no-files-found: warn
   rust:
     name: Rust tests and benchmark compilation
