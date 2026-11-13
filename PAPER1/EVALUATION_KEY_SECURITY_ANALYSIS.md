@@ -120,11 +120,11 @@ The map from \((a_0,\ldots,a_{L-1})\) to \((a_1-Ba_0,\ldots,a_{L-1}-Ba_{L-2})\) 
 
 Let \(s(X)=\sum_{i=0}^{N-1}s_iX^i\), with independent \(s_i\in\{-1,0,1\}\), and compute the negacyclic square in \(\mathbb Z[X]/(X^N+1)\). Reducing its coefficients modulo 2 removes signs and all cross-term pairs, because every off-diagonal product appears twice:
 \[s(X)^2\equiv\sum_{i=0}^{N-1}s_i^2X^{2i}\equiv\sum_{i=0}^{N-1}s_iX^{2i}\pmod 2.\]
-For even N, reducing exponents modulo \(X^N+1\) (which is \(X^N-1\) over \(\mathbb F_2\)) gives
-\[ [X^{2r+1}]s^2\equiv0\pmod2,\qquad [X^{2r}]s^2\equiv s_r\pmod2,\quad 0\le r<N/2,\]
-where coefficient indices are interpreted in the negacyclic ring and the displayed even-index identity uses \(s_r^2\equiv s_r\pmod2\).
+For even N, reducing exponents modulo \(X^N+1\) (which equals \(X^N-1\) over \(\mathbb F_2\)) gives
+\[ [X^{2r+1}]s^2\equiv0\pmod2,\qquad [X^{2r}]s^2\equiv s_r+s_{r+N/2}\pmod2,\quad 0\le r<N/2.\]
+The second identity includes **both** indices whose doubled exponents reduce to \(2r\) modulo N. In particular, the even coefficient parity reveals the XOR of the nonzero indicators of two secret coefficients, not either coefficient individually.
 
-For N=8192 this means every odd-index coefficient of the integer negacyclic square is even, and the parity of its even-index coefficients reveals the parity (zero versus nonzero) of the first 4096 secret coefficients. This is a genuine algebraic property of the target polynomial, not yet a key-recovery attack: the public evaluation-key equations expose the target only mixed with the unknown term \(-a_js\) and modular noise. A practical attack would still need to extract these parities from the joint public transcript.
+For N=8192 this means every odd-index coefficient of the integer negacyclic square is even, while each even-index coefficient gives the parity of the pair \((s_r,s_{r+4096})\). This is a genuine algebraic property of the target polynomial, not yet a key-recovery attack: the public evaluation-key equations expose the target only mixed with the unknown term \(-a_js\) and modular noise. A practical attack would still need to extract these parities from the joint public transcript.
 
 ### Attack relevance and caveats
 
