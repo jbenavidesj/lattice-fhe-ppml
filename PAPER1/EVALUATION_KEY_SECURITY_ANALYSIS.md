@@ -497,7 +497,7 @@ The new deterministic projection script, scripts/audit_mitm_scalability.py, repo
 - corresponding probe-work and expected-join exponents;
 - a payload-only storage lower bound assuming both tables store N residues per entry, excluding all Python object, tuple, hash-table, allocator, and indexing overhead.
 
-For the Paper 1 modulus (218 bits) and eta=2, at N=8192 the model selects k*=31, with log2(half-table entries)=6492.1, log2(probe work)=6564.0, and log2(payload-only storage in bytes)=6518.1. These exponents are resource projections, not measured runtimes or practical attack costs. The payload estimate is already astronomically infeasible before Python overhead is included.
+For the Paper 1 modulus (218 bits) and eta=2, at N=8192 the model selects k*=61, with log2(half-table entries)=6492.0, log2(probe work)=6633.6, log2(expected joined pairs)=-172.3, and log2(payload-only storage in bytes)=6510.8. These exponents are resource projections, not measured runtimes or practical attack costs. The payload estimate is already astronomically infeasible before Python overhead is included.
 
 The expected-join calculation uses 3^N * ((2 eta+1)/q)^k and assumes independent uniform residues in the selected coordinates. Negacyclic ring structure, shared secrets, error correlations, and the evaluation-key equations can violate this assumption. It is a transparent heuristic for understanding the join stage, not a rigorous candidate-count bound. The exact half-table count and its exponential scaling, however, follow directly from the algorithm's enumeration strategy.
 
