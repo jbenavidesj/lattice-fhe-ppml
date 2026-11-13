@@ -444,12 +444,12 @@ The audit exhaustively enumerates all 3^N ternary secrets for each trial:
 
 | Configuration | Trials | Mean original survivors | Mean exact-joint survivors | Mean coarse survivors | Extra coarse candidates |
 |---|---:|---:|---:|---:|---:|
-| N=2, q=23, B=4, L=2 | 40 | 1.000 | 1.000 | 1.250 | 10 total |
+| N=2, q=23, B=4, L=2 | 40 | 1.000 | 1.000 | 1.000 | 0 |
 | N=5, q=65537, B=16, L=6 | 10 | 1.000 | 1.000 | 1.000 | 0 |
 
-For every trial, the original and exact-joint candidate sets were identical, and the planted secret survived. In the small-ring case, the coarse filter retained ten extra candidates across 40 trials (some trials retained two, three, or four candidates). In the medium toy case, all three filters retained only the planted candidate in every trial.
+For every trial in both configurations, the original and exact-joint candidate sets were identical, the planted secret survived, and the coarse filter also retained only that candidate. Thus this run did not observe extra candidates from the coarse box. This does not contradict the separate earlier toy experiment in Section 8: that experiment used different parameters (including q=257 and N=2) and a different generated transcript/filter setup. Results from distinct experiments must not be merged.
 
-These results confirm the set-equivalence of the exact recurrence in the tested toy instances and illustrate the information loss caused by replacing the joint support with a coordinatewise box. They do not demonstrate scalable secret recovery: the largest search space here is only 3^5=243, and all candidates are enumerated. The medium toy's unique candidate is not evidence of production security.
+These results confirm the set-equivalence of the exact recurrence in the tested toy instances. They do not show an observable candidate-count penalty from the coarse box in these particular 50 trials. The algebraic relaxation remains potentially lossy, but that possibility must not be reported as an observed outcome here. The largest search space is only 3^5=243, and all candidates are enumerated; no scalable recovery algorithm or production-security conclusion follows.
 
 ### Validation correction for workflow run #617
 
