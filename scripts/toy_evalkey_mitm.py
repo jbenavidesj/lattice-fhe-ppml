@@ -229,6 +229,33 @@ def mitm_candidates(n, public_sample, eval_samples, selected_coordinates=2, stat
     return survivors
 
 
+def choose_coordinates(n):
+    """Choose k using a transparent, approximate toy join-cost proxy.
+
+    Expected hash hits assume independent uniform selected coordinates:
+      probes = 3^(N/2) * 5^k
+      expected hits = 3^N * (5/Q)^k
+    The factor 4 weights one retrieved pair against four hash probes. It is
+    an empirical toy-scale calibration, not a cryptographic complexity bound.
+    """
+    if n % 2:
+        raise ValueError("The toy MITM split requires an even degree.")
+    candidates = [k for k in SELECTED_COORDINATES if k <= n]
+    scored = []
+    for k in candidates:
+        probes = (3 ** (n // 2)) * (5 ** k)
+        expected_hits = (3 ** n) * ((5 / Q) ** k)
+        score = probes + 4 * expected_hits
+        scored.append((score, k, probes, expected_hits))
+    score, k, probes, expected_hits = min(scored)
+    return {
+        "k": k,
+        "score": score,
+        "estimated_probes": probes,
+        "estimated_joined_pairs": expected_hits,
+    }
+
+
 def main():
     rng = random.Random(0xBF2)
     print(
@@ -271,9 +298,38 @@ def main():
                 result["stats"].append(final_stats)
 
         exhaustive_median = statistics.median(exhaustive_times)
+        adaptive = choose_coordinates(n)
+        adaptive_result = {
+            "times": [],
+            "stats": [],
+        }
+        for trial_index in range(TRIALS):
+            secret, public_sample, eval_samples = generate_instance(
+                n, random.Random(0xBF2 + trial_index + 100000 * n)
+            )
+            exhaustive = exhaustive_candidates(n, public_sample, eval_samples)
+            for _repeat in range(TIMING_REPEATS):
+                start = time.perf_counter()
+                stats = {}
+                mitm = mitm_candidates(
+                    n, public_sample, eval_samples, adaptive["k"], stats
+                )
+                adaptive_result["times"].append(time.perf_counter() - start)
+                adaptive_result["stats"].append(stats)
+                assert exhaustive == mitm
+                assert tuple(secret) in mitm
+        adaptive_median = statistics.median(adaptive_result["times"])
+        adaptive_pairs = statistics.median(
+            [item["joined_pairs"] for item in adaptive_result["stats"]]
+        )
         print(
             f"N={n}: exhaustive median={exhaustive_median:.6f}s; "
-            f"exact-set agreement={TRIALS}/{TRIALS} for every k"
+            f"exact-set agreement={TRIALS}/{TRIALS} for every fixed k; "
+            f"adaptive k={adaptive['k']} (proxy={adaptive['score']:.1f}, "
+            f"estimated hits={adaptive['estimated_joined_pairs']:.1f}); "
+            f"adaptive MITM median={adaptive_median:.6f}s, "
+            f"joined={adaptive_pairs:g}, "
+            f"ratio={exhaustive_median / adaptive_median:.2f}x"
         )
         for k, result in results.items():
             mitm_median = statistics.median(result["times"])
