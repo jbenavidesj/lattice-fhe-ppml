@@ -29,7 +29,7 @@ def check(n, trials, rng):
 
 
 def main():
-    rng = random.Random(0xBFV)  # deterministic seed
+    rng = random.Random(0xBF)  # deterministic seed
     for n in (2, 4, 8, 16, 32, 64, 128):
         check(n, 200, rng)
     print("Ternary negacyclic-square parity identity: PASS")
