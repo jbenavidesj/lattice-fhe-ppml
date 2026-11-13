@@ -120,3 +120,20 @@ Commit `417d8c33af9fb2336a2dfb53f91fbcbee73cbc48` adds per-stage instrumentation
 Across 30 deterministic trials per degree, the MITM candidate set matched exhaustive enumeration in all 90 trials. The median exhaustive/MITM times were 0.000219/0.000166 s (N=4), 0.002845/0.000683 s (N=6), and 0.036167/0.003381 s (N=8). Median joined-pair counts were 16/150/1356; median candidates passing the complete public-key residual were 3.5/7.5/11; and final survivors were 1 at each degree. Sequential evaluation-key checks rejected a median 2.5/6.5/10 candidates at the first level, so later levels required only one check per trial median.
 
 This demonstrates early rejection of downstream verification work in these toy samples, not reduction of the MITM join output or list size. The observed timing ratios (1.32x/4.17x/10.70x) are exploratory CI measurements, not formal benchmarks and not evidence of scalability or a production-parameter attack. The detailed table and interpretation are in `PAPER1/TOY_MITM_PROTOTYPE.md`.
+
+
+## Adaptive MITM selector: parameterized audit and held-out evaluation
+
+The selector cost proxy is now parameterized by q, eta, candidate coordinate counts, and a relative pair-cost weight lambda. The script scripts/audit_mitm_selector.py checks the formula and admissible choices over q={11,17,31,97}, eta={0,1,2,3} where q>2eta, and even N={4,6,8,10,12}. This is a formula/parameter audit, not empirical performance validation across those parameter sets.
+
+Added scripts/audit_mitm_selector_holdout.py, which freezes the existing lambda=4 selector and evaluates it on a disjoint deterministic seed (0xC0FFEE), using the current toy q=11, eta=2 generator and N={4,6,8}. For each held-out instance, it compares k=1,2,3,4 on the same data, checks exact candidate-set equality against exhaustive enumeration, and reports median timing regret relative to the fastest fixed k. The experiment is intentionally limited to the current toy q/eta model; it does not validate generalization across q or eta. Its CI result must be checked before quoting any numerical held-out outcome.
+
+## Manuscript and external-review preparation
+
+Added PAPER1/IEEE_MANUSCRIPT_PLAN.md with a conservative contribution statement, proposed structure, required figures/tables, and explicit submission blockers. Added PAPER1/INDEPENDENT_REVIEW_PACKAGE.md with separate checklists for the multiplication/noise proof, joint public/evaluation-key security model, and implementation/side-channel review.
+
+These documents prepare independent review; they do not mean any external review has taken place. The PR description has been reconciled with the implemented functionality and remaining limitations. The PR remains draft and unmerged.
+
+## Current publication-readiness assessment
+
+The repository has substantial implementation and deterministic correctness evidence, but it is not yet an IEEE submission package. The held-out MITM experiment is a toy algorithm-selection diagnostic, not a cryptographic security result. Still outstanding are: verified held-out CI output; SageMath execution of the pinned unstructured-LWE proxy with careful interpretation; independent mathematical and cryptanalytic review; release-mode performance benchmarks with raw data and environment metadata; related-work/novelty comparison; and final manuscript drafting and technical editing. No concrete security level, production-readiness, arbitrary-depth correctness, or side-channel resistance is claimed.
