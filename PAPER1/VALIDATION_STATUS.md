@@ -77,3 +77,10 @@ The evaluation-key security note now derives the exact adjacent-level identity `
 ## Toy exhaustive related-key candidate experiment
 
 Added `scripts/toy_evalkey_exhaustive_search.py` and `PAPER1/TOY_EVALUATION_KEY_EXPERIMENT.md`. A local deterministic run (seed `0xBF2`, 30 trials per degree) over toy rings `Z_11[X]/(X^N+1)` with `N=4,6,8`, base 3, three evaluation-key levels, and eta=2 errors yielded median surviving ternary candidates of 3.5/7.5/11 using only the public-key sample, versus 1/1/1 when the evaluation-key samples were also imposed. The planted secret remained among the candidates in every trial. These are deliberately tiny exhaustive-search results, not a production-parameter attack, security estimate, or extrapolation to N=8192. The script is now included in the Python CI job; CI for the latest workflow edit is pending and has not yet been claimed as passing.
+
+
+## Exhaustive-search complexity assessment
+
+The toy experiment's exhaustive candidate search costs `3^N` ternary candidates and, with the current direct negacyclic multiplication, worst-case arithmetic work `O(3^N * L * N^2)`. The report now tabulates candidate-space growth through N=8192 and includes exploratory local timings through N=12. These timings are not formal benchmarks. The central conclusion is that candidate-set reduction in tiny instances does not imply an efficient attack; no extrapolation to production parameters is justified.
+
+CI run #360 on commit `e354af6fe7a06956c4b466a06079ae60e4149d77` completed successfully, including the toy exhaustive-search script in the Python audit job.
