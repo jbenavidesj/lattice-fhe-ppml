@@ -583,3 +583,47 @@ For eta=2, each coefficient error has the exact law (e_jsimmathrm{Binomial}(4,1/
 The motivation is to distinguish worst-case support from typical error magnitude. A vector with lower (ell_2^2) can have lower variance and better central quantiles while having a larger worst-case support radius. Such a marginal improvement does not establish a useful attack: all derived equations are deterministic linear combinations of the same 14 original errors and remain correlated. The companion exact joint covariance/characteristic-function analysis remains necessary, and no independent-sample count may be inferred from the number of reduced vectors.
 
 The audit is added to the SageMath CI artifact. Its output must be reviewed before any numerical conclusion is inserted into the manuscript. No secret-recovery attack or concrete security estimate is claimed.
+
+
+## 16. Exact marginal error laws and covariance of LLL-derived relations (CI run #693)
+
+The corrected SageMath audit completed successfully in GitHub Actions run #693 (commit `8ff7f551f38b93af8ca85f51b3a67645674a5146`, SageMath 10.10). Run #692, at the preceding formatting-fix commit, had a failed SageMath job; its result is superseded by the successful rerun #693. The uploaded artifact `sage-lwe-proxy-diagnostic` was downloaded and inspected.
+
+For each integer relation (w\in\mathbb Z^{14}) satisfying
+\[
+\sum_{j=0}^{13}w_jB^j=0\pmod Q,
+\]
+the one-coefficient derived error is (E_w=\sum_jw_je_j). Since the (e_j) are independent CBD_eta2 variables with variance 1, its exact variance is \(\|w\|_2^2\), and its exact support radius is (2\|w\|_1). The PMF audit uses integer dynamic programming and verifies symmetry, total mass, zero mean, and the exact second moment.
+
+The six-point Pareto frontier reported by the finite comparison (adjacent baseline plus 14 displayed LLL basis rows; not a global shortest-vector enumeration) is:
+
+| Relation | L1 | L2² / variance | Support radius | q99 | q99.9 | q99.99 | Pr(|E|>131074) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Adjacent baseline (four equivalent placements) | 65,537 | 4,294,967,297 | 131,074 | 131,073 | 131,074 | 131,074 | 0 |
+| LLL Pareto 5 | 108,404 | 2,019,592,708 | 216,808 | 113,202 | 140,710 | 161,438 | 0.00242896662991 |
+| LLL Pareto 6 | 135,667 | 1,915,654,407 | 271,334 | 111,528 | 140,667 | 164,076 | 0.00227246486711 |
+
+At threshold 100,000, the exact tail probabilities were 0.125 for the adjacent baseline, 0.0242326059205 for Pareto 5, and 0.0214293346562 for Pareto 6. At threshold 160,000, they were 0, 0.000119799105683, and 0.000154062358583, respectively. At threshold 200,000, they were 0, 6.09988514699e-08, and 1.06620283302e-06, respectively. Thus the LLL combinations have substantially better central concentration and lower variance, but larger support and nonzero extreme tails. Neither dominates the adjacent baseline under all thresholds; a lower variance must not be described as an unconditional improvement.
+
+### Dependence between the six derived relations
+
+For any two coefficient-weight vectors (w,v), the exact covariance of their derived errors at one coefficient position is
+\[
+\operatorname{Cov}(E_w,E_v)=w\cdot v,
+\]
+because the original error coordinates are independent with unit variance. For the six frontier rows, the exact Gram/covariance matrix is:
+
+\[
+\begin{pmatrix}
+4294967297&0&0&0&-336266128&154124706\\
+0&4294967297&0&0&76021120&-34853936\\
+0&0&4294967297&0&286720&-142336\\
+0&0&0&4294967297&1571806&-1074464966\\
+-336266128&76021120&286720&1571806&2019592708&213075963\\
+154124706&-34853936&-142336&-1074464966&213075963&1915654407
+\end{pmatrix}.
+\]
+
+In particular, the covariance between the two non-adjacent LLL Pareto rows is 213075963 (correlation approximately 0.10833). These are not independent observations: all rows are deterministic linear combinations of the same 14 error variables. The matrix is a marginal, per-coefficient covariance; it does not by itself characterize the full joint discrete law or prove a distinguisher.
+
+**Conclusion.** The corrected experiment establishes an exact marginal trade-off and quantifies covariance among the selected derived relations. It does not establish a practical filtering advantage, secret recovery, a security reduction, or a concrete security level. The Pareto set is restricted to the tested LLL basis rows and adjacent baseline, not all integer vectors in the modular kernel. A further cryptanalytic step would need to exploit the complete joint law and evaluate an actual attack objective, rather than count correlated derived equations as additional samples.
