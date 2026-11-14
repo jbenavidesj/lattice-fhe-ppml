@@ -53,8 +53,8 @@ pattern = re.compile(
     re.S,
 )
 matches = list(pattern.finditer(source))
-if len(matches) != 5:
-    raise SystemExit(f"Expected 5 Pandoc longtables, found {len(matches)}")
+if len(matches) != 4:
+    raise SystemExit(f"Expected 4 Pandoc longtables, found {len(matches)}")
 
 
 def convert(match):
@@ -90,8 +90,8 @@ def convert(match):
 
 
 source, converted = pattern.subn(convert, source)
-if converted != 5:
-    raise SystemExit(f"Expected to convert 5 tables, converted {converted}")
+if converted != 4:
+    raise SystemExit(f"Expected to convert 4 tables, converted {converted}")
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
@@ -101,8 +101,8 @@ table_pattern = re.compile(
     re.S,
 )
 tables = list(table_pattern.finditer(source))
-if len(tables) != 5:
-    raise SystemExit(f"Expected 5 IEEE tabularx tables, found {len(tables)}")
+if len(tables) != 4:
+    raise SystemExit(f"Expected 4 IEEE tabularx tables, found {len(tables)}")
 for table in tables:
     body = table.group(1)
     if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
