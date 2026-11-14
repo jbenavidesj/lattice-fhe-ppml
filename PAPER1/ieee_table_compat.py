@@ -114,7 +114,7 @@ for table in re.finditer(
     r"\\begin\{tabularx\}.*?\\end\{tabularx\}", source, re.S
 ):
     body = table.group(0)
-    if not (body.find(r"\\toprule") < body.find(r"\\midrule") < body.rfind(r"\\bottomrule")):
+    if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
         raise SystemExit("Table rule ordering check failed")
 
 path.write_text(source, encoding="utf-8")
