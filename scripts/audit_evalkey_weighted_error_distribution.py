@@ -110,6 +110,9 @@ def report(label, row, powers):
     l1, l2, max_abs, w = row
     assert relation_holds(w, powers), "nonzero target remains"
     counts, radius, total = exact_counts(w)
+    # The exact integer PMF represents the centered modular error only when
+    # its entire support is strictly inside (-Q/2,Q/2).
+    assert 2 * radius < Q, "weighted-error support can wrap modulo Q"
     print(f"[{label}]")
     print(f"w={w}")
     print(f"L1={l1}; L2_squared={l2}; max_abs={max_abs}; exact_support_radius={radius}")
@@ -149,6 +152,7 @@ def main():
     print(f"N=8192; Q_bits={Q.nbits()}; B={B}; levels={LEVELS}; CBD_eta2")
     print("All w satisfy sum_j w_j*B^j = 0 (mod Q).")
     print("Variance is L2^2; exact support radius is 2*L1.")
+    print("Every reported support is strictly below Q/2, so no modular centered-lift wrap occurs.")
     print("Pareto frontier is restricted to the adjacent baseline plus the displayed LLL basis rows.")
     print(f"LLL_basis_rows={len(rows)}; pareto_frontier_size={len(frontier)}")
     for rank, row in enumerate(frontier, 1):
