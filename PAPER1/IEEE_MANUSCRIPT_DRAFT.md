@@ -1,8 +1,5 @@
 # An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits
 
-Juan Benavides J.  
-Independent Researcher — Cryptography & Cybersecurity
-
 ## Abstract
 
 This work presents an experimental implementation and bounded correctness study of an RNS-BFV prototype using a four-lane residue number system (RNS) representation at polynomial degree N=8192. The multiplication reference path lifts ciphertext components to centered integers, computes negacyclic tensor products through an auxiliary NTT/CRT basis, and retains the integer quotient information required for coefficientwise BFV scale-and-round. Deterministic audits check arithmetic identities, auxiliary reconstruction range, and a conservative noise bound for one multiplication followed by relinearization. The public evaluation-key format is analyzed as a structured collection of related-secret equations involving (s,s^2), for which no concrete security estimate is claimed. Small-degree exhaustive and meet-in-the-middle experiments are included only as algorithmic diagnostics. The implementation is an experimental correctness prototype: it does not establish a concrete Ring-LWE security level, arbitrary multiplicative depth, side-channel resistance, or production performance.
