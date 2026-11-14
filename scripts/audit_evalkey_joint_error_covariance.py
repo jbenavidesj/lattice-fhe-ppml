@@ -37,6 +37,14 @@ def exact_covariance():
     ]
 
 
+def joint_transcript_covariance():
+    """Covariance of (e_pk, z_0,...,z_12); e_pk is independent of eval-key errors."""
+    C = exact_covariance()
+    return [[1 if i == j == 0 else
+             (C[i - 1][j - 1] if i > 0 and j > 0 else 0)
+             for j in range(ROWS + 1)] for i in range(ROWS + 1)]
+
+
 def joint_characteristic(t):
     """Evaluate exact-form product numerically for a supplied real vector t.
 
@@ -80,8 +88,18 @@ def main():
     print(f"strict_diagonal_dominance_margin={strict_margin}")
     print(f"determinant_exact={det}")
     print("positive_definite=True")
+    J = joint_transcript_covariance()
+    assert J[0][0] == 1
+    assert all(J[0][j] == J[j][0] == 0 for j in range(1, ROWS + 1))
+    assert all(J[i][j] == C[i - 1][j - 1]
+               for i in range(1, ROWS + 1) for j in range(1, ROWS + 1))
+    print("Full public/evaluation transcript residual covariance (e_pk,z_0,...,z_12):")
+    for row in J:
+        print(" ".join(str(x) for x in row))
+    print("public_error_variance=1; public_eval_cross_covariance=0")
     print("joint characteristic function:")
     print("phi(t_0,...,t_12) = product_{k=0}^{13} cos((D^T t)_k/2)^4")
+    print("For the independent public-key residual e_pk, multiply by cos(t_pk/2)^4.")
     print("This factorization retains the exact eta=2 discrete law.")
     print("It proves dependence between adjacent transformed errors; covariance alone is not the full law.")
     print("Coefficient positions are independent under the independent coefficient sampler.")
