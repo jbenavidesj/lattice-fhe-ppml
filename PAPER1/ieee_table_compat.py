@@ -53,8 +53,8 @@ pattern = re.compile(
     re.S,
 )
 matches = list(pattern.finditer(source))
-if len(matches) != 4:
-    raise SystemExit(f"Expected 4 Pandoc longtables, found {len(matches)}")
+if len(matches) != 3:
+    raise SystemExit(f"Expected 3 Pandoc longtables after the hand-authored full-width table, found {len(matches)}")
 
 
 def convert(match):
@@ -97,22 +97,24 @@ def convert(match):
 
 
 source, converted = pattern.subn(convert, source)
-if converted != 4:
-    raise SystemExit(f"Expected to convert 4 tables, converted {converted}")
+if converted != 3:
+    raise SystemExit(f"Expected to convert 3 Pandoc longtables, converted {converted}")
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
-table_pattern = re.compile(
-    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}[lcr]?(?:X+|cX+)@\{\}\}(.*?)\\end\{tabularx\}",
-    re.S,
-)
-tables = list(table_pattern.finditer(source))
-if len(tables) != 4:
-    raise SystemExit(f"Expected 4 IEEE tabularx tables, found {len(tables)}")
-for table in tables:
-    body = table.group(1)
-    if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
+table_starts = len(re.findall(r"\\\\begin\\{tabularx\\}", source))
+table_ends = len(re.findall(r"\\\\end\\{tabularx\\}", source))
+if table_starts != 4 or table_ends != 4:
+    raise SystemExit(
+        f"Expected 4 IEEE tabularx tables (3 converted plus 1 authored), "
+        f"found {table_starts} begins and {table_ends} ends"
+    )
+for table in re.finditer(
+    r"\\\\begin\\{tabularx\\}.*?\\\\end\\{tabularx\\}", source, re.S
+):
+    body = table.group(0)
+    if not (body.find(r"\\\\toprule") < body.find(r"\\\\midrule") < body.rfind(r"\\\\bottomrule")):
         raise SystemExit("Table rule ordering check failed")
 
 path.write_text(source, encoding="utf-8")
