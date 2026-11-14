@@ -200,7 +200,6 @@ jobs:
             --standalone \
             --template=PAPER1/IEEEtran-journal-template.tex \
             --metadata title="An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits" \
-            --variable=longtable:false \
             --wrap=none \
             --output=build/Paper1_IEEEtran.tex
       - name: Compile PDF
