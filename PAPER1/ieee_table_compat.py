@@ -23,7 +23,7 @@ for match in reversed(matches):
         + r"\centering\small" + "\n"
         + r"\begin{tabularx}{\columnwidth}{@{}"
         + "X" * columns
-        + "@{}}" + "}\n"
+        + "@{}}" + "\n"
         + r"\toprule\noalign{}"
     )
     source = source[:match.start()] + replacement + source[match.end():]
