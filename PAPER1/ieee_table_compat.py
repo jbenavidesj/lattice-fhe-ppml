@@ -9,20 +9,20 @@ source = path.read_text(encoding="utf-8")
 # Make long decimal literals breakable without changing their values.
 # seqsplit is used in text mode; the one display-math modulus is wrapped in text.
 source = re.sub(
-    r"Q=(\\d{40,})",
-    lambda m: r"Q=\\text{\\seqsplit{" + m.group(1) + "}}",
+    r"Q=(\d{40,})",
+    lambda m: r"Q=\text{\seqsplit{" + m.group(1) + "}}",
     source,
 )
 source = re.sub(
-    r"(?<![A-Za-z0-9\\{])([0-9]{14,})(?![A-Za-z0-9\\}])",
-    lambda m: r"\\seqsplit{" + m.group(1) + "}",
+    r"(?<![A-Za-z0-9\{])([0-9]{14,})(?![A-Za-z0-9\}])",
+    lambda m: r"\seqsplit{" + m.group(1) + "}",
     source,
 )
 
 # Permit long repository paths and identifiers to wrap at character boundaries.
 source = re.sub(
-    r"\\texttt\\{([^{}]+)\\}",
-    lambda m: r"\\texttt{\\seqsplit{" + m.group(1) + "}}",
+    r"\\texttt\{([^{}]+)\}",
+    lambda m: r"\texttt{\seqsplit{" + m.group(1) + "}}",
     source,
 )
 
