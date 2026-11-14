@@ -49,12 +49,12 @@ The public-key relation is b_pk+a_pk s=e_pk (mod Q), with sign convention as imp
 
 **Concrete parameter instance.** The four coefficient moduli and primitive negacyclic roots are:
 
-| Lane | (q_i) | (w_i) | (psi_i), order (2N) |
-|---:|---:|---:|---:|
-| 1 | 36028797002170369 | 55 | 22505317672356688 |
-| 2 | 36028796951838721 | 55 | 29410112198941026 |
-| 3 | 18014398508400641 | 54 | 9354911369072846 |
-| 4 | 18014398507892737 | 54 | 12617745759101472 |
+| Lane | Modulus q_i | Negacyclic root psi_i (order 2N) |
+|---:|---:|---:|
+| 1 | 36028797002170369 | 22505317672356688 |
+| 2 | 36028796951838721 | 29410112198941026 |
+| 3 | 18014398508400641 | 9354911369072846 |
+| 4 | 18014398507892737 | 12617745759101472 |
 
 Their product is the 218-bit ciphertext modulus
 \[
