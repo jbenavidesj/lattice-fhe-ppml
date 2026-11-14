@@ -33,7 +33,7 @@ source = source.replace(r"\end{longtable}", r"\end{tabularx}" + "\n" + r"\end{ta
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
-table_pattern = re.compile(r"(\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
+table_pattern = re.compile(r"(\\begin\{tabularx\}\{\\\\columnwidth\}\{@\{\}X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
 def fix_table(match):
     body = match.group(2)
     footer = r"\bottomrule\noalign{}"
