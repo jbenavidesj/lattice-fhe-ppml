@@ -14,7 +14,7 @@ if source.count(bibliography_marker) != 1:
     raise SystemExit("Expected exactly one bibliography environment")
 source = source.replace(
     bibliography_marker,
-    r"\balance" + "\n" + bibliography_marker,
+    r"\clearpage" + "\n" + r"\balance" + "\n" + bibliography_marker,
     1,
 )
 
