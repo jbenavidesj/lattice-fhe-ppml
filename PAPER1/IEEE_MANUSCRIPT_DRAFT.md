@@ -124,12 +124,7 @@ establish predictive performance at larger dimensions or production parameters.
 
 ## 8. Performance evaluation
 
-A first Criterion release-mode baseline was collected in a dedicated
-continuous-integration workflow. The runner was a virtualized Azure Linux VM
-with an AMD EPYC 9V74 host, four visible vCPUs, approximately 16 GiB RAM,
-x86_64, Linux kernel 7.0.0-1017-azure, rustc/cargo 1.100.0 and LLVM 23.1.5.
-Raw Criterion outputs and environment metadata are retained as supplementary
-reproducibility artifacts.
+The initial release-mode baseline was measured with Criterion in the CI workflow. The runner was a virtualized Azure Linux VM on an AMD EPYC 9V74 host, with four visible vCPUs and approximately 16 GiB of RAM. The environment used x86_64, Linux kernel 7.0.0-1017-azure, rustc/cargo 1.100.0, and LLVM 23.1.5. Raw Criterion output and environment metadata are retained as reproducibility artifacts.
 
 | Operation | Estimate | 95% within-run CI |
 |---|---:|---:|
@@ -141,31 +136,19 @@ reproducibility artifacts.
 | BFV multiply plus relinearization | 685.83 ms | 685.48–686.20 ms |
 | Relinearization-key generation | 375.69 ms | 375.42–376.04 ms |
 
-For the same 20,000 modular-reduction inputs, AsymRed measured 170.20 us
-(169.85–170.67 us), while the u128 % q baseline measured 38.52 us
-(38.285–38.840 us). AsymRed was therefore approximately 4.42 times slower
-in this microbenchmark; no speedup is claimed.
+On the same 20,000 modular-reduction inputs, AsymRed took 170.20 us (169.85–170.67 us), compared with 38.52 us (38.285–38.840 us) for the u128 % q baseline. In this microbenchmark, AsymRed was about 4.42 times slower. We therefore make no speedup claim.
 
-These results are a single virtualized-CI session. Criterion's intervals
-describe within-run sampling uncertainty and do not capture variation across
-independent sessions, machines, CPU frequency, or co-tenancy. The exact
-auxiliary NTT/CRT plus BigInt multiplication is a correctness-reference path,
-so its cost is not representative of a future optimized implementation.
-These measurements provide a reproducible baseline only, not evidence of
-production performance or competitiveness. A publishable comparison still
-requires independent sessions, preferably bare-metal measurements, additional
-primitive-level baselines, and a recognized BFV implementation with matching
-semantics and parameters.
+All measurements come from one virtualized CI session. Criterion's intervals describe variation within that run; they do not capture differences across independent sessions or machines, changes in CPU frequency, or co-tenancy. The auxiliary NTT/CRT plus BigInt multiplication is a correctness-reference path, not an optimized kernel, so its measured cost should not be taken as representative of a future optimized implementation. These data provide a reproducible baseline only. They do not establish production performance or competitiveness. A meaningful comparison would require independent sessions, preferably on bare metal, additional primitive-level baselines, and a recognized BFV implementation tested with matching semantics and parameters.
 
 ## 9. Limitations and responsible claims
 
-- No concrete Ring-LWE security level or 128-bit security claim.
-- No independent cryptanalytic review of the joint public/evaluation-key transcript.
-- No arbitrary multiplicative-depth proof, modulus switching, or bootstrapping.
-- No production-optimized BFV multiplication or multi-session comparative benchmark evaluation; only a single CI release baseline is available.
-- No constant-time, side-channel-resistance, or comprehensive memory-remanence claim.
-- No production-parameter attack demonstrated by the toy exhaustive/MITM experiments.
-- No independent review of the multiplication/noise proof completed yet.
+- The work does not establish a concrete Ring-LWE security level or a 128-bit security claim.
+- The joint public/evaluation-key transcript has not received independent cryptanalytic review.
+- The correctness argument covers one multiplication and relinearization; it does not prove arbitrary multiplicative depth or include modulus switching or bootstrapping.
+- The implementation does not provide an optimized BFV multiplication. Performance data consist of one virtualized CI session, not a multi-session comparison.
+- No constant-time, side-channel-resistance, or comprehensive memory-remanence property has been established.
+- The toy exhaustive-search and MITM experiments do not demonstrate an attack at the production parameters.
+- The multiplication and noise proof still requires independent mathematical review.
 
 ## 10. Conclusion
 
