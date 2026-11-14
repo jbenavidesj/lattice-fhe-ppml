@@ -65,7 +65,14 @@ def convert(match):
         raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
     if r"\bottomrule" in body:
         raise SystemExit("Unexpected bottomrule inside table body")
-    if "log2(half-table entries)" in header:
+    if "Modulus q" in header or "Negacyclic root" in header:
+        # The four 16-digit CRT moduli and roots must remain on one line.
+        # A two-column float gives each numeric column enough width.
+        table_env = "table*"
+        table_width = r"\textwidth"
+        table_font = r"\centering\small"
+        column_spec = "@{}cXX@{}"
+    elif "log2(half-table entries)" in header:
         table_env = "table"
         table_width = r"\columnwidth"
         table_font = r"\centering\scriptsize"
@@ -97,7 +104,7 @@ if r"\begin{longtable}" in source or r"\end{longtable}" in source:
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
 table_pattern = re.compile(
-    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}(?:l?X+)@\{\}\}(.*?)\\end\{tabularx\}",
+    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}[lcr]?(?:X+|cX+)@\{\}\}(.*?)\\end\{tabularx\}",
     re.S,
 )
 tables = list(table_pattern.finditer(source))
