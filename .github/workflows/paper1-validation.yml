@@ -202,6 +202,10 @@ jobs:
             --metadata title="An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits" \
             --wrap=none \
             --output=build/Paper1_IEEEtran.tex
+      - name: Convert Pandoc longtables to IEEE-compatible tabularx
+        run: python3 PAPER1/ieee_table_compat.py
+      - name: Verify no longtable environment remains
+        run: '! grep -n "\\\\begin{longtable}\\\\|\\\\end{longtable}" build/Paper1_IEEEtran.tex'
       - name: Compile PDF
         run: |
           pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build build/Paper1_IEEEtran.tex > build/pdflatex-pass1.log
