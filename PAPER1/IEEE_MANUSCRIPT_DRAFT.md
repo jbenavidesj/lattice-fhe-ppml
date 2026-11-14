@@ -124,13 +124,12 @@ establish predictive performance at larger dimensions or production parameters.
 
 ## 8. Performance evaluation
 
-A first Criterion release-mode baseline was collected in a dedicated GitHub Actions
-workflow on commit be820f044647e8e2444d5e415503172bb1498a6f (run #3).
-The runner was a virtualized Azure Linux VM with an AMD EPYC 9V74 host,
-four visible vCPUs, approximately 16 GiB RAM, x86_64, Linux kernel
-7.0.0-1017-azure, rustc/cargo 1.100.0 and LLVM 23.1.5. Raw Criterion
-outputs and environment metadata were retained in workflow artifact
-paper1-release-benchmarks-be820f044647e8e2444d5e415503172bb1498a6f.
+A first Criterion release-mode baseline was collected in a dedicated
+continuous-integration workflow. The runner was a virtualized Azure Linux VM
+with an AMD EPYC 9V74 host, four visible vCPUs, approximately 16 GiB RAM,
+x86_64, Linux kernel 7.0.0-1017-azure, rustc/cargo 1.100.0 and LLVM 23.1.5.
+Raw Criterion outputs and environment metadata are retained as supplementary
+reproducibility artifacts.
 
 | Operation | Estimate | 95% within-run CI |
 |---|---:|---:|
