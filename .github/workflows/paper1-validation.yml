@@ -198,6 +198,7 @@ jobs:
             --from=markdown+pipe_tables+raw_tex+tex_math_dollars+tex_math_single_backslash \
             --to=latex \
             --standalone \
+            --shift-heading-level-by=-1 \\
             --template=PAPER1/IEEEtran-journal-template.tex \
             --metadata title="An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits" \
             --wrap=none \
