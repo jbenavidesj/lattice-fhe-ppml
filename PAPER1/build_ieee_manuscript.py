@@ -77,6 +77,16 @@ if appendix_idx is None:
 lines.insert(appendix_idx, r"\appendices")
 lines.insert(appendix_idx + 1, "")
 
+# Strip hand-written section/appendix labels so IEEEtran supplies the
+# single authoritative numbering sequence after the heading-level shift.
+normalized_headings = []
+for line in lines:
+    if line.startswith("## "):
+        line = re.sub(r"^## \d+\.\s+", "## ", line)
+        line = re.sub(r"^## Appendix [A-Z]\.\s+", "## ", line)
+    normalized_headings.append(line)
+lines = normalized_headings
+
 # Use IEEE's bibliography environment while preserving the checked reference text.
 try:
     refs_idx = lines.index("## References")
