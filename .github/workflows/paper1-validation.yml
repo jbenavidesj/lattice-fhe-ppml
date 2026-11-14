@@ -195,7 +195,7 @@ jobs:
       - name: Convert Markdown to IEEEtran LaTeX
         run: |
           pandoc build/IEEE_MANUSCRIPT.md \
-            --from=markdown+pipe_tables+raw_tex+tex_math_dollars \
+            --from=markdown+pipe_tables+raw_tex+tex_math_dollars+tex_math_single_backslash \
             --to=latex \
             --standalone \
             --template=PAPER1/IEEEtran-journal-template.tex \
