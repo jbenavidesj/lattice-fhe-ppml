@@ -1,0 +1,72 @@
+name: Paper 1 release benchmarks
+
+on:
+  push:
+    branches: ["paper1-validation-corrections"]
+    paths:
+      - "src/**"
+      - "benches/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/paper1-release-bench.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-benchmarks:
+    name: Release-mode RNS-BFV benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record machine and toolchain metadata
+        run: |
+          mkdir -p benchmark-artifacts
+          {
+            echo "commit=$GITHUB_SHA"
+            echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "os=$(uname -a)"
+            echo "rustc=$(rustc --version --verbose | tr '\n' ';')"
+            echo "cargo=$(cargo --version)"
+            echo "cpu=$(lscpu | tr '\n' ';')"
+            echo "memory=$(grep MemTotal /proc/meminfo)"
+          } | tee benchmark-artifacts/environment.txt
+      - name: Run Criterion in optimized release mode
+        run: |
+          set -o pipefail
+          cargo bench --bench arithmetic 2>&1 | tee benchmark-artifacts/criterion.log
+      - name: Summarize Criterion estimates
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("target/criterion")
+          out = []
+          if root.exists():
+              for path in sorted(root.glob("**/new/estimates.json")):
+                  data = json.loads(path.read_text())
+                  mean = data.get("mean", {})
+                  ci = mean.get("confidence_interval", {})
+                  out.append(
+                      f"{path.parent.parent.relative_to(root)}: "
+                      f"mean_ns={mean.get('point_estimate')} "
+                      f"95pct_ci_ns=[{ci.get('lower_bound')}, {ci.get('upper_bound')}]"
+                  )
+          summary = "\n".join(out) if out else "No Criterion estimate files were produced."
+          print(summary)
+          Path("benchmark-artifacts/estimates.txt").write_text(summary + "\n")
+          PY
+      - name: Upload raw benchmark results and environment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper1-release-benchmarks-${{ github.sha }}
+          path: |
+            benchmark-artifacts/
+            target/criterion/
+          if-no-files-found: warn
+          retention-days: 30

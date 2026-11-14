@@ -1,0 +1,228 @@
+name: Paper 1 validation
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-audit:
+    name: Python arithmetic audits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit candidate parameters
+        run: python scripts/audit_parameters.py
+      - name: Differential-test AsymRed
+        run: python scripts/verify_asymred.py
+      - name: Check negacyclic reference
+        run: python scripts/verify_negacyclic.py
+      - name: Audit toy BFV multiplication noise bound
+        run: python scripts/audit_toy_bfv_noise.py
+      - name: Audit N=8192 RNS-BFV multiplication noise bound
+        run: python scripts/audit_rns_bfv_noise.py
+      - name: Verify ternary negacyclic-square parity identity
+        run: python scripts/verify_ternary_square_parity.py
+      - name: Exhaustively measure ternary square-map fibers
+        run: python scripts/audit_ternary_square_fibers.py
+      - name: Measure stagewise public and evaluation-key candidate filtering
+        run: python scripts/audit_evalkey_stagewise_filtering.py
+      - name: Compare public-only, evaluation-only, joint, and exact transformed filters
+        run: python scripts/audit_evalkey_four_way_filtering.py
+      - name: Run toy exhaustive evaluation-key candidate experiment
+        run: python scripts/toy_evalkey_exhaustive_search.py
+      - name: Measure staged public/evaluation-key candidate filtering
+        run: python scripts/audit_evalkey_filtering.py
+      - name: Audit adjacent-level linear evaluation-key prefilters
+        run: python scripts/audit_evalkey_linear_prefilter.py
+      - name: Measure adjacent-level prefilters inside the toy MITM pipeline
+        run: python scripts/audit_mitm_linear_prefilter.py
+      - name: Audit split-secret square and evaluation residual identity
+        run: python scripts/audit_split_secret_square.py
+      - name: Run toy meet-in-the-middle cross-check
+        run: python scripts/toy_evalkey_mitm.py
+      - name: Audit adaptive MITM selector across q and eta
+        run: python scripts/audit_mitm_selector.py
+      - name: Evaluate frozen adaptive MITM selector on held-out instances
+        run: python scripts/audit_mitm_selector_holdout.py
+      - name: Evaluate frozen MITM selector across held-out q and eta
+        run: python scripts/audit_mitm_selector_robustness.py
+      - name: Project MITM asymptotic resource requirements
+        run: python scripts/audit_mitm_scalability.py
+
+
+  sage-estimator:
+    name: Pinned LWE proxy diagnostic (SageMath)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: sagemath/sagemath:10.10
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git
+          rm -rf /var/lib/apt/lists/*
+      - name: Check SageMath runtime
+        run: |
+          sage --version
+          git --version
+      - name: Install pinned lattice-estimator revision
+        run: |
+          git clone https://github.com/malb/lattice-estimator.git /tmp/lattice-estimator
+          git -C /tmp/lattice-estimator checkout 7d59f866655362ea8eab803dbc833710c2bc362a
+          cd /tmp/lattice-estimator
+          sage -pip install -e .
+      - name: Run bounded rough-profile LWE proxy diagnostic
+        run: |
+          if sage -python scripts/estimate_lwe_proxy.py > sage-lwe-proxy-output.txt 2>&1; then
+            status=0
+          else
+            status=$?
+          fi
+          cat sage-lwe-proxy-output.txt
+          exit "$status"
+      - name: Audit exact weighted evaluation-key error distributions
+        run: |
+          set +e
+          sage -python scripts/audit_evalkey_weighted_error_distribution.py > evalkey-weighted-error-distribution.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-weighted-error-distribution.txt
+          exit "$status"
+      - name: Audit exact joint evaluation-key error covariance
+        run: |
+          set +e
+          sage -python scripts/audit_evalkey_joint_error_covariance.py > evalkey-joint-error-covariance.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-joint-error-covariance.txt
+          exit "$status"
+      - name: Exhaustively compare toy-ring secret candidate filters
+        run: |
+          set +e
+          sage -python scripts/audit_evalkey_toy_secret_filtering.py > evalkey-toy-secret-filtering.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-toy-secret-filtering.txt
+          exit "$status"
+      - name: Compare exact joint original/transformed candidate constraints
+        run: |
+          set +e
+          sage -python scripts/audit_evalkey_joint_candidate_filter.py > evalkey-joint-candidate-filter.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-joint-candidate-filter.txt
+          exit "$status"
+      - name: Audit stagewise original and transformed candidate filtering
+        run: |
+          set +e
+          sage -python scripts/audit_evalkey_incremental_joint_filtering.py > evalkey-incremental-joint-filtering.txt 2>&1
+          status=$?
+          set -e
+          cat evalkey-incremental-joint-filtering.txt
+          exit "$status"
+      - name: Compare exact ternary transcript MILP with exhaustive enumeration
+        run: |
+          set +e
+          sage -python scripts/audit_ternary_transcript_milp.py > ternary-transcript-milp.txt 2>&1
+          status=$?
+          set -e
+          cat ternary-transcript-milp.txt
+          exit "$status"
+      - name: Search short modular target-cancellation relations
+        run: |
+          if sage -python scripts/search_evalkey_short_relations.sage.py > evalkey-short-relations.txt 2>&1; then
+            status=0
+          else
+            status=$?
+          fi
+          cat evalkey-short-relations.txt
+          exit "$status"
+      - name: Upload diagnostic output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sage-lwe-proxy-diagnostic
+          path: |
+            sage-lwe-proxy-output.txt
+            evalkey-short-relations.txt
+            evalkey-weighted-error-distribution.txt
+            evalkey-joint-error-covariance.txt
+            evalkey-toy-secret-filtering.txt
+            evalkey-joint-candidate-filter.txt
+            evalkey-incremental-joint-filtering.txt
+            ternary-transcript-milp.txt
+          if-no-files-found: warn
+  rust:
+    name: Rust tests and benchmark compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Format Rust sources
+        run: cargo fmt --all
+      - name: Run unit tests
+        run: cargo test --lib
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Compile benchmark target
+        run: cargo bench --no-run
+
+  typeset-ieee:
+    name: IEEEtran journal typesetting and PDF inspection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Pandoc and TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-publishers texlive-latex-extra texlive-fonts-recommended poppler-utils
+      - name: Prepare manuscript for IEEEtran
+        run: python3 PAPER1/build_ieee_manuscript.py
+      - name: Convert Markdown to IEEEtran LaTeX
+        run: |
+          pandoc build/IEEE_MANUSCRIPT.md \
+            --from=markdown+pipe_tables+raw_tex+tex_math_dollars+tex_math_single_backslash \
+            --to=latex \
+            --standalone \
+            --shift-heading-level-by=-1 \
+            --template=PAPER1/IEEEtran-journal-template.tex \
+            --metadata title="An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits" \
+            --wrap=none \
+            --output=build/Paper1_IEEEtran.tex
+      - name: Convert Pandoc longtables to IEEE-compatible tabularx
+        run: python3 PAPER1/ieee_table_compat.py
+      - name: Verify no longtable environment remains
+        run: '! grep -n "\\\\begin{longtable}\\\\|\\\\end{longtable}" build/Paper1_IEEEtran.tex'
+      - name: Compile PDF
+        run: |
+          pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build build/Paper1_IEEEtran.tex > build/pdflatex-pass1.log
+          pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build build/Paper1_IEEEtran.tex > build/pdflatex-pass2.log
+          test -s build/Paper1_IEEEtran.pdf
+          pdfinfo build/Paper1_IEEEtran.pdf | tee build/pdfinfo.txt
+      - name: Upload PDF, LaTeX source, and build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper1-ieee-typeset
+          path: |
+            build/Paper1_IEEEtran.pdf
+            build/Paper1_IEEEtran.tex
+            build/pdflatex-pass1.log
+            build/pdflatex-pass2.log
+            build/pdfinfo.txt
+          if-no-files-found: warn
+          retention-days: 30
