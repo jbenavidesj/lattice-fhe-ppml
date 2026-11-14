@@ -6,6 +6,15 @@ import re
 path = Path("build/Paper1_IEEEtran.tex")
 source = path.read_text(encoding="utf-8")
 
+# Break the long MITM payload header inside its table cell; this is a
+# presentation-only change and leaves the underlying label and values intact.
+source = source.replace(
+    "log2(payload bytes)",
+    r"\shortstack{log2(payload\\ bytes)}",
+)
+if "log2(payload bytes)" in source:
+    raise SystemExit("MITM payload header wrapping substitution failed")
+
 # Make long decimal literals breakable without changing their values.
 # seqsplit is used in text mode; the one display-math modulus is wrapped in text.
 def format_display_modulus(match):
