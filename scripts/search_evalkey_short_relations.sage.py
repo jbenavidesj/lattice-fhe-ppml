@@ -53,6 +53,10 @@ def main():
         relation = sum(w[j] * powers[j] for j in range(LEVELS)) % Q
         assert relation == 0, f"LLL row {i} is not a modular relation"
         l1 = sum(abs(x) for x in w)
+        # The full integer error support must fit strictly inside (-Q/2,Q/2).
+        # This guarantees that its centered modular representative equals the
+        # integer weighted sum used by the distribution analysis.
+        assert 4 * l1 < 2 * Q, "weighted-error support can wrap modulo Q"
         l2_sq = sum(x*x for x in w)
         max_abs = max(abs(x) for x in w)
         rows.append((l1, l2_sq, max_abs, w))
@@ -67,6 +71,7 @@ def main():
             f"error_variance={l2_sq}; w={w}"
         )
     print("All reported rows satisfy the exact modular target-cancellation relation.")
+    print("All reported error supports lie strictly below Q/2; centered lifts equal integer weighted sums.")
     print("Caution: these are derived correlated samples from one transcript, not independent keys.")
     print("No secret-recovery attack or concrete security estimate is performed.")
 
