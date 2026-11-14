@@ -288,4 +288,4 @@ Reproducibility records: CI run #729, commit `2b862166bf4a84178250b728243995b054
 
 [7] A. Al Badawi, Y. Polyakov, K. M. M. Aung, B. Veeravalli, and K. Rohloff, “Implementation and Performance Evaluation of RNS Variants of the BFV Homomorphic Encryption Scheme,” *IEEE Transactions on Emerging Topics in Computing*, vol. 9, no. 2, pp. 941–956, 2021, doi: 10.1109/TETC.2019.2902799.
 
-[8] S. Halevi, Y. Polyakov, and V. Shoup, “An Improved RNS Variant of the BFV Homomorphic Encryption Scheme,” *CT-RSA 2019*, LNCS, vol. 11405, pp. 83–105, 2019, doi: 10.1007/978-3-030-12612-4_5.
+[8] S. Halevi, Y. Polyakov, and V. Shoup, “An Improved RNS Variant of the BFV Homomorphic Encryption Scheme,” *CT-RSA 2019*, LNCS, vol. 11405, pp. 83–105, 2019, doi: 10.1007/978-3-030-12612-4\\_5.
