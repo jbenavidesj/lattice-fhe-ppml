@@ -30,7 +30,20 @@ def normalize_plaintext_powers(line):
         )
     return "".join(parts)
 
-lines = [normalize_plaintext_powers(line) for line in lines]
+# Normalize compact powers only in prose. Do not rewrite any line inside a
+# display-math block: doing so can nest inline \\( ... \\) delimiters
+# inside Pandoc's \\[ ... \\] environment and corrupt equations such as
+# B^j s^2.
+normalized_lines = []
+in_display_math = False
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith(r"\\[") or stripped == r"\\begin{equation}":
+        in_display_math = True
+    normalized_lines.append(line if in_display_math else normalize_plaintext_powers(line))
+    if stripped.endswith(r"\\]") or stripped == r"\\end{equation}":
+        in_display_math = False
+lines = normalized_lines
 
 # Remove the Markdown title (provided by the IEEEtran template) and the
 # internal editorial-status paragraph, neither of which belongs in the paper.
