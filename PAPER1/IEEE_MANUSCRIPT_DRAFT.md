@@ -262,11 +262,11 @@ The dimension-growth exhaustive audit in CI run #722 tested (N=3,4), $q\in\{17,1
 
 The following exhaustive experiments extend the conditional candidate-filtering diagnostics across dimensions. In every setting, the candidate space is the full ternary space for the stated small (N), with toy moduli and bounded errors; these are not production-parameter attacks.
 
-| Audit | Findings |
-|---|---|
-| CI #729 | Parameters/trials: (N=5,6), $q\in\{17,19\}$; 50 trials per (N=5) setting and 30 per (N=6) setting; (B=2), six levels. Public-key equation ambiguous: 18/50, 10/50, 11/30, 8/30, respectively. Evaluation-key effect: the joint public-plus-first-evaluation-key filter was unique in every trial; evaluation-key-only filtering reached uniqueness by the second tested level. |
-| CI #734 | Parameters/trials: (N=2,3,4,5,6), $q\in\{17,19\}$; 960 seeded transcripts in aggregate. Public-key equation ambiguous: 314/960. Evaluation-key effect: among those 314 ambiguous cases, the first level resolved 281, the second another 29, and the third the final four; evaluation-key constraints did not change cases already unique from the public key. |
-| CI #741 | Parameters/trials: (N=7,8), $q\in\{13,17\}$; 30 or 20 trials per setting; (B=2), six levels. Public-key equation ambiguous: 28/30, 8/30, 20/20, 4/20, respectively. Evaluation-key effect: the first joint evaluation-key stage resolved all 60 ambiguous cases; the remaining 40 were already unique from the public-key equation. |
+**CI #729.** Parameters and trials: (N=5,6), $q\in\{17,19\}$; 50 trials per (N=5) setting and 30 per (N=6) setting; (B=2), six levels. The public-key equation was ambiguous in 18/50, 10/50, 11/30, and 8/30 trials, respectively. The joint public-plus-first-evaluation-key filter was unique in every trial; evaluation-key-only filtering reached uniqueness by the second tested level.
+
+**CI #734.** Parameters and trials: (N=2,3,4,5,6), $q\in\{17,19\}$; 960 seeded transcripts in aggregate. The public-key equation was ambiguous in 314/960 cases. Among those 314 ambiguous cases, the first evaluation-key level resolved 281, the second another 29, and the third the final four. Evaluation-key constraints did not change cases already unique from the public key.
+
+**CI #741.** Parameters and trials: (N=7,8), $q\in\{13,17\}$; 30 or 20 trials per setting; (B=2), six levels. The public-key equation was ambiguous in 28/30, 8/30, 20/20, and 4/20 trials, respectively. The first joint evaluation-key stage resolved all 60 ambiguous cases; the remaining 40 were already unique from the public-key equation.
 
 Across these audits, every tested candidate set remained nonempty and retained the planted secret. Where the transformed anchor-plus-adjacent-differences filter was evaluated, it matched the original residual constraints exactly. The experiments enumerate at most (3^8=6{,}561) ternary candidates and use very small moduli. Their observations are conditional finite-sample results only: they do not establish scalable secret recovery, a production attack, or a concrete security estimate.
 
