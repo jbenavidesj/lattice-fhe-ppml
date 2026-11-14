@@ -95,7 +95,7 @@ if r"\begin{longtable}" in source or r"\end{longtable}" in source:
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
 table_pattern = re.compile(
-    r"\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}X+@\{\}\}(.*?)\\end\{tabularx\}",
+    r"\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}(?:X+|rrXXX)@\{\}\}(.*?)\\end\{tabularx\}",
     re.S,
 )
 tables = list(table_pattern.finditer(source))
