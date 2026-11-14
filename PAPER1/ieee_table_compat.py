@@ -8,9 +8,17 @@ source = path.read_text(encoding="utf-8")
 
 # Make long decimal literals breakable without changing their values.
 # seqsplit is used in text mode; the one display-math modulus is wrapped in text.
+def format_display_modulus(match):
+    digits = match.group(1)
+    # Preserve the exact integer while splitting its display over aligned rows.
+    chunks = [digits[i:i + 22] for i in range(0, len(digits), 22)]
+    rows = [r"Q={}&\mathtt{" + chunks[0] + "}"]
+    rows.extend(r"&\mathtt{" + chunk + "}" for chunk in chunks[1:])
+    return r"\begin{aligned}" + r" \\ ".join(rows) + r"\end{aligned}"
+
 source = re.sub(
     r"Q=(\d{40,})",
-    lambda m: r"Q=\text{\seqsplit{" + m.group(1) + "}}",
+    format_display_modulus,
     source,
 )
 source = re.sub(
