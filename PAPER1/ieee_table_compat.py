@@ -33,9 +33,7 @@ source = source.replace(r"\end{longtable}", r"\end{tabularx}" + "\n" + r"\end{ta
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
-# Pandoc places the longtable footer rule before the body rows. In a normal
-# tabularx float, move that rule to the actual end of each table.
-table_pattern = re.compile(r"(\\begin\{tabularx\}\{\columnwidth\}\{@\{\}X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
+table_pattern = re.compile(r"(\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
 def fix_table(match):
     body = match.group(2)
     footer = r"\bottomrule\noalign{}"
@@ -48,7 +46,6 @@ source, fixed = table_pattern.subn(fix_table, source)
 if fixed != len(matches):
     raise SystemExit(f"Expected to repair {len(matches)} tables, repaired {fixed}")
 
-# Verify that every table has the order top rule -> mid rule -> data -> bottom rule.
 for m in table_pattern.finditer(source):
     body = m.group(2)
     if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
