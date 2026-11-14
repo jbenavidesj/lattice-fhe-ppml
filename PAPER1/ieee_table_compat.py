@@ -6,6 +6,18 @@ import re
 path = Path("build/Paper1_IEEEtran.tex")
 source = path.read_text(encoding="utf-8")
 
+# Balance the final bibliography columns at the start of the bibliography.
+# Calling \\balance after \\end{thebibliography} is too late: IEEEtran may
+# already be in the second column, leaving the final page visibly unbalanced.
+bibliography_marker = r"\\begin{thebibliography}"
+if source.count(bibliography_marker) != 1:
+    raise SystemExit("Expected exactly one bibliography environment")
+source = source.replace(
+    bibliography_marker,
+    r"\\balance" + "\\n" + bibliography_marker,
+    1,
+)
+
 # Break the long MITM payload header inside its table cell; this is a
 # presentation-only change and leaves the underlying label and values intact.
 source = source.replace(
