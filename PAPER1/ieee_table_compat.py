@@ -65,25 +65,33 @@ def convert(match):
         raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
     if r"\bottomrule" in body:
         raise SystemExit("Unexpected bottomrule inside table body")
-    # Keep all five MITM resource columns under tabularx width control. Fixed-width
-    # X columns prevent natural-width header boxes from expanding the alignment.
-    if "log2(half-table entries)" in header:
+    # Appendix H has long prose cells; use an IEEE double-column float.
+    if "Public-key equation ambiguous" in header:
+        table_env = "table*"
+        table_width = r"\textwidth"
+        table_font = r"\centering\small"
+        column_spec = "@{}XXXX@{}"
+    elif "log2(half-table entries)" in header:
+        table_env = "table"
+        table_width = r"\columnwidth"
         table_font = r"\centering\scriptsize"
         column_spec = "@{}XXXXX@{}"
     else:
+        table_env = "table"
+        table_width = r"\columnwidth"
         table_font = r"\centering\small"
         column_spec = "@{}" + "X" * columns + "@{}"
     return (
-        r"\begin{table}[!t]" + "\n"
+        r"\begin{" + table_env + r"}[!t]" + "\n"
         + table_font + "\n"
-        + r"\begin{tabularx}{\columnwidth}{" + column_spec + "}" + "\n"
+        + r"\begin{tabularx}{" + table_width + "}{" + column_spec + "}" + "\n"
         + r"\toprule\noalign{}" + "\n"
         + header + "\n"
         + r"\midrule\noalign{}" + "\n"
         + body + "\n"
         + r"\bottomrule\noalign{}" + "\n"
         + r"\end{tabularx}" + "\n"
-        + r"\end{table}"
+        + r"\end{" + table_env + "}"
     )
 
 
@@ -95,7 +103,7 @@ if r"\begin{longtable}" in source or r"\end{longtable}" in source:
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
 table_pattern = re.compile(
-    r"\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}(?:X+|rrXXX)@\{\}\}(.*?)\\end\{tabularx\}",
+    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}X+@\{\}\}(.*?)\\end\{tabularx\}",
     re.S,
 )
 tables = list(table_pattern.finditer(source))
