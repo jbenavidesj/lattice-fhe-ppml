@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-"""Convert Pandoc longtable blocks to single-column IEEEtran tabularx floats."""
+"""Convert Pandoc longtable blocks into IEEEtran-compatible tabularx floats."""
 from pathlib import Path
 import re
 
 path = Path("build/Paper1_IEEEtran.tex")
 source = path.read_text(encoding="utf-8")
 pattern = re.compile(r"\\begin\{longtable\}\[\]\{(.*?)\}\s*\n\\toprule\\noalign\{\}", re.S)
-
 matches = list(pattern.finditer(source))
 if not matches:
-    raise SystemExit("No Pandoc longtable blocks found; refusing to silently skip table conversion")
+    raise SystemExit("No Pandoc longtable blocks found; refusing to skip conversion")
 
-# Count separators in the actual first header row, not letters in the column
-# preamble (which may contain commands such as \raggedright and \arraybackslash).
 for match in reversed(matches):
     header_end = source.find(r"\midrule\noalign{}", match.end())
     if header_end < 0:
@@ -36,10 +33,26 @@ source = source.replace(r"\end{longtable}", r"\end{tabularx}" + "\n" + r"\end{ta
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
-# Structural sanity checks: every generated tabularx must have a nonempty X
-# specification, and the number of table starts and ends must match.
-starts = re.findall(r"\\begin\{tabularx\}\{\\columnwidth\}\{@(X+)@\{\}\}", source)
-if len(starts) != len(matches) or source.count(r"\end{tabularx}") != len(matches):
-    raise SystemExit("Tabularx structural check failed")
+# Pandoc places the longtable footer rule before the body rows. In a normal
+# tabularx float, move that rule to the actual end of each table.
+table_pattern = re.compile(r"(\\begin\{tabularx\}\{\\columnwidth\}\{@X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
+def fix_table(match):
+    body = match.group(2)
+    footer = r"\bottomrule\noalign{}"
+    if body.count(footer) != 1:
+        raise SystemExit("Expected exactly one Pandoc bottomrule in each converted table")
+    body = body.replace(footer, "", 1).rstrip() + "\n" + footer + "\n"
+    return match.group(1) + body + match.group(3)
+
+source, fixed = table_pattern.subn(fix_table, source)
+if fixed != len(matches):
+    raise SystemExit(f"Expected to repair {len(matches)} tables, repaired {fixed}")
+
+# Verify that every table has the order top rule -> mid rule -> data -> bottom rule.
+for m in table_pattern.finditer(source):
+    body = m.group(2)
+    if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
+        raise SystemExit("Table rule ordering check failed")
+
 path.write_text(source, encoding="utf-8")
-print("Converted tables with column counts: " + ", ".join(str(len(x)) for x in starts))
+print(f"Converted and reordered rules in {fixed} tables.")
