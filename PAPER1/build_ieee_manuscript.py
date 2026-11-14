@@ -38,10 +38,10 @@ normalized_lines = []
 in_display_math = False
 for line in lines:
     stripped = line.strip()
-    if stripped.startswith(r"\\[") or stripped == r"\\begin{equation}":
+    if stripped.startswith(r"\[") or stripped == r"\begin{equation}":
         in_display_math = True
     normalized_lines.append(line if in_display_math else normalize_plaintext_powers(line))
-    if stripped.endswith(r"\\]") or stripped == r"\\end{equation}":
+    if stripped.endswith(r"\]") or stripped == r"\end{equation}":
         in_display_math = False
 lines = normalized_lines
 
