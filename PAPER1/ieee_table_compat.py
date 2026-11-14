@@ -9,10 +9,10 @@ source = path.read_text(encoding="utf-8")
 # Pandoc inserts line breaks between booktabs rules and longtable markers.
 # Allow whitespace at those boundaries; do not parse the nested column preamble.
 pattern = re.compile(
-    r"\\begin\\{longtable\\}.*?\\toprule\\noalign\\{\\}\\s*"
-    r"(.*?)\\s*\\midrule\\noalign\\{\\}\\s*\\endhead\\s*"
-    r"\\bottomrule\\noalign\\{\\}\\s*\\endlastfoot\\s*"
-    r"(.*?)\\s*\\end\\{longtable\\}",
+    r"\\begin\{longtable\}.*?\\toprule\\noalign\{\}\s*"
+    r"(.*?)\s*\\midrule\\noalign\{\}\s*\\endhead\s*"
+    r"\\bottomrule\\noalign\{\}\s*\\endlastfoot\s*"
+    r"(.*?)\s*\\end\{longtable\}",
     re.S,
 )
 matches = list(pattern.finditer(source))
@@ -26,31 +26,31 @@ def convert(match):
     columns = header.count("&") + 1
     if columns < 2:
         raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
-    if r"\\bottomrule" in body:
+    if r"\bottomrule" in body:
         raise SystemExit("Unexpected bottomrule inside table body")
     return (
-        r"\\begin{table}[!t]" + "\n"
-        + r"\\centering\\small" + "\n"
-        + r"\\begin{tabularx}{\\columnwidth}{@{}" + "X" * columns + "@{}}" + "\n"
-        + r"\\toprule\\noalign{}" + "\n"
+        r"\begin{table}[!t]" + "\n"
+        + r"\centering\small" + "\n"
+        + r"\begin{tabularx}{\columnwidth}{@{}" + "X" * columns + "@{}}" + "\n"
+        + r"\toprule\noalign{}" + "\n"
         + header + "\n"
-        + r"\\midrule\\noalign{}" + "\n"
+        + r"\midrule\noalign{}" + "\n"
         + body + "\n"
-        + r"\\bottomrule\\noalign{}" + "\n"
-        + r"\\end{tabularx}" + "\n"
-        + r"\\end{table}"
+        + r"\bottomrule\noalign{}" + "\n"
+        + r"\end{tabularx}" + "\n"
+        + r"\end{table}"
     )
 
 
 source, converted = pattern.subn(convert, source)
 if converted != 5:
     raise SystemExit(f"Expected to convert 5 tables, converted {converted}")
-if r"\\begin{longtable}" in source or r"\\end{longtable}" in source:
+if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
 table_pattern = re.compile(
-    r"\\begin\\{tabularx\\}\\{\\columnwidth\\}\\{@\\{\\}X+@\\{\\}\\}(.*?)\\end\\{tabularx\\}",
+    r"\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}X+@\{\}\}(.*?)\\end\{tabularx\}",
     re.S,
 )
 tables = list(table_pattern.finditer(source))
@@ -58,7 +58,7 @@ if len(tables) != 5:
     raise SystemExit(f"Expected 5 IEEE tabularx tables, found {len(tables)}")
 for table in tables:
     body = table.group(1)
-    if not (body.find(r"\\toprule") < body.find(r"\\midrule") < body.rfind(r"\\bottomrule")):
+    if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
         raise SystemExit("Table rule ordering check failed")
 
 path.write_text(source, encoding="utf-8")
