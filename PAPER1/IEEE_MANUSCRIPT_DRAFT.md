@@ -30,22 +30,22 @@ The arithmetic studied here is situated within the original FV construction and 
 
 The algorithmic boundary is important. Textbook BFV multiplication forms the degree-two tensor product over integer representatives and then applies coefficientwise scale-and-round; this underlying lift/multiply/scale structure is not introduced by the present implementation [1]. BEHZ adapts the required conversions and rounding to RNS using integer arithmetic and auxiliary/redundant moduli, while HPS uses CRT basis-extension and scaling procedures with floating-point approximations, explicit precision analysis, and bounded effects on noise [2], [8]. Al Badawi et al. provide a direct implementation comparison of BEHZ and HPS on CPU and GPU, including multiplicative-depth and throughput measurements [7]. Consequently, the present auxiliary NTT/CRT plus BigInt route must be described narrowly: it reconstructs centered integer products exactly as a correctness-reference implementation, rather than proposing a new solution to RNS scale-and-round or outperforming BEHZ/HPS. The single-session measurements are not comparable to their optimized CPU/GPU results and support no competitiveness claim.
 
-\\begin{table*}[t]
-\\centering
-\\small
-\\caption{Positioning relative to full-RNS BFV multiplication methods.}
-\\label{tab:prior-work}
-\\begin{tabularx}{\\textwidth}{@{}>{\\raggedright\\arraybackslash}p{0.19\\textwidth}>{\\raggedright\\arraybackslash}p{0.22\\textwidth}>{\\raggedright\\arraybackslash}p{0.25\\textwidth}X@{}}
-\\toprule
-Aspect & BEHZ & HPS & Present prototype \\\\
-\\midrule
-BFV multiplication and scaling & Full-RNS procedure & Full-RNS procedure & Exact integer-lift reference path \\\\
-Conversion and rounding & Integer arithmetic; auxiliary or redundant moduli & CRT basis extension and scaling; floating-point approximation with precision analysis & Auxiliary NTT/CRT reconstruction; BigInt scale-and-round \\\\
-Published implementation comparison & Compared with HPS [7] & Compared with BEHZ [7] & No equivalent comparative benchmark \\\\
-Claim made here & Prior art & Prior art & Auditable reference path; no performance or algorithmic-superiority claim \\\\
-\\bottomrule
-\\end{tabularx}
-\\end{table*}
+\begin{table*}[t]
+\centering
+\small
+\caption{Positioning relative to full-RNS BFV multiplication methods.}
+\label{tab:prior-work}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.25\textwidth}X@{}}
+\toprule
+Aspect & BEHZ & HPS & Present prototype \\
+\midrule
+BFV multiplication and scaling & Full-RNS procedure & Full-RNS procedure & Exact integer-lift reference path \\
+Conversion and rounding & Integer arithmetic; auxiliary or redundant moduli & CRT basis extension and scaling; floating-point approximation with precision analysis & Auxiliary NTT/CRT reconstruction; BigInt scale-and-round \\
+Published implementation comparison & Compared with HPS [7] & Compared with BEHZ [7] & No equivalent comparative benchmark \\
+Claim made here & Prior art & Prior art & Auditable reference path; no performance or algorithmic-superiority claim \\
+\bottomrule
+\end{tabularx}
+\end{table*}
 
 The remaining candidate contribution is therefore the source-linked, parameter-specific correctness audit and the finite diagnostics of the implemented related-secret evaluation-key transcript. The former is a concrete instance-specific validation result, not a new general BFV noise theorem; the latter is a diagnostic characterization, not a demonstrated attack or security reduction. A sufficiently distinct methodological contribution beyond the prior full-RNS BFV literature has not yet been established.
 
