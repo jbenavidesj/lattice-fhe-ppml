@@ -35,7 +35,7 @@ The algorithmic boundary is important. Textbook BFV multiplication forms the deg
 | Aspect | BEHZ | HPS | Present prototype |
 |---|---|---|---|
 | BFV multiplication and scaling | Full-RNS procedure | Full-RNS procedure | Exact integer-lift reference path |
-| Conversion/rounding strategy | Integer arithmetic with auxiliary/redundant moduli | CRT basis extension/scaling with floating-point approximations and precision analysis | Auxiliary NTT/CRT reconstruction followed by BigInt scale-and-round |
+| Conversion / rounding | Integer arithmetic with auxiliary/redundant moduli | CRT basis extension/scaling with floating-point approximations and precision analysis | Auxiliary NTT/CRT reconstruction followed by BigInt scale-and-round |
 | Published implementation comparison | Compared with HPS in [7] | Compared with BEHZ in [7] | No equivalent comparative benchmark |
 | Claim made here | Prior art | Prior art | Auditable reference path only; no performance or algorithmic-superiority claim |
 
