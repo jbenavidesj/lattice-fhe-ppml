@@ -65,12 +65,21 @@ def convert(match):
         raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
     if r"\bottomrule" in body:
         raise SystemExit("Unexpected bottomrule inside table body")
-    # Appendix H has long prose cells; use an IEEE double-column float.
-    if "Public-key equation ambiguous" in header:
-        table_env = "table*"
-        table_width = r"\textwidth"
-        table_font = r"\centering\small"
-        column_spec = "@{}XXXX@{}"
+    # Appendix H uses a compact two-column inline table. Keeping it
+    # non-floating prevents IEEEtran from deferring it beyond the references.
+    if "Findings" in header and columns == 2:
+        return (
+            r"\begin{center}" + "\n"
+            + r"\small" + "\n"
+            + r"\begin{tabularx}{\columnwidth}{@{}lX@{}}" + "\n"
+            + r"\toprule\noalign{}" + "\n"
+            + header + "\n"
+            + r"\midrule\noalign{}" + "\n"
+            + body + "\n"
+            + r"\bottomrule\noalign{}" + "\n"
+            + r"\end{tabularx}" + "\n"
+            + r"\end{center}"
+        )
     elif "log2(half-table entries)" in header:
         table_env = "table"
         table_width = r"\columnwidth"
@@ -103,7 +112,7 @@ if r"\begin{longtable}" in source or r"\end{longtable}" in source:
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
 table_pattern = re.compile(
-    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}X+@\{\}\}(.*?)\\end\{tabularx\}",
+    r"\\begin\{tabularx\}\{\\(?:columnwidth|textwidth)\}\{@\{\}(?:l?X+)@\{\}\}(.*?)\\end\{tabularx\}",
     re.S,
 )
 tables = list(table_pattern.finditer(source))
