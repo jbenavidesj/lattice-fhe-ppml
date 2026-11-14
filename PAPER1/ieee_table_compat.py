@@ -8,18 +8,18 @@ source = path.read_text(encoding="utf-8")
 
 # Add legal TeX line-break opportunities to long numeric literals and
 # monospaced identifiers. The characters and underlying values are unchanged.
-def break_long_numeric_runs(match):
+    return r"\allowbreak ".join(value[i:i+4] for i in range(0, len(value), 4))
     value = match.group(0)
-    return r"\\allowbreak ".join(value[i:i+4] for i in range(0, len(value), 4))
+source = re.sub(r"(?<![A-Za-z])\d{14,}(?![A-Za-z])", break_long_numeric_runs, source)
 
 source = re.sub(r"(?<![A-Za-z])\\d{14,}(?![A-Za-z])", break_long_numeric_runs, source)
-
-def break_monospace(match):
+    value = value.replace("/", "/\allowbreak ")
+    value = value.replace("_", "_\allowbreak ")
     value = match.group(1)
-    value = value.replace("/", "/\\allowbreak ")
-    value = value.replace("_", "_\\allowbreak ")
+        value = r"\allowbreak ".join(value[i:i+8] for i in range(0, len(value), 8))
+    return r"\texttt{" + value + "}"
     if re.fullmatch(r"[0-9a-f]{40}", value):
-        value = r"\\allowbreak ".join(value[i:i+8] for i in range(0, len(value), 8))
+source = re.sub(r"\\texttt\{([^{}]+)\}", break_monospace, source)
     return r"\\texttt{" + value + "}"
 
 source = re.sub(r"\\\\texttt\\{([^{}]+)\\}", break_monospace, source)
