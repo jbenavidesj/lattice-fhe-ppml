@@ -103,18 +103,18 @@ if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
 # Confirm that every converted table has a valid width/spec pair and ordered rules.
-table_starts = len(re.findall(r"\\\\begin\\{tabularx\\}", source))
-table_ends = len(re.findall(r"\\\\end\\{tabularx\\}", source))
+table_starts = len(re.findall(r"\\begin\{tabularx\}", source))
+table_ends = len(re.findall(r"\\end\{tabularx\}", source))
 if table_starts != 4 or table_ends != 4:
     raise SystemExit(
         f"Expected 4 IEEE tabularx tables (3 converted plus 1 authored), "
         f"found {table_starts} begins and {table_ends} ends"
     )
 for table in re.finditer(
-    r"\\\\begin\\{tabularx\\}.*?\\\\end\\{tabularx\\}", source, re.S
+    r"\\begin\{tabularx\}.*?\\end\{tabularx\}", source, re.S
 ):
     body = table.group(0)
-    if not (body.find(r"\\\\toprule") < body.find(r"\\\\midrule") < body.rfind(r"\\\\bottomrule")):
+    if not (body.find(r"\\toprule") < body.find(r"\\midrule") < body.rfind(r"\\bottomrule")):
         raise SystemExit("Table rule ordering check failed")
 
 path.write_text(source, encoding="utf-8")
