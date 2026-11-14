@@ -1,5 +1,8 @@
 # An Experimental RNS-BFV Implementation with Exact Integer-Lift Multiplication and Reproducible Correctness Audits
 
+Juan Benavides J.  
+Independent Researcher — Cryptography & Cybersecurity
+
 **Manuscript status (2026-11-13): internally consolidated research manuscript; not cleared for journal submission.** The internal editorial pass is complete for scope, claim discipline, citation-to-claim mapping, bibliography metadata, and interpretation of the available benchmark. References [1]–[8] are all cited and mapped to their intended claims. The BEHZ/HPS comparison is deliberately limited to the principal algorithmic distinctions documented here; it is not claimed to be an exhaustive survey of every implementation variant. The one-session CI measurements are descriptive only, and no comparative-performance claim is made. The remaining blockers are external: independent mathematical review of the one-operation correctness derivation; specialist cryptanalytic review of the joint public/evaluation-key transcript; and an independent assessment of whether the narrowed implementation-and-reproducibility contribution meets the novelty threshold of a target journal. No reviewer certification, concrete security level, or production-readiness is claimed.
 
 ## Abstract
