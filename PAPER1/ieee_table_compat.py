@@ -65,10 +65,18 @@ def convert(match):
         raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
     if r"\bottomrule" in body:
         raise SystemExit("Unexpected bottomrule inside table body")
+    # The MITM resource table has two compact integer columns and three
+    # descriptive columns. Natural-width integer columns avoid the overfull box.
+    if "log2(half-table entries)" in header:
+        table_font = r"\centering\scriptsize"
+        column_spec = "@{}rrXXX@{}"
+    else:
+        table_font = r"\centering\small"
+        column_spec = "@{}" + "X" * columns + "@{}"
     return (
         r"\begin{table}[!t]" + "\n"
-        + r"\centering\small" + "\n"
-        + r"\begin{tabularx}{\columnwidth}{@{}" + "X" * columns + "@{}}" + "\n"
+        + table_font + "\n"
+        + r"\begin{tabularx}{\columnwidth}{" + column_spec + "}" + "\n"
         + r"\toprule\noalign{}" + "\n"
         + header + "\n"
         + r"\midrule\noalign{}" + "\n"
