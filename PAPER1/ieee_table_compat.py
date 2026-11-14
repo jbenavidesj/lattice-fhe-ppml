@@ -6,24 +6,25 @@ import re
 path = Path("build/Paper1_IEEEtran.tex")
 source = path.read_text(encoding="utf-8")
 
-# Add legal TeX line-break opportunities to long numeric literals and
-# monospaced identifiers. The characters and underlying values are unchanged.
-def break_long_numeric_runs(match):
-    value = match.group(0)
-    return r"\\allowbreak ".join(value[i:i+4] for i in range(0, len(value), 4))
+# Make long decimal literals breakable without changing their values.
+# seqsplit is used in text mode; the one display-math modulus is wrapped in text.
+source = re.sub(
+    r"Q=(\\d{40,})",
+    lambda m: r"Q=\\text{\\seqsplit{" + m.group(1) + "}}",
+    source,
+)
+source = re.sub(
+    r"(?<![A-Za-z0-9\\{])([0-9]{14,})(?![A-Za-z0-9\\}])",
+    lambda m: r"\\seqsplit{" + m.group(1) + "}",
+    source,
+)
 
-source = re.sub(r"(?<![A-Za-z])\\d{14,}(?![A-Za-z])", break_long_numeric_runs, source)
-
-def break_monospace(match):
-    value = match.group(1)
-    value = value.replace("/", "/\\allowbreak ")
-    value = value.replace("_", "_\\allowbreak ")
-    if re.fullmatch(r"[0-9a-f]{40}", value):
-        value = r"\\allowbreak ".join(value[i:i+8] for i in range(0, len(value), 8))
-    return r"\\texttt{" + value + "}"
-
-source = re.sub(r"\\\\texttt\\{([^{}]+)\\}", break_monospace, source)
-
+# Permit long repository paths and identifiers to wrap at character boundaries.
+source = re.sub(
+    r"\\texttt\\{([^{}]+)\\}",
+    lambda m: r"\\texttt{\\seqsplit{" + m.group(1) + "}}",
+    source,
+)
 
 # Pandoc inserts line breaks between booktabs rules and longtable markers.
 # Allow whitespace at those boundaries; do not parse the nested column preamble.
