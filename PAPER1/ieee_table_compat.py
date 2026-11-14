@@ -5,51 +5,59 @@ import re
 
 path = Path("build/Paper1_IEEEtran.tex")
 source = path.read_text(encoding="utf-8")
-pattern = re.compile(r"\\begin\{longtable\}\[\]\{(.*?)\}\s*\n\\toprule\\noalign\{\}", re.S)
-matches = list(pattern.finditer(source))
-if not matches:
-    raise SystemExit("No Pandoc longtable blocks found; refusing to skip conversion")
 
-for match in reversed(matches):
-    header_end = source.find(r"\midrule\noalign{}", match.end())
-    if header_end < 0:
-        raise SystemExit("Could not locate the first table header terminator")
-    header = source[match.end():header_end]
+# Match the complete Pandoc longtable structure. Do not parse its column
+# preamble: Pandoc emits nested braces and multiline p-column definitions.
+pattern = re.compile(
+    r"\\begin\{longtable\}.*?\\toprule\\noalign\{\}"
+    r"(.*?)\\midrule\\noalign\{\}\\endhead"
+    r"\\bottomrule\\noalign\{\}\\endlastfoot"
+    r"(.*?)\\end\{longtable\}",
+    re.S,
+)
+matches = list(pattern.finditer(source))
+if len(matches) != 5:
+    raise SystemExit(f"Expected 5 Pandoc longtables, found {len(matches)}")
+
+def convert(match):
+    header = match.group(1).strip()
+    body = match.group(2).strip()
     columns = header.count("&") + 1
     if columns < 2:
-        raise SystemExit(f"Unexpected one-column table header: {header!r}")
-    replacement = (
+        raise SystemExit(f"Unexpected table header with {columns} columns: {header!r}")
+    if r"\bottomrule" in body:
+        raise SystemExit("Unexpected bottomrule inside table body")
+    return (
         r"\begin{table}[!t]" + "\n"
         + r"\centering\small" + "\n"
-        + r"\begin{tabularx}{\columnwidth}{@{}"
-        + "X" * columns
-        + "@{}}" + "\n"
-        + r"\toprule\noalign{}"
+        + r"\begin{tabularx}{\columnwidth}{@{}" + "X" * columns + "@{}}" + "\n"
+        + r"\toprule\noalign{}" + "\n"
+        + header + "\n"
+        + r"\midrule\noalign{}" + "\n"
+        + body + "\n"
+        + r"\bottomrule\noalign{}" + "\n"
+        + r"\end{tabularx}" + "\n"
+        + r"\end{table}"
     )
-    source = source[:match.start()] + replacement + source[match.end():]
 
-source = source.replace(r"\endhead", "").replace(r"\endlastfoot", "")
-source = source.replace(r"\end{longtable}", r"\end{tabularx}" + "\n" + r"\end{table}")
+source, converted = pattern.subn(convert, source)
+if converted != 5:
+    raise SystemExit(f"Expected to convert 5 tables, converted {converted}")
 if r"\begin{longtable}" in source or r"\end{longtable}" in source:
     raise SystemExit("Unconverted longtable environment remains")
 
-table_pattern = re.compile(r"(\\begin\{tabularx\}\{\\\\columnwidth\}\{@\{\}X+@\{\}\})(.*?)(\\end\{tabularx\})", re.S)
-def fix_table(match):
-    body = match.group(2)
-    footer = r"\bottomrule\noalign{}"
-    if body.count(footer) != 1:
-        raise SystemExit("Expected exactly one Pandoc bottomrule in each converted table")
-    body = body.replace(footer, "", 1).rstrip() + "\n" + footer + "\n"
-    return match.group(1) + body + match.group(3)
-
-source, fixed = table_pattern.subn(fix_table, source)
-if fixed != len(matches):
-    raise SystemExit(f"Expected to repair {len(matches)} tables, repaired {fixed}")
-
-for m in table_pattern.finditer(source):
-    body = m.group(2)
+# Confirm that every converted table has a valid width/spec pair and ordered rules.
+table_pattern = re.compile(
+    r"\\begin\{tabularx\}\{\\columnwidth\}\{@\{\}X+@\{\}\}(.*?)\\end\{tabularx\}",
+    re.S,
+)
+tables = list(table_pattern.finditer(source))
+if len(tables) != 5:
+    raise SystemExit(f"Expected 5 IEEE tabularx tables, found {len(tables)}")
+for table in tables:
+    body = table.group(1)
     if not (body.find(r"\toprule") < body.find(r"\midrule") < body.rfind(r"\bottomrule")):
         raise SystemExit("Table rule ordering check failed")
 
 path.write_text(source, encoding="utf-8")
-print(f"Converted and reordered rules in {fixed} tables.")
+print(f"Converted and verified {converted} IEEE-compatible tables.")
